@@ -1,0 +1,22 @@
+' Use case diagram — Guest (PlantUML, Smetana).
+' Actor = stick figure; actor–use case = plain solid line (no arrowhead).
+@startuml
+!pragma layout smetana
+left to right direction
+
+actor Guest as G
+
+rectangle PrintHub {
+  usecase "Register Account" as UC1
+  usecase "Log In" as UC2
+  usecase "Forgot Password" as UC3
+  usecase "Browse & Search Shops" as UC9
+  usecase "View Shop Detail" as UC10
+}
+
+G -- UC1
+G -- UC2
+G -- UC3
+G -- UC9
+G -- UC10
+@enduml
