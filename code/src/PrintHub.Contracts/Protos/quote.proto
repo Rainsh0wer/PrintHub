@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option csharp_namespace = "PrintHub.Contracts.Quoting";
+package quoting;
+
+// The Quote Engine is a stateless calculator: the platform gathers each shop's
+// pricing data and asks the engine to compute a price and completion estimate.
+// This keeps pricing logic (and the Strategy per pricing model) isolated in a
+// service that can evolve and be scaled independently of the ordering system.
+service QuoteEstimator {
+  rpc Estimate (EstimateRequest) returns (EstimateResponse);
+}
+
+message EstimateRequest {
+  repeated EstimateItem items = 1;
+}
+
+message EstimateItem {
+  string pricing_model = 1;        // PerPage | PerUnit | MaterialAndTime
+  int32 quantity = 2;
+  int32 page_count = 3;
+  double estimated_grams = 4;
+  double unit_price = 5;           // shop's base unit price for this service
+  double setup_fee = 6;
+  int32 lead_time_minutes = 7;     // baseline time per unit of measure
+  repeated string selected_options = 8;  // chosen option keys (paper, colour, sides, material, quality)
+  repeated PricingRuleInput rules = 9;   // shop's pricing rules for this service
+}
+
+message PricingRuleInput {
+  string rule_type = 1;
+  string option_key = 2;
+  double multiplier = 3;
+  double flat_extra = 4;
+  int32 min_quantity = 5;
+  int32 max_quantity = 6;
+  bool has_min = 7;
+  bool has_max = 8;
+}
+
+message EstimateResponse {
+  double subtotal = 1;
+  int32 estimated_minutes = 2;
+  repeated LineBreakdown lines = 3;
+}
+
+message LineBreakdown {
+  string description = 1;
+  double effective_unit_price = 2;
+  double line_total = 3;
+  int32 minutes = 4;
+  repeated string applied_rules = 5;
+}
