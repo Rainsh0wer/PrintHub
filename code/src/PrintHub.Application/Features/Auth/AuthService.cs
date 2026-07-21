@@ -156,19 +156,22 @@ public class AuthService : IAuthService
             userDto);
     }
 
-    /// <summary>Shop-membership ids for the access token: owned shops for owners, active memberships for staff.</summary>
+    /// <summary>
+    /// Shop-membership ids for the access token — the union of shops the user owns
+    /// and shops they are active staff of. This handles the real case where a user
+    /// both owns a shop and works at another.
+    /// </summary>
     private async Task<IReadOnlyCollection<int>> GetShopIdsAsync(User user, CancellationToken ct)
     {
-        switch (user.Role)
-        {
-            case UserRole.ShopOwner:
-                var owned = await _uow.Repository<Shop>().ListAsync(new ShopsByOwnerSpecification(user.Id), ct);
-                return owned.Select(s => s.Id).ToArray();
-            case UserRole.ShopStaff:
-                var staff = await _uow.Repository<ShopStaff>().ListAsync(new ActiveStaffByUserSpecification(user.Id), ct);
-                return staff.Select(s => s.ShopId).ToArray();
-            default:
-                return Array.Empty<int>();
-        }
+        if (user.Role == UserRole.Admin)
+            return Array.Empty<int>();
+
+        var owned = await _uow.Repository<Shop>().ListAsync(new ShopsByOwnerSpecification(user.Id), ct);
+        var staff = await _uow.Repository<ShopStaff>().ListAsync(new ActiveStaffByUserSpecification(user.Id), ct);
+
+        return owned.Select(s => s.Id)
+            .Concat(staff.Select(s => s.ShopId))
+            .Distinct()
+            .ToArray();
     }
 }
