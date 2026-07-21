@@ -1,0 +1,274 @@
+// PrintHub ERD — paste into https://dbdiagram.io (crow's foot, PK/FK).  Export PNG/PDF.
+// Enums are stored as int in the DB; modelled here as enum for readability.
+
+Enum user_role { Customer ShopOwner ShopStaff Admin }
+Enum shop_status { Draft PendingReview Active Rejected Suspended }
+Enum service_group { Document Finishing Fabrication }
+Enum pricing_model { PerPage PerUnit MaterialAndTime }
+Enum order_status { Draft Quoted Expired AwaitingAcceptance Accepted InProduction ProductionFailed ReadyForPickup OutForDelivery Completed Declined Cancelled }
+Enum wallet_txn_type { TopUp Payment Refund Adjustment }
+Enum complaint_status { Open ShopResponded Resolved Escalated Closed }
+
+Table User {
+  Id int [pk, increment]
+  FullName varchar
+  Email varchar [unique, not null]
+  PhoneNumber varchar
+  PasswordHash varchar [note: 'BCrypt; never exposed']
+  Role user_role
+  WalletBalance decimal
+  Status int
+  IsDeleted bool
+  CreatedAt datetime
+}
+
+Table RefreshToken {
+  Id int [pk, increment]
+  UserId int [ref: > User.Id]
+  Token varchar [unique]
+  ExpiresAt datetime
+  RevokedAt datetime
+}
+
+Table Shop {
+  Id int [pk, increment]
+  OwnerId int [ref: > User.Id]
+  Name varchar
+  District varchar
+  City varchar
+  Status shop_status
+  RatingAverage float
+  RatingCount int
+  ApprovedBy int [ref: > User.Id]
+  IsDeleted bool
+}
+
+// n-n WITH attributes: User x Shop
+Table ShopStaff {
+  Id int [pk, increment]
+  ShopId int [ref: > Shop.Id]
+  UserId int [ref: > User.Id]
+  Position varchar
+  JoinedAt datetime
+  IsActive bool
+
+  Indexes { (ShopId, UserId) [unique] }
+}
+
+Table ServiceType {
+  Id int [pk, increment]
+  Code varchar [unique]
+  Name varchar
+  ServiceGroup service_group
+  PricingModel pricing_model
+  UnitOfMeasure varchar
+  RequiresFile bool
+  IsActive bool
+  IsDeleted bool
+}
+
+// n-n WITH attributes: Shop x ServiceType  (the rate card — read on every quote)
+Table ShopService {
+  Id int [pk, increment]
+  ShopId int [ref: > Shop.Id]
+  ServiceTypeId int [ref: > ServiceType.Id]
+  UnitPrice decimal
+  SetupFee decimal
+  MinQuantity int
+  LeadTimeMinutes int
+  IsActive bool
+
+  Indexes { (ShopId, ServiceTypeId) [unique] }
+}
+
+Table PriceRule {
+  Id int [pk, increment]
+  ShopServiceId int [ref: > ShopService.Id]
+  RuleType int
+  OptionKey varchar
+  Multiplier decimal
+  FlatExtra decimal
+  MinQuantity int
+  MaxQuantity int
+  IsActive bool
+}
+
+Table Machine {
+  Id int [pk, increment]
+  ShopId int [ref: > Shop.Id]
+  Name varchar
+  MachineType int
+  ServiceGroup service_group
+  Status int
+  IsDeleted bool
+}
+
+Table Material {
+  Id int [pk, increment]
+  ShopId int [ref: > Shop.Id]
+  Name varchar
+  MaterialType int
+  Unit varchar
+  StockQuantity decimal
+  LowStockThreshold decimal
+  UnitCost decimal
+  IsDeleted bool
+}
+
+Table DocumentFile {
+  Id int [pk, increment]
+  OwnerUserId int [ref: > User.Id]
+  FileName varchar
+  StoragePath varchar [note: 'never exposed to clients']
+  ContentType varchar
+  DeclaredPageCount int
+  RightsDeclared bool
+  IsDeleted bool
+}
+
+Table Quote {
+  Id int [pk, increment]
+  CustomerId int [ref: > User.Id]
+  ShopId int [ref: > Shop.Id]
+  SubTotal decimal
+  EstimatedMinutes int
+  DistanceMeters float
+  BreakdownJson text
+  IsIndicative bool
+  ExpiresAt datetime
+  CreatedAt datetime
+}
+
+Table Order {
+  Id int [pk, increment]
+  OrderCode varchar [unique]
+  CustomerId int [ref: > User.Id]
+  ShopId int [ref: > Shop.Id]
+  QuoteId int [ref: > Quote.Id]
+  MachineId int [ref: > Machine.Id]
+  VoucherId int [ref: > Voucher.Id]
+  Status order_status
+  FulfilmentMethod int
+  SubTotal decimal
+  DiscountAmount decimal
+  TotalAmount decimal
+  CommissionRate decimal
+  CommissionAmount decimal
+  ProgressPercent int
+  PlacedAt datetime
+  CompletedAt datetime
+}
+
+Table OrderItem {
+  Id int [pk, increment]
+  OrderId int [ref: > Order.Id]
+  ServiceTypeId int [ref: > ServiceType.Id]
+  DocumentFileId int [ref: > DocumentFile.Id]
+  Quantity int
+  PageCount int
+  PaperType varchar
+  ColorMode int
+  Sides int
+  BindingType varchar
+  MaterialName varchar
+  QualityProfile varchar
+  EstimatedGrams decimal
+  UnitPrice decimal
+  LineTotal decimal
+}
+
+Table OrderStatusHistory {
+  Id int [pk, increment]
+  OrderId int [ref: > Order.Id]
+  FromStatus order_status
+  ToStatus order_status
+  ActorUserId int [ref: > User.Id]
+  ActorRole user_role
+  Reason varchar
+  CreatedAt datetime [note: 'append-only']
+}
+
+Table WalletTransaction {
+  Id int [pk, increment]
+  UserId int [ref: > User.Id]
+  OrderId int [ref: > Order.Id]
+  Type wallet_txn_type
+  Amount decimal
+  BalanceAfter decimal
+  RefCode varchar [unique]
+  Status int
+  ConfirmedBy int [ref: > User.Id]
+  CreatedAt datetime
+}
+
+Table Voucher {
+  Id int [pk, increment]
+  Code varchar [unique]
+  DiscountType int
+  DiscountValue decimal
+  MinOrderAmount decimal
+  MaxDiscountAmount decimal
+  UsageLimit int
+  UsedCount int
+  ValidFrom datetime
+  ValidTo datetime
+  IsActive bool
+}
+
+Table Review {
+  Id int [pk, increment]
+  OrderId int [ref: - Order.Id, note: 'one review per order']
+  CustomerId int [ref: > User.Id]
+  ShopId int [ref: > Shop.Id]
+  Rating int
+  Comment varchar
+  ShopReply varchar
+  CreatedAt datetime
+}
+
+Table Complaint {
+  Id int [pk, increment]
+  OrderId int [ref: > Order.Id]
+  CustomerId int [ref: > User.Id]
+  ShopId int [ref: > Shop.Id]
+  Reason int
+  Description varchar
+  Status complaint_status
+  ProposedResolution int
+  RefundAmount decimal
+  ReplacementOrderId int [ref: > Order.Id]
+  ResolvedBy int [ref: > User.Id]
+  CreatedAt datetime
+}
+
+Table Favourite {
+  Id int [pk, increment]
+  CustomerId int [ref: > User.Id]
+  ShopId int [ref: > Shop.Id]
+  CreatedAt datetime
+
+  Indexes { (CustomerId, ShopId) [unique] }
+}
+
+Table Notification {
+  Id int [pk, increment]
+  UserId int [ref: > User.Id]
+  Title varchar
+  Content varchar
+  Type int
+  RelatedOrderId int [ref: > Order.Id]
+  IsRead bool
+  CreatedAt datetime
+}
+
+Table AuditLog {
+  Id int [pk, increment]
+  ActorUserId int [ref: > User.Id]
+  Action varchar
+  EntityName varchar
+  EntityId varchar
+  OldValue text
+  NewValue text
+  IpAddress varchar
+  CreatedAt datetime [note: 'append-only']
+}

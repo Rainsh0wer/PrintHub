@@ -1,0 +1,43 @@
+' Use case diagram — Customer (PlantUML).  Render at https://www.plantuml.com/plantuml
+' Note the correct notation: include arrow points base -> included; extend arrow points extending -> base.
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor Guest as G
+actor Customer as C
+G <|-- C
+
+rectangle PrintHub {
+  usecase "Browse & Search Shops" as UC9
+  usecase "View Shop Detail" as UC10
+  usecase "Manage Favourites" as UC11
+  usecase "Compare Quotes" as UC13
+  usecase "Apply Voucher" as UC14
+  usecase "Place Order" as UC15
+  usecase "Track Order" as UC16
+  usecase "Cancel Order" as UC17
+  usecase "Top Up Wallet" as UC21
+  usecase "Submit Review" as UC23
+  usecase "Raise Complaint" as UC24
+  usecase "Apply to Open Shop" as UC25
+}
+
+G --> UC9
+G --> UC10
+C --> UC11
+C --> UC13
+C --> UC15
+C --> UC16
+C --> UC17
+C --> UC21
+C --> UC23
+C --> UC24
+C --> UC25
+
+UC15 ..> UC21 : <<include>>
+UC14 ..> UC15 : <<extend>>
+UC23 ..> UC16 : <<extend>>
+UC24 ..> UC16 : <<extend>>
+@enduml

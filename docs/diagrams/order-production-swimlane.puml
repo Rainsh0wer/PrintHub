@@ -1,0 +1,39 @@
+' Order production activity with swimlanes (PlantUML).  Render at https://www.plantuml.com/plantuml
+' Shows the RabbitMQ asynchronous production pipeline across lanes.
+@startuml
+|Customer|
+start
+:Place order (pay from wallet);
+|#AntiqueWhite|Shop (Owner/Staff)|
+:See order in queue;
+if (Accept order?) then (yes)
+  :Accept;
+  :Assign machine & start production;
+  :Publish job message to RabbitMQ;
+  |#LightBlue|Production Agent|
+  :Consume job from queue;
+  :Simulate machine\n(emit progress events);
+  if (Produced OK?) then (yes)
+    :Publish completion event;
+    |#AntiqueWhite|Shop (Owner/Staff)|
+    :Order -> ReadyForPickup;
+    :Hand over at counter;
+    |Customer|
+    :Confirm receipt;
+    :Order Completed\n(commission recorded);
+    stop
+  else (failure)
+    :Publish failure event;
+    |#AntiqueWhite|Shop (Owner/Staff)|
+    :Retry production or decline;
+    |Customer|
+    :Refund on decline;
+    stop
+  endif
+else (no)
+  :Decline with reason;
+  |Customer|
+  :Full refund to wallet;
+  stop
+endif
+@enduml

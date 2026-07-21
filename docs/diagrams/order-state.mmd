@@ -1,0 +1,23 @@
+%% Order lifecycle state machine (PrintHub).
+%% Render: https://mermaid.live  → export PNG.  Or paste into draw.io (Insert ▸ Advanced ▸ Mermaid).
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Quoted: compare quotes
+    Quoted --> AwaitingAcceptance: place order (wallet debit + snapshot)
+    Quoted --> Expired: 24h elapsed
+    AwaitingAcceptance --> Accepted: shop accepts
+    AwaitingAcceptance --> Declined: shop declines / full refund
+    AwaitingAcceptance --> Cancelled: customer cancels / full refund
+    Accepted --> InProduction: start production (publish job to RabbitMQ)
+    Accepted --> Cancelled: cancel (cancellation fee)
+    InProduction --> ReadyForPickup: agent completed (pickup)
+    InProduction --> OutForDelivery: agent completed (delivery)
+    InProduction --> ProductionFailed: agent failure event
+    ProductionFailed --> InProduction: retry (no charge)
+    ProductionFailed --> Declined: give up / full refund
+    ReadyForPickup --> Completed: hand over (commission recorded)
+    OutForDelivery --> Completed: delivered
+    Completed --> [*]
+    Declined --> [*]
+    Cancelled --> [*]
+    Expired --> [*]

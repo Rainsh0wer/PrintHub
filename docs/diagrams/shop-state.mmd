@@ -1,0 +1,13 @@
+%% Shop onboarding state machine (PrintHub).  Render at https://mermaid.live
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> PendingReview: submit application
+    PendingReview --> Active: admin approve (owner elevated)
+    PendingReview --> Rejected: admin reject (reason)
+    Rejected --> PendingReview: revise & resubmit
+    Active --> Suspended: admin suspend (reason)
+    Suspended --> Active: admin reinstate
+    note right of Suspended
+        Hidden from search; in-progress
+        orders continue to completion.
+    end note

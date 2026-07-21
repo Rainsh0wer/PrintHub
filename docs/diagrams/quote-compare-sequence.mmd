@@ -1,0 +1,19 @@
+%% UC-13 quote comparison — gRPC Quote Engine call sequence.  Render at https://mermaid.live
+sequenceDiagram
+    actor C as Customer
+    participant API as PrintHub.Api
+    participant DB as SQL Server
+    participant QE as QuoteEngine (gRPC)
+
+    C->>API: POST /api/quotes/compare (items, sortBy)
+    API->>DB: load service types + eligible shops<br/>(rate cards, price rules, machines)
+    loop for each eligible shop
+        API->>QE: Estimate(items + shop pricing rules)  [gRPC/h2c]
+        QE->>QE: select PricingStrategy per item, apply rules
+        QE-->>API: subtotal, estimatedMinutes, breakdown
+    end
+    alt Quote Engine unavailable
+        API->>API: in-process indicative price (IsIndicative = true)
+    end
+    API->>DB: persist one Quote per shop (24h expiry + breakdown)
+    API-->>C: ranked comparison (price / time / rating)
