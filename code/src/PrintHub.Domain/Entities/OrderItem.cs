@@ -31,7 +31,10 @@ public class OrderItem : BaseEntity
     /// <summary>Effective unit price after pricing rules, snapshotted.</summary>
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public int? EstimatedMinutes { get; set; }
 
+    /// <summary>File name captured at order time (the library file may later change).</summary>
+    public string? SnapshotFileName { get; set; }
     public string? ItemNote { get; set; }
 
     // Navigation

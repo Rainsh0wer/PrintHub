@@ -17,6 +17,9 @@ public class ShopStaff : BaseEntity
     public DateTime JoinedAt { get; set; }
     public bool IsActive { get; set; } = true;
 
+    public int? InvitedByUserId { get; set; }
+    public DateTime? RevokedAt { get; set; }
+
     // Navigation
     public Shop Shop { get; set; } = null!;
     public User User { get; set; } = null!;

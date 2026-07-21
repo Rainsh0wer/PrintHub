@@ -20,10 +20,12 @@ public class ShopService : AuditableEntity
     public decimal SetupFee { get; set; }
 
     public int MinQuantity { get; set; } = 1;
+    public int? MaxQuantity { get; set; }
 
     /// <summary>Baseline production time per unit, used to estimate completion.</summary>
     public int LeadTimeMinutes { get; set; }
 
+    public string? Notes { get; set; }
     public bool IsActive { get; set; } = true;
 
     // Navigation

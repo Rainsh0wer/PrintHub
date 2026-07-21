@@ -17,6 +17,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.PhoneNumber).HasMaxLength(20);
         b.Property(x => x.DefaultAddress).HasMaxLength(300);
         b.Property(x => x.WalletBalance).HasPrecision(18, 2);
+        b.Property(x => x.AvatarUrl).HasMaxLength(500);
 
         b.HasIndex(x => x.Email).IsUnique();
 
@@ -32,6 +33,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         b.HasKey(x => x.Id);
 
         b.Property(x => x.Token).HasMaxLength(500).IsRequired();
+        b.Property(x => x.CreatedByIp).HasMaxLength(45);
+        b.Property(x => x.RevokedByIp).HasMaxLength(45);
+        b.Property(x => x.ReplacedByToken).HasMaxLength(500);
         b.HasIndex(x => x.Token).IsUnique();
 
         b.Ignore(x => x.IsActive);

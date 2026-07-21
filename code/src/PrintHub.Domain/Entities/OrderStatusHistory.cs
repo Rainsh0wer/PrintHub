@@ -20,6 +20,7 @@ public class OrderStatusHistory : BaseEntity
     public UserRole? ActorRole { get; set; }
 
     public string? Reason { get; set; }
+    public string? IpAddress { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation

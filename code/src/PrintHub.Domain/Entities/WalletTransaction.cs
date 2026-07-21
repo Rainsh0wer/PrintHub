@@ -28,6 +28,10 @@ public class WalletTransaction : BaseEntity
 
     public int? ConfirmedBy { get; set; }
 
+    public string? Description { get; set; }
+    /// <summary>The bank's own transaction reference for a confirmed top-up.</summary>
+    public string? BankReference { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? ConfirmedAt { get; set; }
 

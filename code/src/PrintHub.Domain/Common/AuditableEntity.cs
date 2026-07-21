@@ -9,4 +9,10 @@ public abstract class AuditableEntity : BaseEntity
 {
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>User id who created the record (stamped centrally; null for system/seed).</summary>
+    public int? CreatedBy { get; set; }
+
+    /// <summary>User id who last updated the record.</summary>
+    public int? UpdatedBy { get; set; }
 }

@@ -26,6 +26,10 @@ public class DocumentFile : BaseEntity, ISoftDelete
     public bool RightsDeclared { get; set; }
 
     public DateTime UploadedAt { get; set; }
+    public string? Checksum { get; set; }
+    public DateTime? LastAccessedAt { get; set; }
+    /// <summary>Retention deadline after which the file is purged (data-protection policy).</summary>
+    public DateTime? PurgeAfter { get; set; }
 
     public bool IsDeleted { get; set; }
 

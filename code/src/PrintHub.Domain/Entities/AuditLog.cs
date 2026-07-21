@@ -20,6 +20,7 @@ public class AuditLog : BaseEntity
     public string? NewValue { get; set; }
 
     public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation

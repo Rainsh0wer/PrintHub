@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using PrintHub.Application.Common.Interfaces;
 using PrintHub.Domain.Common;
 using PrintHub.Domain.Entities;
 
@@ -13,7 +14,13 @@ namespace PrintHub.Infrastructure.Persistence;
 /// </summary>
 public class PrintHubDbContext : DbContext
 {
-    public PrintHubDbContext(DbContextOptions<PrintHubDbContext> options) : base(options) { }
+    private readonly ICurrentUser? _currentUser;
+
+    public PrintHubDbContext(DbContextOptions<PrintHubDbContext> options, ICurrentUser? currentUser = null)
+        : base(options)
+    {
+        _currentUser = currentUser;
+    }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -71,15 +78,18 @@ public class PrintHubDbContext : DbContext
     private void StampAuditTimestamps()
     {
         var now = DateTime.UtcNow;
+        var userId = _currentUser?.UserId;
         foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
             switch (entry.State)
             {
                 case EntityState.Added:
                     entry.Entity.CreatedAt = now;
+                    entry.Entity.CreatedBy = userId;
                     break;
                 case EntityState.Modified:
                     entry.Entity.UpdatedAt = now;
+                    entry.Entity.UpdatedBy = userId;
                     break;
             }
         }

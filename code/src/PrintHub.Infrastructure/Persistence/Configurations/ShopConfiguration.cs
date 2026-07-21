@@ -18,6 +18,11 @@ public class ShopConfiguration : IEntityTypeConfiguration<Shop>
         b.Property(x => x.City).HasMaxLength(100).IsRequired();
         b.Property(x => x.PhoneNumber).HasMaxLength(20);
         b.Property(x => x.ReviewNote).HasMaxLength(1000);
+        b.Property(x => x.Email).HasMaxLength(256);
+        b.Property(x => x.LogoUrl).HasMaxLength(500);
+        b.Property(x => x.CoverImageUrl).HasMaxLength(500);
+        b.Property(x => x.TaxCode).HasMaxLength(50);
+        b.Property(x => x.BusinessLicenseNo).HasMaxLength(100);
 
         b.HasIndex(x => x.Status);
         b.HasIndex(x => x.District);
@@ -63,6 +68,8 @@ public class MachineConfiguration : IEntityTypeConfiguration<Machine>
         b.HasKey(x => x.Id);
 
         b.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Model).HasMaxLength(100);
+        b.Property(x => x.SerialNumber).HasMaxLength(100);
 
         b.HasOne(x => x.Shop)
             .WithMany(s => s.Machines)
@@ -85,6 +92,9 @@ public class MaterialConfiguration : IEntityTypeConfiguration<Material>
         b.Property(x => x.StockQuantity).HasPrecision(18, 3);
         b.Property(x => x.LowStockThreshold).HasPrecision(18, 3);
         b.Property(x => x.UnitCost).HasPrecision(18, 2);
+        b.Property(x => x.ReorderQuantity).HasPrecision(18, 3);
+        b.Property(x => x.Sku).HasMaxLength(50);
+        b.Property(x => x.Color).HasMaxLength(50);
 
         b.Ignore(x => x.IsLowStock);
 

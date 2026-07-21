@@ -33,6 +33,15 @@ public class Shop : AuditableEntity, ISoftDelete
     public double RatingAverage { get; set; }
     public int RatingCount { get; set; }
 
+    // Storefront & business details
+    public string? Email { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? CoverImageUrl { get; set; }
+    public string? TaxCode { get; set; }
+    public string? BusinessLicenseNo { get; set; }
+    /// <summary>Owner marks the shop closed temporarily; stays visible but not quotable.</summary>
+    public bool IsTemporarilyClosed { get; set; }
+
     public DateTime? ApprovedAt { get; set; }
     public int? ApprovedBy { get; set; }
 

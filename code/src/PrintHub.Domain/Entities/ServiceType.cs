@@ -21,6 +21,8 @@ public class ServiceType : AuditableEntity, ISoftDelete
 
     public bool RequiresFile { get; set; }
     public string? Description { get; set; }
+    public string? IconUrl { get; set; }
+    public int DisplayOrder { get; set; }
     public bool IsActive { get; set; } = true;
 
     public bool IsDeleted { get; set; }

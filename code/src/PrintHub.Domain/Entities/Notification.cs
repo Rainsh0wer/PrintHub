@@ -18,6 +18,9 @@ public class Notification : BaseEntity
     public int? RelatedOrderId { get; set; }
 
     public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+    /// <summary>Deep link the client opens when the notification is tapped.</summary>
+    public string? LinkUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation

@@ -17,6 +17,9 @@ public class Review : AuditableEntity
 
     public string? ShopReply { get; set; }
     public DateTime? RepliedAt { get; set; }
+    public int? RepliedByUserId { get; set; }
+    /// <summary>Moderation flag; a hidden review does not count toward the shop rating display.</summary>
+    public bool IsVisible { get; set; } = true;
 
     // Navigation
     public Order Order { get; set; } = null!;

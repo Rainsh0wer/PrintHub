@@ -14,6 +14,11 @@ public class RefreshToken : BaseEntity
     public DateTime ExpiresAt { get; set; }
     public DateTime? RevokedAt { get; set; }
 
+    public string? CreatedByIp { get; set; }
+    public string? RevokedByIp { get; set; }
+    /// <summary>The token that replaced this one on rotation (audit chain).</summary>
+    public string? ReplacedByToken { get; set; }
+
     public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
 
     // Navigation

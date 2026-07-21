@@ -15,6 +15,7 @@ public class ServiceTypeConfiguration : IEntityTypeConfiguration<ServiceType>
         b.Property(x => x.Name).HasMaxLength(150).IsRequired();
         b.Property(x => x.UnitOfMeasure).HasMaxLength(20).IsRequired();
         b.Property(x => x.Description).HasMaxLength(1000);
+        b.Property(x => x.IconUrl).HasMaxLength(500);
 
         b.HasIndex(x => x.Code).IsUnique();
 
@@ -35,6 +36,7 @@ public class ShopServiceConfiguration : IEntityTypeConfiguration<ShopService>
 
         b.Property(x => x.UnitPrice).HasPrecision(18, 2);
         b.Property(x => x.SetupFee).HasPrecision(18, 2);
+        b.Property(x => x.Notes).HasMaxLength(500);
 
         // A shop offers a given service type at most once.
         b.HasIndex(x => new { x.ShopId, x.ServiceTypeId }).IsUnique();
@@ -61,6 +63,7 @@ public class PriceRuleConfiguration : IEntityTypeConfiguration<PriceRule>
         b.Property(x => x.OptionKey).HasMaxLength(50).IsRequired();
         b.Property(x => x.Multiplier).HasPrecision(18, 4);
         b.Property(x => x.FlatExtra).HasPrecision(18, 2);
+        b.Property(x => x.Description).HasMaxLength(200);
 
         b.HasOne(x => x.ShopService)
             .WithMany(s => s.PriceRules)

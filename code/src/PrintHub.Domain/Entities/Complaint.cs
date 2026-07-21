@@ -29,9 +29,13 @@ public class Complaint : AuditableEntity
     public int? ReplacementOrderId { get; set; }
 
     public int? ResolvedBy { get; set; }
+    /// <summary>Comma/JSON list of evidence attachment URLs supplied by the customer.</summary>
+    public string? AttachmentUrls { get; set; }
 
     public DateTime? RespondedAt { get; set; }
+    public DateTime? EscalatedAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
+    public DateTime? ClosedAt { get; set; }
 
     // Navigation
     public Order Order { get; set; } = null!;

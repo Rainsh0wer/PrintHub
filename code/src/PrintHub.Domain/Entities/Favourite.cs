@@ -10,6 +10,7 @@ public class Favourite : BaseEntity
 {
     public int CustomerId { get; set; }
     public int ShopId { get; set; }
+    public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Navigation

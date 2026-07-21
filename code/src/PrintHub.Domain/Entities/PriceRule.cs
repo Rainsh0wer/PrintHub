@@ -28,6 +28,8 @@ public class PriceRule : BaseEntity
     public int? MinQuantity { get; set; }
     public int? MaxQuantity { get; set; }
 
+    public string? Description { get; set; }
+    public int DisplayOrder { get; set; }
     public bool IsActive { get; set; } = true;
 
     // Navigation

@@ -10,6 +10,10 @@ namespace PrintHub.Domain.Entities;
 public class Voucher : AuditableEntity
 {
     public string Code { get; set; } = null!;
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    /// <summary>Max redemptions per user (null = unlimited within the global UsageLimit).</summary>
+    public int? PerUserLimit { get; set; }
 
     public VoucherDiscountType DiscountType { get; set; }
     public decimal DiscountValue { get; set; }

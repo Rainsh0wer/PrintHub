@@ -14,6 +14,7 @@ public class DocumentFileConfiguration : IEntityTypeConfiguration<DocumentFile>
         b.Property(x => x.FileName).HasMaxLength(260).IsRequired();
         b.Property(x => x.StoragePath).HasMaxLength(500).IsRequired();
         b.Property(x => x.ContentType).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Checksum).HasMaxLength(128);
 
         b.HasOne(x => x.Owner)
             .WithMany(u => u.Documents)
@@ -56,6 +57,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         b.Property(x => x.OrderCode).HasMaxLength(30).IsRequired();
         b.Property(x => x.CustomerNote).HasMaxLength(1000);
         b.Property(x => x.DeliveryAddress).HasMaxLength(300);
+        b.Property(x => x.CancellationReason).HasMaxLength(500);
+        b.Property(x => x.RefundedAmount).HasPrecision(18, 2);
 
         b.Property(x => x.SubTotal).HasPrecision(18, 2);
         b.Property(x => x.DiscountAmount).HasPrecision(18, 2);
@@ -105,6 +108,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         b.Property(x => x.MaterialName).HasMaxLength(100);
         b.Property(x => x.QualityProfile).HasMaxLength(50);
         b.Property(x => x.ItemNote).HasMaxLength(500);
+        b.Property(x => x.SnapshotFileName).HasMaxLength(260);
 
         b.Property(x => x.UnitPrice).HasPrecision(18, 2);
         b.Property(x => x.LineTotal).HasPrecision(18, 2);
@@ -135,6 +139,7 @@ public class OrderStatusHistoryConfiguration : IEntityTypeConfiguration<OrderSta
         b.HasKey(x => x.Id);
 
         b.Property(x => x.Reason).HasMaxLength(1000);
+        b.Property(x => x.IpAddress).HasMaxLength(45);
 
         b.HasOne(x => x.Order)
             .WithMany(o => o.StatusHistory)

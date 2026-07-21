@@ -38,9 +38,13 @@ public class Order : AuditableEntity
 
     public string? CustomerNote { get; set; }
     public DeclineReason? DeclineReason { get; set; }
+    public string? CancellationReason { get; set; }
+    public decimal? RefundedAmount { get; set; }
 
     public DateTime? PlacedAt { get; set; }
     public DateTime? AcceptedAt { get; set; }
+    public DateTime? EstimatedReadyAt { get; set; }
+    public DateTime? DeclinedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public DateTime? CancelledAt { get; set; }
 

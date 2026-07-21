@@ -28,6 +28,8 @@ public class User : AuditableEntity, ISoftDelete
     public double? Longitude { get; set; }
 
     public DateTime? EmailVerifiedAt { get; set; }
+    public string? AvatarUrl { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     public bool IsDeleted { get; set; }
 

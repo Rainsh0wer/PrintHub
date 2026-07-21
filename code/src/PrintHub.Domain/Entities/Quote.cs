@@ -19,6 +19,7 @@ public class Quote : BaseEntity
     public int EstimatedMinutes { get; set; }
 
     public double? DistanceMeters { get; set; }
+    public int? TravelMinutes { get; set; }
 
     /// <summary>Itemised computation trace: which rules applied and their effect.</summary>
     public string? BreakdownJson { get; set; }

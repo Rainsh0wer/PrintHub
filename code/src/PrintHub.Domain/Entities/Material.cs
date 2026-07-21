@@ -24,6 +24,10 @@ public class Material : AuditableEntity, ISoftDelete
     /// <summary>Shop's cost per unit, used in margin reporting. Never exposed publicly.</summary>
     public decimal UnitCost { get; set; }
 
+    public string? Sku { get; set; }
+    public string? Color { get; set; }
+    public decimal? ReorderQuantity { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public bool IsLowStock => StockQuantity <= LowStockThreshold;
