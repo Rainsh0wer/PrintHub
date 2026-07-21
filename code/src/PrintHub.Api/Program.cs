@@ -1,15 +1,74 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using PrintHub.Api.Common;
+using PrintHub.Api.Filters;
+using PrintHub.Api.Middleware;
+using PrintHub.Application;
+using PrintHub.Application.Common.Interfaces;
 using PrintHub.Infrastructure;
 using PrintHub.Infrastructure.Persistence;
+using PrintHub.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// ---- Services ----
+builder.Services.AddControllers(options => options.Filters.Add<ValidationFilter>());
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
-// Persistence (DbContext, repositories, unit of work).
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
+// JWT authentication.
+var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+          ?? throw new InvalidOperationException("Missing 'Jwt' configuration section.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwt.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwt.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromSeconds(30),
+            RoleClaimType = ClaimTypes.Role,
+            NameClaimType = JwtRegisteredClaimNames.Sub
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Swagger with a Bearer security scheme so the "Authorize" button works.
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "PrintHub API", Version = "v1" });
+    var scheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter the JWT access token.",
+        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+    };
+    options.AddSecurityDefinition("Bearer", scheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement { [scheme] = Array.Empty<string>() });
+});
 
 var app = builder.Build();
 
@@ -19,26 +78,13 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<PrintHubDbContext>();
     await db.Database.MigrateAsync();
     await DataSeeder.SeedAsync(db);
-
-    if (app.Environment.IsDevelopment())
-    {
-        Console.WriteLine(
-            $"[seed] users={await db.Users.CountAsync()} " +
-            $"shops={await db.Shops.CountAsync()} " +
-            $"serviceTypes={await db.ServiceTypes.CountAsync()} " +
-            $"rateCard={await db.ShopServices.CountAsync()} " +
-            $"machines={await db.Machines.CountAsync()} " +
-            $"materials={await db.Materials.CountAsync()} " +
-            $"orders={await db.Orders.CountAsync()} " +
-            $"reviews={await db.Reviews.CountAsync()} " +
-            $"vouchers={await db.Vouchers.CountAsync()}");
-    }
 }
 
-// A one-shot mode used to seed and verify without serving. Full API endpoints
-// (auth, OData, formatters) are wired in the API phase.
 if (args.Contains("--seed-only"))
     return;
+
+// ---- Pipeline ----
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -47,9 +93,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
 app.MapGet("/", () => "PrintHub API is running.");
 
 app.Run();
