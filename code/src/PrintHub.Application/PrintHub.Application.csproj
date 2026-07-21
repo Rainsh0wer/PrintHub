@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PrintHub.Domain\PrintHub.Domain.csproj" />
+    <ProjectReference Include="..\PrintHub.Contracts\PrintHub.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Pinned to 13.0.1: last MIT-licensed line before AutoMapper's commercial
+         licensing model (15+). NU1903 (CVE-2026-32933) is a stack-overflow DoS
+         reachable only via ~25,000-level nested input; our mapping surface is
+         flat request/response DTOs, so the risk is not applicable. Suppressed
+         locally rather than upgrading into the paid-license versions. -->
+    <PackageReference Include="AutoMapper" Version="13.0.1" NoWarn="NU1903" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,229 @@
+YÊU CẦU PROJECT CUỐI KỲ
+PRN232 - ChiLP.
+Thông tin Nội dung
+Hình thức Project cá nhân
+Sản phẩm chính Backend ASP.NET Core Web API, database, JavaScript client, service phụ, tài liệu project
+Mục tiêu Đánh giá năng lực phân tích, thiết kế kiến trúc backend và triển khai API theo yêu cầu kỹ
+thuật1. Mục tiêu project
+Project yêu cầu sinh viên xây dựng một hệ thống backend hoàn chỉnh bằng ASP.NET Core Web
+API. Hệ thống cần thể hiện được khả năng thiết kế kiến trúc ứng dụng, xây dựng cơ sở dữ liệu, triển
+khai RESTful API, xử lý bảo mật, hỗ trợ content negotiation, tích hợp JavaScript client và minh họa
+giao tiếp giữa các service.
+Thông qua project, sinh viên cần chứng minh rằng mình không chỉ viết được API, mà còn biết phân
+tích bài toán, thiết kế dữ liệu, tổ chức service layer, xác định business rules và phân quyền người
+dùng trong một hệ thống backend thực tế.
+2. Hình thức thực hiện
+Sinh viên thực hiện project theo cá nhân. Mỗi cá nhân chọn một đề tài trong danh sách gợi ý ở Mục
+3 hoặc đề xuất một đề tài tương đương. Đề tài tự đề xuất cần có đủ độ phức tạp về dữ liệu, vai trò
+người dùng, workflow nghiệp vụ và yêu cầu kỹ thuật.
+Các project không được chỉ dừng ở mức CRUD đơn giản. Hệ thống phải có quy trình nghiệp vụ,
+phân quyền, xử lý trạng thái, kiểm tra ràng buộc nghiệp vụ và có tài liệu giải thích thiết kế kiến trúc.
+3. Danh sách đề tài lựa chọn
+Sinh viên chọn một trong các đề tài dưới đây hoặc đề xuất một đề tài tương đương. Mô tả chi tiết
+của từng đề tài được trình bày trong Phụ lục A. Mô tả chi tiết các đề tài gợi ý.
+Mã đề tài Tên đề tài
+P1 Equipment Borrowing Management System
+P2 IT Support Ticket Management System
+P3 Student Event Registration System
+P4 Academic Advising Appointment System
+P5 Room/Lab Booking Management System
+P6 Internal Library/Resource Management System
+P7 Canteen/Food Ordering Management System
+Sinh viên có thể đề xuất đề tài khác, ví dụ hệ thống quản lý khóa học ngắn hạn, quản lý phòng khám,
+quản lý bảo trì thiết bị, quản lý đăng ký câu lạc bộ hoặc quản lý đặt lịch dịch vụ. Đề tài được chấp
+nhận khi có tối thiểu ba vai trò người dùng, ít nhất năm entity và ít nhất một workflow có trạng thái.
+4. Yêu cầu nghiệp vụ chung
+Mỗi project cần có các thành phần nghiệp vụ sau:
+Thành phần Yêu cầu
+Vai trò người dùng Tối thiểu 3 vai trò, ví dụ Admin, Staff, User
+Entity Tối thiểu 5 entity chính
+Quan hệ dữ liệu Có quan hệ 1-n và ít nhất một quan hệ n-n hoặc bảng trung gian có thuộc tính
+Workflow Có ít nhất một quy trình nghiệp vụ có trạng thái
+Business rules Có ít nhất 5 quy tắc nghiệp vụ rõ ràng
+Chức năng quản trị CRUD, tìm kiếm, lọc, phân trang, xem thống kêThành phần Yêu cầu
+Chức năng người dùng Gửi yêu cầu, xem trạng thái, cập nhật thông tin, xem lịch sử
+Báo cáo Có ít nhất 2 báo cáo hoặc thống kê cơ bản
+Ví dụ workflow có thể là:
+Pending -> Approved -> In Progress -> Completed -> Cancelled
+hoặc:
+Submitted -> Assigned -> Processing -> Resolved -> Closed -> Reopened
+Sinh viên cần tự xác định workflow phù hợp với đề tài đã chọn.
+5. Yêu cầu về thiết kế kiến trúc
+Project cần được tổ chức theo kiến trúc nhiều tầng. Cách chia tầng có thể linh hoạt, nhưng phải thể
+hiện rõ trách nhiệm của từng phần.
+Tầng / Thành phần Vai trò
+API Layer Chứa Controller, nhận request, trả response, xử lý HTTP status code
+Service Layer Xử lý use case, business rules, validation nghiệp vụ
+Data Access Layer Làm việc với EF Core, DbContext, Repository nếu có
+Domain/Model Layer Chứa entity, enum, class mô tả nghiệp vụ
+DTO Layer Chứa request DTO, response DTO, mapping giữa entity và dữ liệu trả về
+Infrastructure Chứa cấu hình database, JWT, external service, gRPC/WCF client nếu có
+Controller không nên chứa logic nghiệp vụ phức tạp. Controller chỉ nên nhận request, gọi service
+phù hợp và trả kết quả về client. Các xử lý như kiểm tra trạng thái, kiểm tra quyền nghiệp vụ, kiểm
+tra trùng lịch, kiểm tra tồn kho, kiểm tra quá hạn cần đặt trong service layer.
+Sinh viên cần có tài liệu giải thích cách phân chia service. Danh sách service phải phù hợp với đề
+tài cụ thể. Cần tránh hai lỗi phổ biến: đưa toàn bộ logic vào một service duy nhất hoặc để controller
+xử lý trực tiếp quá nhiều business logic.
+Ví dụ phân chia service
+Service Trách nhiệm
+AuthService Đăng ký, đăng nhập, tạo JWT
+UserService Quản lý thông tin người dùng
+EquipmentService Quản lý thiết bị và tình trạng thiết bị
+BorrowRequestService Tạo, duyệt, từ chối, hủy yêu cầu mượn
+ReturnService Xử lý trả thiết bị
+ReportService Tổng hợp thống kê
+NotificationService Gửi thông báo hoặc gọi gRPC service
+6. Yêu cầu về cơ sở dữ liệu và Entity Framework Core
+Project phải sử dụng Entity Framework Core với SQL Server.
+• Có thiết kế database rõ ràng.• Có ít nhất 5 entity.
+• Có khóa chính, khóa ngoại và quan hệ giữa các bảng.
+• Có dữ liệu mẫu để demo.
+• Có migration hoặc file script tạo database.
+• Có cấu hình connection string trong appsettings.json.
+• Có sử dụng Data Annotation hoặc Fluent API để cấu hình model khi cần.
+Sinh viên cần nộp ERD hoặc sơ đồ quan hệ dữ liệu. ERD phải thể hiện rõ các bảng, khóa chính,
+khóa ngoại và bội số quan hệ.
+7. Yêu cầu về RESTful API
+Project cần xây dựng các API theo phong cách RESTful.
+• Có API CRUD cho các entity chính.
+• Có API phục vụ workflow nghiệp vụ.
+• Có API tìm kiếm, lọc, sắp xếp hoặc phân trang.
+• Có API thống kê hoặc báo cáo.
+• Trả về HTTP status code phù hợp, ví dụ 200 OK, 201 Created, 400 Bad Request, 401
+Unauthorized, 403 Forbidden, 404 Not Found.
+• Có sử dụng DTO cho request và response.
+• Không trả trực tiếp dữ liệu nhạy cảm như password hash, token nội bộ hoặc thông tin không cần
+thiết.
+Ví dụ API cho hệ thống mượn thiết bị:
+GET /api/equipment
+GET /api/equipment/{id}
+POST /api/equipment
+PUT /api/equipment/{id}
+DELETE /api/equipment/{id}
+POST /api/borrow-requests
+PUT /api/borrow-requests/{id}/approve
+PUT /api/borrow-requests/{id}/reject
+PUT /api/borrow-requests/{id}/cancel
+PUT /api/borrow-requests/{id}/return
+GET /api/reports/borrow-summary
+GET /api/reports/overdue-requests
+8. Yêu cầu về OData
+Project phải có ít nhất 2 API hỗ trợ OData. Các API này cần minh họa được một số thao tác như
+$filter, $orderby, $top, $skip, $select và $expand nếu phù hợp.
+Ví dụ:
+GET /api/equipment?$filter=status eq 'Available'&$orderby=name&$top=10
+GET /api/borrow-requests?$filter=userId eq 3&$orderby=requestDate desc
+Sinh viên cần trình bày rõ API nào có hỗ trợ OData và demo bằng Postman, Swagger hoặc browser.9. Yêu cầu về Media Formatter và Content Negotiation
+Project phải hỗ trợ content negotiation ở mức cơ bản.
+• API có thể trả về JSON.
+• API có thể trả về XML khi client gửi header Accept: application/xml.
+• Có demo ít nhất một request trả JSON và một request trả XML.
+• Có sử dụng [Consumes] hoặc [Produces] ở ít nhất một API phù hợp.
+• Sinh viên cần giải thích được vai trò của Accept, Content-Type, input formatter và output
+formatter.
+Ví dụ:
+GET /api/equipment
+Accept: application/json
+GET /api/equipment
+Accept: application/xml
+10. Yêu cầu về Security
+Project phải có authentication và authorization.
+• Có chức năng đăng ký hoặc tạo tài khoản mẫu.
+• Có chức năng đăng nhập.
+• Sử dụng JWT Authentication.
+• Có phân quyền theo role.
+• Có ít nhất 3 role, ví dụ Admin, Staff, User.
+• Một số API chỉ Admin được gọi.
+• Một số API chỉ Staff được gọi.
+• Người dùng thường chỉ được xem và thao tác trên dữ liệu của chính mình.
+• Password phải được hash, không lưu plain text trong database.
+Ví dụ phân quyền:
+API / Chức năng Admin Staff User
+Quản lý người dùng Có Không Không
+Quản lý danh mục Có Có Không
+Gửi yêu cầu Có Có Có
+Duyệt yêu cầu Có Có Không
+Xem báo cáo Có Có Không
+Xem lịch sử cá nhân Có Có Có, nhưng chỉ dữ liệu của mình
+Sinh viên cần nộp security matrix mô tả vai trò nào được phép sử dụng chức năng nào.
+11. Yêu cầu về Client
+Project cần có một client đơn giản sử dụng .Net App (Web App hoặc Desktop App) hoặc HTML,
+CSS và JavaScript (Có thể sử dụng 1 FE framework nào đó). Client cần:
+• Có màn hình đăng nhập.
+• Sau khi đăng nhập, client lưu JWT token.• Client gửi request có Authorization: Bearer <token>.
+• Có màn hình hiển thị danh sách dữ liệu.
+• Có chức năng thêm mới hoặc cập nhật dữ liệu.
+• Có chức năng gửi một request nghiệp vụ, ví dụ gửi yêu cầu mượn, tạo ticket, đăng ký sự kiện
+hoặc đặt lịch.
+• Có xử lý lỗi cơ bản như 401 Unauthorized, 403 Forbidden, 404 Not Found, 400 Bad Request.
+Client không cần thiết kế giao diện phức tạp. Mục tiêu chính là chứng minh sinh viên biết cách một
+client giao tiếp với ASP.NET Core Web API.
+12. Yêu cầu về gRPC, WCF hoặc Microservices
+Project cần có một thành phần minh họa giao tiếp giữa các service. Sinh viên chọn một trong ba
+hướng sau:
+Lựa chọn Yêu cầu
+gRPC Service Xây dựng một gRPC service phụ và Web API chính gọi service này
+WCF Service Xây dựng một WCF service đơn giản để mô phỏng hệ thống cũ
+Microservice Simulation Tách một module nhỏ thành service riêng, ví dụ Notification, Report hoặc
+Inventory
+Khuyến nghị sử dụng gRPC service vì phù hợp với hệ sinh thái .NET hiện đại. Thành phần
+gRPC/WCF không cần quá lớn, nhưng phải chạy được và có demo rõ ràng.
+13. Yêu cầu về tài liệu nộp kèm
+Sinh viên cần nộp tài liệu mô tả project. Tài liệu cần có các phần sau:
+Phần Nội dung
+Giới thiệu project Tên đề tài, mục tiêu, phạm vi hệ thống
+Mô tả vai trò người dùng Danh sách role và quyền chính
+Use case Các chức năng chính của từng vai trò
+ERD / Database schema Sơ đồ cơ sở dữ liệu
+Business rules Ít nhất 5 quy tắc nghiệp vụ
+Workflow Mô tả luồng trạng thái chính
+Kiến trúc hệ thống Sơ đồ hoặc mô tả các tầng
+Service design Danh sách service và trách nhiệm của từng service
+API endpoint list Danh sách API chính, method, route, quyền truy cập
+Security matrix Bảng phân quyền theo role
+OData demo Danh sách API có hỗ trợ OData và ví dụ request
+Content negotiation demo Ví dụ request JSON/XML
+gRPC/WCF/Microservice demo Mô tả service phụ và cách Web API gọi service đó
+Hướng dẫn chạy project Cách cấu hình database, chạy backend, chạy client
+14. Sản phẩm cần nộp
+Sản phẩm Yêu cầu
+Source code Toàn bộ mã nguồn project
+Database Migration hoặc script tạo database và dữ liệu mẫuSản phẩm Yêu cầu
+Tài liệu project File mô tả phân tích, thiết kế và hướng dẫn chạy
+API testing file Postman collection hoặc file mô tả các request chính
+Client App Mã nguồn client gọi API
+gRPC/WCF service Mã nguồn service phụ nếu tách riêng
+Project cần chạy được khi chấm. Sinh viên phải ghi rõ tài khoản mẫu cho từng vai trò, ví dụ Admin,
+Staff và User.
+15. Một số yêu cầu nâng cao khuyến khích
+Sinh viên có thể triển khai thêm các chức năng sau để nâng cao chất lượng project:
+• Refresh token
+• Audit log
+• Soft delete
+• Pagination chuẩn hóa
+• Global exception handling
+• Response wrapper hoặc Result pattern
+• AutoMapper hoặc mapping thủ công có tổ chức
+• Repository và Unit of Work nếu phù hợp
+• Validation bằng FluentValidation
+• Gửi email hoặc thông báo giả lập
+• Dashboard thống kê
+• Docker compose cho database và service
+• Logging bằng Serilog hoặc cơ chế tương đương
+Các yêu cầu nâng cao không thay thế các yêu cầu bắt buộc. Sinh viên chỉ nên triển khai khi đã hoàn
+thành phần cốt lõi của project.
+16. Lưu ý khi thực hiện
+Sinh viên cần đảm bảo project thể hiện được tư duy thiết kế backend, không chỉ tạo các API CRUD
+rời rạc. Mỗi API nên gắn với một use case rõ ràng. Các service cần có trách nhiệm cụ thể. Các
+business rules cần được xử lý ở tầng service thay vì đặt toàn bộ trong controller.
+Cần tránh các lỗi sau:
+• Controller chứa quá nhiều logic nghiệp vụ
+• Không dùng DTO, trả trực tiếp entity cho mọi API
+• Không kiểm tra quyền truy cập theo từng vai trò
+• Chỉ có CRUD mà không có workflow nghiệp vụ
+• Không có dữ liệu mẫu để demo
+• Không demo được OData, XML response, JWT hoặc JavaScript client
+• Tách service hình thức nhưng không có trách nhiệm rõ ràng
+• Thiếu hướng dẫn chạy projectProject đạt yêu cầu khi hệ thống chạy được, có dữ liệu mẫu, có API rõ ràng, có phân quyền, có
+workflow nghiệp vụ, có client gọi API và có tài liệu giải thích thiết kế. Sinh viên cần hiểu, nắm
+được và kiểm soát được project của mình, lý giải được các quyết định trong thiết kế và triển khai.
