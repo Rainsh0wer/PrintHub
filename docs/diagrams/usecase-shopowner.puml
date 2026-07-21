@@ -1,0 +1,37 @@
+' Use case diagram — Shop Owner (PlantUML, Smetana).
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Shop Owner" as O
+
+rectangle PrintHub {
+  usecase "Apply to Open Shop" as UC25
+  usecase "Manage Shop Profile" as UC26
+  usecase "Manage Rate Card & Pricing" as UC27
+  usecase "Manage Machines & Materials" as UC28
+  usecase "Manage Staff" as UC29
+  usecase "View Revenue Report" as UC30
+  usecase "View Order Queue" as UC31
+  usecase "Accept / Decline Order" as UC32
+  usecase "Execute Production" as UC33
+  usecase "Hand Over Order" as UC34
+  usecase "Respond to Complaint" as UC35
+}
+
+O --> UC25
+O --> UC26
+O --> UC27
+O --> UC28
+O --> UC29
+O --> UC30
+O --> UC31
+O --> UC32
+O --> UC33
+O --> UC34
+O --> UC35
+
+UC33 ..> UC31 : <<extend>>
+@enduml

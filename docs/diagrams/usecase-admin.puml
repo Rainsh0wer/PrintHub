@@ -1,0 +1,29 @@
+' Use case diagram — Admin (PlantUML, Smetana).
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor Admin as A
+
+rectangle PrintHub {
+  usecase "Review Shop Application" as UC36
+  usecase "Suspend / Reinstate Shop" as UC37
+  usecase "Manage User Accounts" as UC38
+  usecase "Manage Service Catalog & Commission" as UC39
+  usecase "Manage Vouchers" as UC40
+  usecase "Adjudicate Escalated Complaint" as UC41
+  usecase "View & Export Platform Reports" as UC42
+}
+
+A --> UC36
+A --> UC37
+A --> UC38
+A --> UC39
+A --> UC40
+A --> UC41
+A --> UC42
+
+UC37 ..> UC36 : <<extend>>
+@enduml

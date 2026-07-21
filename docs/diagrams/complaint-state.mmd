@@ -1,0 +1,10 @@
+%% Complaint / resolution workflow state machine (PrintHub). Render at https://mermaid.live
+stateDiagram-v2
+    [*] --> Open: customer raises complaint
+    Open --> ShopResponded: shop proposes reprint / refund
+    Open --> Escalated: shop no response (timeout)
+    ShopResponded --> Resolved: customer accepts resolution
+    ShopResponded --> Escalated: customer rejects resolution
+    Escalated --> Closed: admin adjudicates (final)
+    Resolved --> [*]
+    Closed --> [*]

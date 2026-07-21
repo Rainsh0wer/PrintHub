@@ -1,0 +1,27 @@
+%% Service call sequence — asynchronous order production over RabbitMQ. Render at https://mermaid.live
+sequenceDiagram
+    actor S as Shop Staff
+    participant API as PrintHub.Api
+    participant DB as SQL Server
+    participant MQ as RabbitMQ
+    participant PA as ProductionAgent
+
+    S->>API: PUT /api/orders/{id}/start (assign machine)
+    API->>DB: order -> InProduction, machine -> Busy
+    API->>MQ: publish job.dispatch (orderId, items, machine)
+    MQ->>PA: deliver production job
+    loop while producing
+        PA->>MQ: publish job.progress (percent)
+        MQ->>API: progress event (consumer)
+        API->>DB: update ProgressPercent
+    end
+    alt produced successfully
+        PA->>MQ: publish job.completed
+        MQ->>API: completion event
+        API->>DB: order -> ReadyForPickup, machine -> Idle
+    else machine fault
+        PA->>MQ: publish job.failed (reason)
+        MQ->>API: failure event
+        API->>DB: order -> ProductionFailed
+    end
+    Note over MQ,PA: retries + dead-letter queue, idempotent handlers ignore duplicate events

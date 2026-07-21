@@ -8,11 +8,10 @@ every one as **PNG** and insert into the Word document.
 | Diagram (doc section) | Tool | Source / how |
 |---|---|---|
 | **System Context** (like WonderTales fig.1) | **draw.io** | Manual. System = **rectangle** (NOT a DFD circle); actors = stick figures; external systems = `<<External system>>` boxes; arrows labelled "… via ►" with multiplicities. See spec below. |
-| **Use Case** (per actor) | **PlantUML** | `usecase-customer.puml` (+ make owner/staff/admin similarly). Or draw.io UML shapes. |
-| **ERD** (§4) | **dbdiagram.io** | `erd.dbml` — paste, auto-lays out crow's-foot with PK/FK. |
-| **Order state machine** (§6) | **Mermaid** | `order-state.mmd` |
-| **Shop onboarding state machine** (§6) | **Mermaid** | `shop-state.mmd` |
-| **Quote comparison sequence** (§13) | **Mermaid** | `quote-compare-sequence.mmd` |
+| **Use Case — per role** (§3) | **PlantUML** | `usecase-customer.puml`, `usecase-shopowner.puml`, `usecase-shopstaff.puml`, `usecase-admin.puml` |
+| **ERD** (§4) | **dbdiagram.io** / Mermaid | `erd.dbml` (nicer layout) or `erd.mmd`. NOTE: the diagram shows keys + representative fields; the **full field list belongs in the Data Dictionary table**, not the ERD image. |
+| **Workflows — all state machines** (§6) | **Mermaid** | `order-state.mmd`, `shop-state.mmd`, `complaint-state.mmd` |
+| **Service call sequences** (§13) | **Mermaid** | `quote-compare-sequence.mmd` (gRPC), `order-production-sequence.mmd` (RabbitMQ) |
 | **Order production swimlane/activity** (§6) | **PlantUML** | `order-production-swimlane.puml` |
 | **Architecture** (§7) | **draw.io** | Manual boxes: clients → Api (REST/OData) → Application → Infrastructure (EF/SQL); Api ─gRPC→ QuoteEngine; Api ↔ RabbitMQ ↔ ProductionAgent. |
 | **Screen Flow** | **draw.io** | Screens = rectangles; arrows = navigation; modals = ovals. |

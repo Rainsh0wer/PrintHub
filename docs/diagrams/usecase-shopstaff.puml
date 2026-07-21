@@ -1,0 +1,26 @@
+' Use case diagram — Shop Staff (PlantUML, Smetana).
+' Staff perform operational tasks only — no pricing, staffing, or revenue.
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor "Shop Staff" as S
+
+rectangle PrintHub {
+  usecase "View Order Queue" as UC31
+  usecase "Accept / Decline Order" as UC32
+  usecase "Execute Production" as UC33
+  usecase "Hand Over Order" as UC34
+  usecase "Respond to Complaint" as UC35
+  usecase "Manage Machines & Materials" as UC28
+}
+
+S --> UC31
+S --> UC32
+S --> UC33
+S --> UC34
+S --> UC35
+S --> UC28
+@enduml
