@@ -28,6 +28,8 @@ public static class DependencyInjection
         services.AddScoped<IFavouriteService, FavouriteService>();
         services.AddScoped<IShopOnboardingService, ShopOnboardingService>();
         services.AddScoped<IShopAdminService, ShopAdminService>();
+        services.AddScoped<IShopProfileService, ShopProfileService>();
+        services.AddScoped<IRateCardService, RateCardService>();
 
         return services;
     }

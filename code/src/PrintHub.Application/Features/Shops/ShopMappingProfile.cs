@@ -39,6 +39,15 @@ public class ShopMappingProfile : Profile
             .ForCtorParam(nameof(ShopAdminListItemDto.OwnerEmail), o => o.MapFrom(s => s.Owner.Email))
             .ForCtorParam(nameof(ShopAdminListItemDto.Status), o => o.MapFrom(s => s.Status.ToString()));
 
+        CreateMap<ShopService, RateCardEntryDto>()
+            .ForCtorParam(nameof(RateCardEntryDto.ServiceTypeCode), o => o.MapFrom(s => s.ServiceType.Code))
+            .ForCtorParam(nameof(RateCardEntryDto.ServiceTypeName), o => o.MapFrom(s => s.ServiceType.Name))
+            .ForCtorParam(nameof(RateCardEntryDto.ServiceGroup), o => o.MapFrom(s => s.ServiceType.ServiceGroup.ToString()))
+            .ForCtorParam(nameof(RateCardEntryDto.PricingModel), o => o.MapFrom(s => s.ServiceType.PricingModel.ToString()));
+
+        CreateMap<PriceRule, PriceRuleDto>()
+            .ForCtorParam(nameof(PriceRuleDto.RuleType), o => o.MapFrom(s => s.RuleType.ToString()));
+
         // OData projections — kept translatable (no enum.ToString, no in-memory calls)
         // so AutoMapper ProjectTo produces a query EF pushes to SQL.
         CreateMap<Shop, ShopODataDto>();
