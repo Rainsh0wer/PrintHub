@@ -2,12 +2,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using PrintHub.Api.Common;
 using PrintHub.Api.Filters;
 using PrintHub.Api.Middleware;
+using PrintHub.Api.OData;
 using PrintHub.Application;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Infrastructure;
@@ -17,7 +19,11 @@ using PrintHub.Infrastructure.Security;
 var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services ----
-builder.Services.AddControllers(options => options.Filters.Add<ValidationFilter>());
+builder.Services
+    .AddControllers(options => options.Filters.Add<ValidationFilter>())
+    .AddOData(options => options
+        .Select().Filter().OrderBy().Expand().Count().SetMaxTop(100)
+        .AddRouteComponents("odata", EdmModelBuilder.Build()));
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddApplication();
