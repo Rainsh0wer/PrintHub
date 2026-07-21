@@ -57,8 +57,20 @@ is deferred. To run the full system you will need:
 
 - [x] Solution scaffolded — 9 projects, references, packages, clean build.
 - [x] Domain layer — 21 entities, 20 enums, base/audit/soft-delete primitives.
-- [ ] Infrastructure — DbContext, Fluent configuration, migrations, seed data.
-- [ ] Application — services, DTOs, validation, mapping, pipeline.
+- [x] Application foundation — Result, PagedResult, Specification, IRepository, IUnitOfWork.
+- [x] Infrastructure — DbContext + Fluent config, Repository/UoW/Specification evaluator,
+      InitialCreate migration (21 tables, applied to LocalDB), DataSeeder (verified).
+- [ ] Application — services, DTOs, validation, AutoMapper, MediatR pipeline.
 - [ ] Api — auth, controllers, OData, formatters, middleware.
 - [ ] QuoteEngine (gRPC), ProductionAgent (RabbitMQ).
 - [ ] Web (MVC), Desktop (WPF).
+
+### Run the seed / verify the database
+
+```
+dotnet run --project src/PrintHub.Api -- --seed-only
+```
+
+Seeds LocalDB `PrintHubDb` and prints row counts. Sample accounts (password
+`Password123!`): `admin@printhub.vn`, `owner.quickprint@printhub.vn`,
+`staff.quickprint@printhub.vn`, `customer1@printhub.vn`.
