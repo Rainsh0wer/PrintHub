@@ -1,9 +1,8 @@
 ' Use case diagram — Shop Owner (PlantUML, Smetana).
+' Actor = stick figure; actor–use case = plain solid line (no arrowhead).
 @startuml
 !pragma layout smetana
 left to right direction
-skinparam packageStyle rectangle
-skinparam actorStyle awesome
 
 actor "Shop Owner" as O
 
@@ -21,17 +20,17 @@ rectangle PrintHub {
   usecase "Respond to Complaint" as UC35
 }
 
-O --> UC25
-O --> UC26
-O --> UC27
-O --> UC28
-O --> UC29
-O --> UC30
-O --> UC31
-O --> UC32
-O --> UC33
-O --> UC34
-O --> UC35
+O -- UC25
+O -- UC26
+O -- UC27
+O -- UC28
+O -- UC29
+O -- UC30
+O -- UC31
+O -- UC32
+O -- UC33
+O -- UC34
+O -- UC35
 
 UC33 ..> UC31 : <<extend>>
 @enduml

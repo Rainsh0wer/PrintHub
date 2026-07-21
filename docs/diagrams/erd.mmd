@@ -1,145 +1,390 @@
-%% PrintHub ERD (Mermaid erDiagram, crow's foot). Render at https://mermaid.live
-%% dbdiagram.io version (nicer layout): see erd.dbml
+%% PrintHub ERD generated from the live PrintHubDb schema (all columns). Render at https://mermaid.live
 erDiagram
-    User ||--o{ RefreshToken : has
-    User ||--o{ Shop : owns
-    User ||--o{ ShopStaff : "is staff"
-    Shop ||--o{ ShopStaff : "has staff"
-    Shop ||--o{ ShopService : offers
-    ServiceType ||--o{ ShopService : "priced by"
-    ShopService ||--o{ PriceRule : has
-    Shop ||--o{ Machine : has
-    Shop ||--o{ Material : has
-    User ||--o{ DocumentFile : uploads
-    User ||--o{ Quote : requests
-    Shop ||--o{ Quote : "quoted by"
-    User ||--o{ Order : places
-    Shop ||--o{ Order : fulfils
-    Quote |o--o| Order : "snapshotted onto"
-    Machine |o--o{ Order : "assigned to"
-    Voucher |o--o{ Order : "applied to"
-    Order ||--o{ OrderItem : contains
-    ServiceType ||--o{ OrderItem : "of type"
-    DocumentFile |o--o{ OrderItem : "attached to"
-    Order ||--o{ OrderStatusHistory : logs
-    User ||--o{ WalletTransaction : owns
-    Order |o--o{ WalletTransaction : "settled by"
-    Order |o--|| Review : "reviewed by"
-    Order ||--o{ Complaint : "disputed by"
-    User ||--o{ Favourite : saves
-    Shop ||--o{ Favourite : "saved as"
-    User ||--o{ Notification : receives
-    User ||--o{ AuditLog : acts
-
-    User {
+    ServiceTypes ||--o{ ShopServices : ServiceTypeId
+    ServiceTypes ||--o{ OrderItems : ServiceTypeId
+    Users |o--o{ AuditLogs : ActorUserId
+    Users ||--o{ DocumentFiles : OwnerUserId
+    Users ||--o{ Notifications : UserId
+    Users ||--o{ RefreshTokens : UserId
+    Users ||--o{ Shops : OwnerId
+    Users ||--o{ Favourites : CustomerId
+    Users ||--o{ Quotes : CustomerId
+    Users ||--o{ ShopStaff : UserId
+    Users ||--o{ Orders : CustomerId
+    Users ||--o{ Complaints : CustomerId
+    Users |o--o{ OrderStatusHistories : ActorUserId
+    Users ||--o{ Reviews : CustomerId
+    Users ||--o{ WalletTransactions : UserId
+    Vouchers |o--o{ Orders : VoucherId
+    DocumentFiles |o--o{ OrderItems : DocumentFileId
+    Shops ||--o{ Favourites : ShopId
+    Shops ||--o{ Machines : ShopId
+    Shops ||--o{ Materials : ShopId
+    Shops ||--o{ Quotes : ShopId
+    Shops ||--o{ ShopServices : ShopId
+    Shops ||--o{ ShopStaff : ShopId
+    Shops ||--o{ Orders : ShopId
+    Shops ||--o{ Complaints : ShopId
+    Shops ||--o{ Reviews : ShopId
+    Machines |o--o{ Orders : MachineId
+    Quotes |o--o{ Orders : QuoteId
+    ShopServices ||--o{ PriceRules : ShopServiceId
+    Orders ||--o{ Complaints : OrderId
+    Orders |o--o{ Complaints : ReplacementOrderId
+    Orders ||--o{ OrderItems : OrderId
+    Orders ||--o{ OrderStatusHistories : OrderId
+    Orders ||--o{ Reviews : OrderId
+    Orders |o--o{ WalletTransactions : OrderId
+    AuditLogs {
         int Id PK
-        string Email UK
-        string PasswordHash
-        int Role
-        decimal WalletBalance
+        int ActorUserId FK
+        nvarchar Action
+        nvarchar EntityName
+        nvarchar EntityId
+        nvarchar OldValue
+        nvarchar NewValue
+        nvarchar IpAddress
+        datetime2 CreatedAt
+        nvarchar UserAgent
     }
-    Shop {
+    Complaints {
+        int Id PK
+        int OrderId FK
+        int CustomerId FK
+        int ShopId FK
+        int Reason
+        nvarchar Description
+        int Status
+        int ProposedResolution
+        nvarchar ShopResponse
+        nvarchar AdminRuling
+        decimal RefundAmount
+        int ReplacementOrderId FK
+        int ResolvedBy
+        datetime2 RespondedAt
+        datetime2 ResolvedAt
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        nvarchar AttachmentUrls
+        datetime2 ClosedAt
+        int CreatedBy
+        datetime2 EscalatedAt
+        int UpdatedBy
+    }
+    DocumentFiles {
+        int Id PK
+        int OwnerUserId FK
+        nvarchar FileName
+        nvarchar StoragePath
+        nvarchar ContentType
+        bigint FileSizeKb
+        int DeclaredPageCount
+        bit RightsDeclared
+        datetime2 UploadedAt
+        bit IsDeleted
+        nvarchar Checksum
+        datetime2 LastAccessedAt
+        datetime2 PurgeAfter
+    }
+    Favourites {
+        int Id PK
+        int CustomerId FK
+        int ShopId FK
+        datetime2 CreatedAt
+        nvarchar Note
+    }
+    Machines {
+        int Id PK
+        int ShopId FK
+        nvarchar Name
+        int MachineType
+        int ServiceGroup
+        int Status
+        bit IsDeleted
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        int CreatedBy
+        datetime2 LastMaintenanceAt
+        nvarchar Model
+        nvarchar SerialNumber
+        int UpdatedBy
+    }
+    Materials {
+        int Id PK
+        int ShopId FK
+        nvarchar Name
+        int MaterialType
+        nvarchar Unit
+        decimal StockQuantity
+        decimal LowStockThreshold
+        decimal UnitCost
+        bit IsDeleted
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        nvarchar Color
+        int CreatedBy
+        decimal ReorderQuantity
+        nvarchar Sku
+        int UpdatedBy
+    }
+    Notifications {
+        int Id PK
+        int UserId FK
+        nvarchar Title
+        nvarchar Content
+        int Type
+        int RelatedOrderId
+        bit IsRead
+        datetime2 CreatedAt
+        nvarchar LinkUrl
+        datetime2 ReadAt
+    }
+    OrderItems {
+        int Id PK
+        int OrderId FK
+        int ServiceTypeId FK
+        int DocumentFileId FK
+        int Quantity
+        int PageCount
+        nvarchar PaperType
+        int ColorMode
+        int Sides
+        nvarchar BindingType
+        nvarchar MaterialName
+        nvarchar QualityProfile
+        decimal EstimatedGrams
+        decimal UnitPrice
+        decimal LineTotal
+        nvarchar ItemNote
+        int EstimatedMinutes
+        nvarchar SnapshotFileName
+    }
+    Orders {
+        int Id PK
+        nvarchar OrderCode UK
+        int CustomerId FK
+        int ShopId FK
+        int QuoteId FK
+        int MachineId FK
+        int VoucherId FK
+        int Status
+        int FulfilmentMethod
+        datetime2 PickupSlotStart
+        datetime2 PickupSlotEnd
+        nvarchar DeliveryAddress
+        decimal SubTotal
+        decimal DiscountAmount
+        decimal TotalAmount
+        decimal CommissionRate
+        decimal CommissionAmount
+        int ProgressPercent
+        nvarchar CustomerNote
+        int DeclineReason
+        datetime2 PlacedAt
+        datetime2 AcceptedAt
+        datetime2 CompletedAt
+        datetime2 CancelledAt
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        nvarchar CancellationReason
+        int CreatedBy
+        datetime2 DeclinedAt
+        datetime2 EstimatedReadyAt
+        decimal RefundedAmount
+        int UpdatedBy
+    }
+    OrderStatusHistories {
+        int Id PK
+        int OrderId FK
+        int FromStatus
+        int ToStatus
+        int ActorUserId FK
+        int ActorRole
+        nvarchar Reason
+        datetime2 CreatedAt
+        nvarchar IpAddress
+    }
+    PriceRules {
+        int Id PK
+        int ShopServiceId FK
+        int RuleType
+        nvarchar OptionKey
+        decimal Multiplier
+        decimal FlatExtra
+        int MinQuantity
+        int MaxQuantity
+        bit IsActive
+        nvarchar Description
+        int DisplayOrder
+    }
+    Quotes {
+        int Id PK
+        int CustomerId FK
+        int ShopId FK
+        decimal SubTotal
+        int EstimatedMinutes
+        float DistanceMeters
+        nvarchar BreakdownJson
+        bit IsIndicative
+        datetime2 ExpiresAt
+        datetime2 CreatedAt
+        int TravelMinutes
+    }
+    RefreshTokens {
+        int Id PK
+        int UserId FK
+        nvarchar Token UK
+        datetime2 CreatedAt
+        datetime2 ExpiresAt
+        datetime2 RevokedAt
+        nvarchar CreatedByIp
+        nvarchar ReplacedByToken
+        nvarchar RevokedByIp
+    }
+    Reviews {
+        int Id PK
+        int OrderId FK,UK
+        int CustomerId FK
+        int ShopId FK
+        int Rating
+        nvarchar Comment
+        nvarchar ShopReply
+        datetime2 RepliedAt
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        int CreatedBy
+        bit IsVisible
+        int RepliedByUserId
+        int UpdatedBy
+    }
+    ServiceTypes {
+        int Id PK
+        nvarchar Code UK
+        nvarchar Name
+        int ServiceGroup
+        int PricingModel
+        nvarchar UnitOfMeasure
+        bit RequiresFile
+        nvarchar Description
+        bit IsActive
+        bit IsDeleted
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        int CreatedBy
+        int DisplayOrder
+        nvarchar IconUrl
+        int UpdatedBy
+    }
+    Shops {
         int Id PK
         int OwnerId FK
+        nvarchar Name
+        nvarchar Description
+        nvarchar AddressLine
+        nvarchar District
+        nvarchar City
+        float Latitude
+        float Longitude
+        nvarchar PhoneNumber
+        time OpenTime
+        time CloseTime
         int Status
+        nvarchar ReviewNote
         float RatingAverage
+        int RatingCount
+        datetime2 ApprovedAt
+        int ApprovedBy
+        bit IsDeleted
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        nvarchar BusinessLicenseNo
+        nvarchar CoverImageUrl
+        int CreatedBy
+        nvarchar Email
+        bit IsTemporarilyClosed
+        nvarchar LogoUrl
+        nvarchar TaxCode
+        int UpdatedBy
+    }
+    ShopServices {
+        int Id PK
+        int ShopId FK
+        int ServiceTypeId FK
+        decimal UnitPrice
+        decimal SetupFee
+        int MinQuantity
+        int LeadTimeMinutes
+        bit IsActive
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        int CreatedBy
+        int MaxQuantity
+        nvarchar Notes
+        int UpdatedBy
     }
     ShopStaff {
         int Id PK
         int ShopId FK
         int UserId FK
-        bool IsActive
+        nvarchar Position
+        datetime2 JoinedAt
+        bit IsActive
+        int InvitedByUserId
+        datetime2 RevokedAt
     }
-    ServiceType {
+    Users {
         int Id PK
-        string Code UK
-        int ServiceGroup
-        int PricingModel
-    }
-    ShopService {
-        int Id PK
-        int ShopId FK
-        int ServiceTypeId FK
-        decimal UnitPrice
-    }
-    PriceRule {
-        int Id PK
-        int ShopServiceId FK
-        string OptionKey
-        decimal Multiplier
-    }
-    Machine {
-        int Id PK
-        int ShopId FK
+        nvarchar FullName
+        nvarchar Email UK
+        nvarchar PhoneNumber
+        nvarchar PasswordHash
+        int Role
         int Status
+        decimal WalletBalance
+        nvarchar DefaultAddress
+        float Latitude
+        float Longitude
+        datetime2 EmailVerifiedAt
+        bit IsDeleted
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        nvarchar AvatarUrl
+        int CreatedBy
+        datetime2 LastLoginAt
+        int UpdatedBy
     }
-    Material {
+    Vouchers {
         int Id PK
-        int ShopId FK
-        decimal StockQuantity
+        nvarchar Code UK
+        int DiscountType
+        decimal DiscountValue
+        decimal MinOrderAmount
+        decimal MaxDiscountAmount
+        int UsageLimit
+        int UsedCount
+        datetime2 ValidFrom
+        datetime2 ValidTo
+        bit IsActive
+        datetime2 CreatedAt
+        datetime2 UpdatedAt
+        int CreatedBy
+        nvarchar Description
+        nvarchar Name
+        int PerUserLimit
+        int UpdatedBy
     }
-    DocumentFile {
-        int Id PK
-        int OwnerUserId FK
-    }
-    Quote {
-        int Id PK
-        int CustomerId FK
-        int ShopId FK
-        decimal SubTotal
-        datetime ExpiresAt
-    }
-    Order {
-        int Id PK
-        string OrderCode UK
-        int CustomerId FK
-        int ShopId FK
-        int Status
-        decimal TotalAmount
-    }
-    OrderItem {
-        int Id PK
-        int OrderId FK
-        int ServiceTypeId FK
-        decimal LineTotal
-    }
-    OrderStatusHistory {
-        int Id PK
-        int OrderId FK
-        int ToStatus
-    }
-    WalletTransaction {
+    WalletTransactions {
         int Id PK
         int UserId FK
+        int OrderId FK
         int Type
         decimal Amount
-        string RefCode UK
-    }
-    Voucher {
-        int Id PK
-        string Code UK
-    }
-    Review {
-        int Id PK
-        int OrderId FK
-        int Rating
-    }
-    Complaint {
-        int Id PK
-        int OrderId FK
+        decimal BalanceAfter
+        nvarchar RefCode UK
         int Status
-    }
-    Favourite {
-        int Id PK
-        int CustomerId FK
-        int ShopId FK
-    }
-    Notification {
-        int Id PK
-        int UserId FK
-    }
-    AuditLog {
-        int Id PK
-        int ActorUserId FK
-        string Action
+        int ConfirmedBy
+        datetime2 CreatedAt
+        datetime2 ConfirmedAt
+        nvarchar BankReference
+        nvarchar Description
     }

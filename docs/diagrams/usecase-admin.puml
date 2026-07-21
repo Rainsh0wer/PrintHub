@@ -1,9 +1,8 @@
 ' Use case diagram — Admin (PlantUML, Smetana).
+' Actor = stick figure; actor–use case = plain solid line (no arrowhead).
 @startuml
 !pragma layout smetana
 left to right direction
-skinparam packageStyle rectangle
-skinparam actorStyle awesome
 
 actor Admin as A
 
@@ -17,13 +16,13 @@ rectangle PrintHub {
   usecase "View & Export Platform Reports" as UC42
 }
 
-A --> UC36
-A --> UC37
-A --> UC38
-A --> UC39
-A --> UC40
-A --> UC41
-A --> UC42
+A -- UC36
+A -- UC37
+A -- UC38
+A -- UC39
+A -- UC40
+A -- UC41
+A -- UC42
 
 UC37 ..> UC36 : <<extend>>
 @enduml

@@ -1,10 +1,9 @@
-' Use case diagram — Customer (PlantUML).  Render at https://www.plantuml.com/plantuml
-' Note the correct notation: include arrow points base -> included; extend arrow points extending -> base.
+' Use case diagram — Customer (PlantUML, Smetana).
+' Actors = default stick figures. Actor–use case = plain solid line (no arrowhead).
+' include/extend = dashed arrow; generalization = hollow-triangle arrow.
 @startuml
 !pragma layout smetana
 left to right direction
-skinparam packageStyle rectangle
-skinparam actorStyle awesome
 
 actor Guest as G
 actor Customer as C
@@ -25,17 +24,17 @@ rectangle PrintHub {
   usecase "Apply to Open Shop" as UC25
 }
 
-G --> UC9
-G --> UC10
-C --> UC11
-C --> UC13
-C --> UC15
-C --> UC16
-C --> UC17
-C --> UC21
-C --> UC23
-C --> UC24
-C --> UC25
+G -- UC9
+G -- UC10
+C -- UC11
+C -- UC13
+C -- UC15
+C -- UC16
+C -- UC17
+C -- UC21
+C -- UC23
+C -- UC24
+C -- UC25
 
 UC14 ..> UC15 : <<extend>>
 UC23 ..> UC16 : <<extend>>
