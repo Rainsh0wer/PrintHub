@@ -1,5 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using PrintHub.Application.Common.Interfaces;
+using PrintHub.Application.Common.Services;
 using PrintHub.Application.Features.Auth;
 using PrintHub.Application.Features.Favourites;
 using PrintHub.Application.Features.Shops;
@@ -20,9 +22,12 @@ public static class DependencyInjection
         services.AddAutoMapper(assembly);
         services.AddValidatorsFromAssembly(assembly);
 
+        services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IShopCatalogService, ShopCatalogService>();
         services.AddScoped<IFavouriteService, FavouriteService>();
+        services.AddScoped<IShopOnboardingService, ShopOnboardingService>();
+        services.AddScoped<IShopAdminService, ShopAdminService>();
 
         return services;
     }
