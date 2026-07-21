@@ -22,6 +22,7 @@ public static class DependencyInjection
                 sql.MigrationsAssembly(typeof(PrintHubDbContext).Assembly.FullName)));
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped(typeof(IReadRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         // Security (Options pattern for JWT settings).

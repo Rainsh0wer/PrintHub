@@ -8,13 +8,15 @@ namespace PrintHub.Infrastructure.Persistence;
 /// <summary>
 /// Generic repository over the DbContext. All non-trivial querying flows through
 /// specifications, so this class stays thin and the same implementation serves
-/// every entity.
+/// every entity. Also implements the read-only queryable escape hatch used by OData.
 /// </summary>
-public class Repository<T> : IRepository<T> where T : BaseEntity
+public class Repository<T> : IRepository<T>, IReadRepository<T> where T : BaseEntity
 {
     private readonly PrintHubDbContext _db;
 
     public Repository(PrintHubDbContext db) => _db = db;
+
+    public IQueryable<T> Query() => _db.Set<T>().AsNoTracking();
 
     public async Task<T?> GetByIdAsync(int id, CancellationToken ct = default)
         => await _db.Set<T>().FindAsync(new object[] { id }, ct);
