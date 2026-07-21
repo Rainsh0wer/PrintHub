@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrintHub.Application.Common.Interfaces;
+using PrintHub.Contracts.Quoting;
 using PrintHub.Infrastructure.Persistence;
+using PrintHub.Infrastructure.Quoting;
 using PrintHub.Infrastructure.Security;
 
 namespace PrintHub.Infrastructure;
@@ -29,6 +31,12 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+        // gRPC Quote Engine client. Uses HTTP/2 plaintext (h2c) for local dev.
+        AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+        var quoteEngineAddress = configuration["QuoteEngine:Address"] ?? "http://localhost:5090";
+        services.AddGrpcClient<QuoteEstimator.QuoteEstimatorClient>(o => o.Address = new Uri(quoteEngineAddress));
+        services.AddScoped<IQuoteEngineClient, QuoteEngineClient>();
 
         return services;
     }
