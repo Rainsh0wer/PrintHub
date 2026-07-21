@@ -1,0 +1,20 @@
+# Normalise line endings so cross-platform checkouts stay consistent and Git
+# stops warning about LF -> CRLF conversion on Windows.
+* text=auto
+
+*.cs      text diff=csharp
+*.csproj  text
+*.sln     text
+*.json    text
+*.md      text
+*.xaml    text
+*.proto   text
+*.ps1     text
+*.sh      text eol=lf
+
+# Binary assets Git should never try to normalise or diff.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.docx binary
+*.ico binary
