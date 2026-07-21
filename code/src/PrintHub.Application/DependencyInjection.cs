@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using PrintHub.Application.Features.Auth;
+using PrintHub.Application.Features.Favourites;
+using PrintHub.Application.Features.Shops;
 
 namespace PrintHub.Application;
 
@@ -19,6 +21,8 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(assembly);
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IShopCatalogService, ShopCatalogService>();
+        services.AddScoped<IFavouriteService, FavouriteService>();
 
         return services;
     }
