@@ -1,0 +1,145 @@
+%% PrintHub ERD (Mermaid erDiagram, crow's foot). Render at https://mermaid.live
+%% dbdiagram.io version (nicer layout): see erd.dbml
+erDiagram
+    User ||--o{ RefreshToken : has
+    User ||--o{ Shop : owns
+    User ||--o{ ShopStaff : "is staff"
+    Shop ||--o{ ShopStaff : "has staff"
+    Shop ||--o{ ShopService : offers
+    ServiceType ||--o{ ShopService : "priced by"
+    ShopService ||--o{ PriceRule : has
+    Shop ||--o{ Machine : has
+    Shop ||--o{ Material : has
+    User ||--o{ DocumentFile : uploads
+    User ||--o{ Quote : requests
+    Shop ||--o{ Quote : "quoted by"
+    User ||--o{ Order : places
+    Shop ||--o{ Order : fulfils
+    Quote |o--o| Order : "snapshotted onto"
+    Machine |o--o{ Order : "assigned to"
+    Voucher |o--o{ Order : "applied to"
+    Order ||--o{ OrderItem : contains
+    ServiceType ||--o{ OrderItem : "of type"
+    DocumentFile |o--o{ OrderItem : "attached to"
+    Order ||--o{ OrderStatusHistory : logs
+    User ||--o{ WalletTransaction : owns
+    Order |o--o{ WalletTransaction : "settled by"
+    Order |o--|| Review : "reviewed by"
+    Order ||--o{ Complaint : "disputed by"
+    User ||--o{ Favourite : saves
+    Shop ||--o{ Favourite : "saved as"
+    User ||--o{ Notification : receives
+    User ||--o{ AuditLog : acts
+
+    User {
+        int Id PK
+        string Email UK
+        string PasswordHash
+        int Role
+        decimal WalletBalance
+    }
+    Shop {
+        int Id PK
+        int OwnerId FK
+        int Status
+        float RatingAverage
+    }
+    ShopStaff {
+        int Id PK
+        int ShopId FK
+        int UserId FK
+        bool IsActive
+    }
+    ServiceType {
+        int Id PK
+        string Code UK
+        int ServiceGroup
+        int PricingModel
+    }
+    ShopService {
+        int Id PK
+        int ShopId FK
+        int ServiceTypeId FK
+        decimal UnitPrice
+    }
+    PriceRule {
+        int Id PK
+        int ShopServiceId FK
+        string OptionKey
+        decimal Multiplier
+    }
+    Machine {
+        int Id PK
+        int ShopId FK
+        int Status
+    }
+    Material {
+        int Id PK
+        int ShopId FK
+        decimal StockQuantity
+    }
+    DocumentFile {
+        int Id PK
+        int OwnerUserId FK
+    }
+    Quote {
+        int Id PK
+        int CustomerId FK
+        int ShopId FK
+        decimal SubTotal
+        datetime ExpiresAt
+    }
+    Order {
+        int Id PK
+        string OrderCode UK
+        int CustomerId FK
+        int ShopId FK
+        int Status
+        decimal TotalAmount
+    }
+    OrderItem {
+        int Id PK
+        int OrderId FK
+        int ServiceTypeId FK
+        decimal LineTotal
+    }
+    OrderStatusHistory {
+        int Id PK
+        int OrderId FK
+        int ToStatus
+    }
+    WalletTransaction {
+        int Id PK
+        int UserId FK
+        int Type
+        decimal Amount
+        string RefCode UK
+    }
+    Voucher {
+        int Id PK
+        string Code UK
+    }
+    Review {
+        int Id PK
+        int OrderId FK
+        int Rating
+    }
+    Complaint {
+        int Id PK
+        int OrderId FK
+        int Status
+    }
+    Favourite {
+        int Id PK
+        int CustomerId FK
+        int ShopId FK
+    }
+    Notification {
+        int Id PK
+        int UserId FK
+    }
+    AuditLog {
+        int Id PK
+        int ActorUserId FK
+        string Action
+    }

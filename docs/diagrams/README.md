@@ -17,7 +17,19 @@ every one as **PNG** and insert into the Word document.
 | **Architecture** (§7) | **draw.io** | Manual boxes: clients → Api (REST/OData) → Application → Infrastructure (EF/SQL); Api ─gRPC→ QuoteEngine; Api ↔ RabbitMQ ↔ ProductionAgent. |
 | **Screen Flow** | **draw.io** | Screens = rectangles; arrows = navigation; modals = ovals. |
 
-## Render targets
+## Rendered images
+
+All diagrams are pre-rendered to **`png/`** (ready to insert into Word). To
+regenerate after editing a source, run:
+
+```
+powershell -ExecutionPolicy Bypass -File docs/diagrams/render.ps1
+```
+
+It renders `.mmd` with mermaid-cli and `.puml` with PlantUML (Smetana layout — no
+Graphviz needed). Prerequisites: Java, and `npm i -g @mermaid-js/mermaid-cli`.
+
+## Render targets (online, no install)
 - **Mermaid** (`.mmd`): https://mermaid.live — paste, then *Actions ▸ PNG*.
 - **PlantUML** (`.puml`): https://www.plantuml.com/plantuml — paste, *PNG*.
 - **dbdiagram** (`.dbml`): https://dbdiagram.io — paste, *Export ▸ PNG/PDF*.

@@ -1,0 +1,27 @@
+%% PrintHub system architecture (Mermaid flowchart). Render at https://mermaid.live
+flowchart TB
+    subgraph Clients
+        W["PrintHub.Web<br/>(MVC + JS)"]
+        D["PrintHub.Desktop<br/>(WPF, MVVM)"]
+    end
+    subgraph Backend["Backend (PrintHub.sln)"]
+        API["PrintHub.Api<br/>REST + OData + JWT"]
+        APP["Application<br/>services · DTOs · specs · Result"]
+        INF["Infrastructure<br/>EF Core · repo/UoW · gRPC client · BCrypt"]
+        API --> APP --> INF
+    end
+    QE["PrintHub.QuoteEngine<br/>gRPC · Strategy pricing"]
+    PA["PrintHub.ProductionAgent<br/>simulates machines"]
+    DB[("SQL Server<br/>(LocalDB)")]
+    MQ[["RabbitMQ"]]
+    EXT["VietQR · Routing · SMTP"]
+
+    W -->|HTTPS + Bearer| API
+    D -->|HTTPS + Bearer| API
+    INF -->|EF Core| DB
+    API -->|gRPC h2c| QE
+    API -->|publish job| MQ
+    MQ -->|consume| PA
+    PA -->|progress / complete / fail| MQ
+    MQ -->|events| API
+    INF -.->|HTTP| EXT

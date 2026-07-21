@@ -1,0 +1,3 @@
+# Rendering tool, downloaded on demand by render.ps1 — do not commit (large).
+plantuml.jar
+*.jar

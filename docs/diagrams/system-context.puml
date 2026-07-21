@@ -1,0 +1,37 @@
+' System Context Diagram (PlantUML, Smetana layout — no Graphviz needed).
+' System = rectangle (NOT a DFD circle). Actors + external systems with labelled flows.
+@startuml
+!pragma layout smetana
+left to right direction
+skinparam actorStyle awesome
+skinparam rectangle {
+  BackgroundColor White
+  BorderColor Black
+}
+
+actor Guest
+actor Customer
+actor "Shop Owner" as Owner
+actor "Shop Staff" as Staff
+actor Admin
+
+rectangle "**PrintHub**" as SYS #whitesmoke
+
+Guest --> SYS : interact with >
+Customer --> SYS : interact with >
+Owner --> SYS : interact with >
+Staff --> SYS : interact with >
+Admin --> SYS : interact with >
+
+rectangle "<<External system>>\nVietQR" as VQ
+rectangle "<<External system>>\nRouting Service" as RS
+rectangle "<<External system>>\nGmail SMTP" as SMTP
+rectangle "<<External system>>\nQuote Engine (gRPC)" as QE
+rectangle "<<External system>>\nRabbitMQ / Production Agent" as MQ
+
+SYS --> VQ : generates top-up QR via >
+SYS --> RS : gets distance / ETA via >
+SYS --> SMTP : sends email via >
+SYS --> QE : estimates price via >
+SYS --> MQ : dispatches production via >
+@enduml

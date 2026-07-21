@@ -1,6 +1,7 @@
 ' Use case diagram — Customer (PlantUML).  Render at https://www.plantuml.com/plantuml
 ' Note the correct notation: include arrow points base -> included; extend arrow points extending -> base.
 @startuml
+!pragma layout smetana
 left to right direction
 skinparam packageStyle rectangle
 skinparam actorStyle awesome
@@ -36,7 +37,6 @@ C --> UC23
 C --> UC24
 C --> UC25
 
-UC15 ..> UC21 : <<include>>
 UC14 ..> UC15 : <<extend>>
 UC23 ..> UC16 : <<extend>>
 UC24 ..> UC16 : <<extend>>
