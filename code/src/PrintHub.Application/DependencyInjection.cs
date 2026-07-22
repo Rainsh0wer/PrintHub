@@ -7,6 +7,7 @@ using PrintHub.Application.Features.Favourites;
 using PrintHub.Application.Features.Orders;
 using PrintHub.Application.Features.Quotes;
 using PrintHub.Application.Features.Shops;
+using PrintHub.Application.Features.Wallet;
 
 namespace PrintHub.Application;
 
@@ -37,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IQuoteService, QuoteService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IShopOrderService, ShopOrderService>();
+        services.AddScoped<IWalletService, WalletService>();
 
         return services;
     }
