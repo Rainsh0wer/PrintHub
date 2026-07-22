@@ -36,6 +36,7 @@ public static class DependencyInjection
         services.AddScoped<IShopResourceService, ShopResourceService>();
         services.AddScoped<IQuoteService, QuoteService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IShopOrderService, ShopOrderService>();
 
         return services;
     }

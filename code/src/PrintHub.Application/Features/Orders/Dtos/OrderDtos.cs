@@ -30,6 +30,12 @@ public record PlaceOrderRequest(
 /// <summary>Reason carried on cancel/decline transitions.</summary>
 public record CancelOrderRequest(string? Reason);
 
+/// <summary>UC-32 — a shop declines an incoming order (reason mandatory; triggers a full refund).</summary>
+public record DeclineOrderRequest(DeclineReason Reason, string? Note);
+
+/// <summary>UC-33 — a shop starts production, optionally assigning a specific machine.</summary>
+public record StartProductionRequest(int? MachineId);
+
 public record OrderItemDto(
     int Id,
     int ServiceTypeId,
@@ -83,6 +89,7 @@ public record OrderDetailDto(
     decimal DiscountAmount,
     decimal TotalAmount,
     decimal? RefundedAmount,
+    decimal CommissionAmount,
     int ProgressPercent,
     string? CustomerNote,
     string? CancellationReason,

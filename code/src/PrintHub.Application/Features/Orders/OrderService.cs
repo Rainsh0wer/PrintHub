@@ -19,7 +19,7 @@ namespace PrintHub.Application.Features.Orders;
 public class OrderService : IOrderService
 {
     /// <summary>Platform commission taken on completion (UC-39 will make this admin-configurable).</summary>
-    private const decimal PlatformCommissionRate = 0.10m;
+    internal const decimal PlatformCommissionRate = 0.10m;
 
     private readonly IUnitOfWork _uow;
     private readonly ICurrentUser _currentUser;
