@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Contracts.Quoting;
+using PrintHub.Infrastructure.Messaging;
 using PrintHub.Infrastructure.Persistence;
 using PrintHub.Infrastructure.Quoting;
 using PrintHub.Infrastructure.Security;
@@ -37,6 +38,10 @@ public static class DependencyInjection
         var quoteEngineAddress = configuration["QuoteEngine:Address"] ?? "http://localhost:5090";
         services.AddGrpcClient<QuoteEstimator.QuoteEstimatorClient>(o => o.Address = new Uri(quoteEngineAddress));
         services.AddScoped<IQuoteEngineClient, QuoteEngineClient>();
+
+        // Async production pipeline (RabbitMQ publisher; degrades gracefully if the broker is down).
+        services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMq"));
+        services.AddSingleton<IProductionQueue, RabbitMqProductionQueue>();
 
         return services;
     }
