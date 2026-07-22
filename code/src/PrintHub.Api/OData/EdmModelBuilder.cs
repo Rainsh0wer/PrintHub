@@ -1,5 +1,6 @@
 using Microsoft.OData.Edm;
 using Microsoft.OData.ModelBuilder;
+using PrintHub.Application.Features.Orders.Dtos;
 using PrintHub.Application.Features.Shops.Dtos;
 
 namespace PrintHub.Api.OData;
@@ -14,6 +15,7 @@ public static class EdmModelBuilder
     {
         var builder = new ODataConventionModelBuilder();
         builder.EntitySet<ShopODataDto>("Shops");
+        builder.EntitySet<OrderODataDto>("Orders");
         return builder.GetEdmModel();
     }
 }

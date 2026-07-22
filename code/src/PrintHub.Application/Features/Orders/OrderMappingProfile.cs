@@ -27,5 +27,10 @@ public class OrderMappingProfile : Profile
             .ForCtorParam(nameof(OrderStatusHistoryDto.FromStatus), o => o.MapFrom(s => s.FromStatus == null ? null : s.FromStatus.ToString()))
             .ForCtorParam(nameof(OrderStatusHistoryDto.ToStatus), o => o.MapFrom(s => s.ToStatus.ToString()))
             .ForCtorParam(nameof(OrderStatusHistoryDto.ActorRole), o => o.MapFrom(s => s.ActorRole == null ? null : s.ActorRole.ToString()));
+
+        // OData projections (SQL-translatable: enums kept as enums, ShopName joined).
+        CreateMap<Order, OrderODataDto>()
+            .ForMember(d => d.ShopName, o => o.MapFrom(s => s.Shop.Name));
+        CreateMap<OrderItem, OrderItemODataDto>();
     }
 }
