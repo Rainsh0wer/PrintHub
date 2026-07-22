@@ -1,274 +1,413 @@
-// PrintHub ERD — paste into https://dbdiagram.io (crow's foot, PK/FK).  Export PNG/PDF.
-// Enums are stored as int in the DB; modelled here as enum for readability.
+// PrintHub ERD - generated from the live PrintHubDb schema.
+// Paste into https://dbdiagram.io (default style).
 
-Enum user_role { Customer ShopOwner ShopStaff Admin }
-Enum shop_status { Draft PendingReview Active Rejected Suspended }
-Enum service_group { Document Finishing Fabrication }
-Enum pricing_model { PerPage PerUnit MaterialAndTime }
-Enum order_status { Draft Quoted Expired AwaitingAcceptance Accepted InProduction ProductionFailed ReadyForPickup OutForDelivery Completed Declined Cancelled }
-Enum wallet_txn_type { TopUp Payment Refund Adjustment }
-Enum complaint_status { Open ShopResponded Resolved Escalated Closed }
+Table AuditLogs {
+  Id int [pk]
+  ActorUserId int
+  Action nvarchar
+  EntityName nvarchar
+  EntityId nvarchar
+  OldValue nvarchar
+  NewValue nvarchar
+  IpAddress nvarchar
+  CreatedAt datetime2
+  UserAgent nvarchar
+}
 
-Table User {
-  Id int [pk, increment]
-  FullName varchar
-  Email varchar [unique, not null]
-  PhoneNumber varchar
-  PasswordHash varchar [note: 'BCrypt; never exposed']
-  Role user_role
-  WalletBalance decimal
+Table Complaints {
+  Id int [pk]
+  OrderId int
+  CustomerId int
+  ShopId int
+  Reason int
+  Description nvarchar
   Status int
-  IsDeleted bool
-  CreatedAt datetime
+  ProposedResolution int
+  ShopResponse nvarchar
+  AdminRuling nvarchar
+  RefundAmount decimal
+  ReplacementOrderId int
+  ResolvedBy int
+  RespondedAt datetime2
+  ResolvedAt datetime2
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  AttachmentUrls nvarchar
+  ClosedAt datetime2
+  CreatedBy int
+  EscalatedAt datetime2
+  UpdatedBy int
 }
 
-Table RefreshToken {
-  Id int [pk, increment]
-  UserId int [ref: > User.Id]
-  Token varchar [unique]
-  ExpiresAt datetime
-  RevokedAt datetime
+Table DocumentFiles {
+  Id int [pk]
+  OwnerUserId int
+  FileName nvarchar
+  StoragePath nvarchar
+  ContentType nvarchar
+  FileSizeKb bigint
+  DeclaredPageCount int
+  RightsDeclared bit
+  UploadedAt datetime2
+  IsDeleted bit
+  Checksum nvarchar
+  LastAccessedAt datetime2
+  PurgeAfter datetime2
 }
 
-Table Shop {
-  Id int [pk, increment]
-  OwnerId int [ref: > User.Id]
-  Name varchar
-  District varchar
-  City varchar
-  Status shop_status
-  RatingAverage float
-  RatingCount int
-  ApprovedBy int [ref: > User.Id]
-  IsDeleted bool
+Table Favourites {
+  Id int [pk]
+  CustomerId int
+  ShopId int
+  CreatedAt datetime2
+  Note nvarchar
 }
 
-// n-n WITH attributes: User x Shop
-Table ShopStaff {
-  Id int [pk, increment]
-  ShopId int [ref: > Shop.Id]
-  UserId int [ref: > User.Id]
-  Position varchar
-  JoinedAt datetime
-  IsActive bool
-
-  Indexes { (ShopId, UserId) [unique] }
-}
-
-Table ServiceType {
-  Id int [pk, increment]
-  Code varchar [unique]
-  Name varchar
-  ServiceGroup service_group
-  PricingModel pricing_model
-  UnitOfMeasure varchar
-  RequiresFile bool
-  IsActive bool
-  IsDeleted bool
-}
-
-// n-n WITH attributes: Shop x ServiceType  (the rate card — read on every quote)
-Table ShopService {
-  Id int [pk, increment]
-  ShopId int [ref: > Shop.Id]
-  ServiceTypeId int [ref: > ServiceType.Id]
-  UnitPrice decimal
-  SetupFee decimal
-  MinQuantity int
-  LeadTimeMinutes int
-  IsActive bool
-
-  Indexes { (ShopId, ServiceTypeId) [unique] }
-}
-
-Table PriceRule {
-  Id int [pk, increment]
-  ShopServiceId int [ref: > ShopService.Id]
-  RuleType int
-  OptionKey varchar
-  Multiplier decimal
-  FlatExtra decimal
-  MinQuantity int
-  MaxQuantity int
-  IsActive bool
-}
-
-Table Machine {
-  Id int [pk, increment]
-  ShopId int [ref: > Shop.Id]
-  Name varchar
+Table Machines {
+  Id int [pk]
+  ShopId int
+  Name nvarchar
   MachineType int
-  ServiceGroup service_group
+  ServiceGroup int
   Status int
-  IsDeleted bool
+  IsDeleted bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  CreatedBy int
+  LastMaintenanceAt datetime2
+  Model nvarchar
+  SerialNumber nvarchar
+  UpdatedBy int
 }
 
-Table Material {
-  Id int [pk, increment]
-  ShopId int [ref: > Shop.Id]
-  Name varchar
+Table Materials {
+  Id int [pk]
+  ShopId int
+  Name nvarchar
   MaterialType int
-  Unit varchar
+  Unit nvarchar
   StockQuantity decimal
   LowStockThreshold decimal
   UnitCost decimal
-  IsDeleted bool
+  IsDeleted bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  Color nvarchar
+  CreatedBy int
+  ReorderQuantity decimal
+  Sku nvarchar
+  UpdatedBy int
 }
 
-Table DocumentFile {
-  Id int [pk, increment]
-  OwnerUserId int [ref: > User.Id]
-  FileName varchar
-  StoragePath varchar [note: 'never exposed to clients']
-  ContentType varchar
-  DeclaredPageCount int
-  RightsDeclared bool
-  IsDeleted bool
+Table Notifications {
+  Id int [pk]
+  UserId int
+  Title nvarchar
+  Content nvarchar
+  Type int
+  RelatedOrderId int
+  IsRead bit
+  CreatedAt datetime2
+  LinkUrl nvarchar
+  ReadAt datetime2
 }
 
-Table Quote {
-  Id int [pk, increment]
-  CustomerId int [ref: > User.Id]
-  ShopId int [ref: > Shop.Id]
-  SubTotal decimal
+Table OrderItems {
+  Id int [pk]
+  OrderId int
+  ServiceTypeId int
+  DocumentFileId int
+  Quantity int
+  PageCount int
+  PaperType nvarchar
+  ColorMode int
+  Sides int
+  BindingType nvarchar
+  MaterialName nvarchar
+  QualityProfile nvarchar
+  EstimatedGrams decimal
+  UnitPrice decimal
+  LineTotal decimal
+  ItemNote nvarchar
   EstimatedMinutes int
-  DistanceMeters float
-  BreakdownJson text
-  IsIndicative bool
-  ExpiresAt datetime
-  CreatedAt datetime
+  SnapshotFileName nvarchar
 }
 
-Table Order {
-  Id int [pk, increment]
-  OrderCode varchar [unique]
-  CustomerId int [ref: > User.Id]
-  ShopId int [ref: > Shop.Id]
-  QuoteId int [ref: > Quote.Id]
-  MachineId int [ref: > Machine.Id]
-  VoucherId int [ref: > Voucher.Id]
-  Status order_status
+Table Orders {
+  Id int [pk]
+  OrderCode nvarchar [unique]
+  CustomerId int
+  ShopId int
+  QuoteId int
+  MachineId int
+  VoucherId int
+  Status int
   FulfilmentMethod int
+  PickupSlotStart datetime2
+  PickupSlotEnd datetime2
+  DeliveryAddress nvarchar
   SubTotal decimal
   DiscountAmount decimal
   TotalAmount decimal
   CommissionRate decimal
   CommissionAmount decimal
   ProgressPercent int
-  PlacedAt datetime
-  CompletedAt datetime
+  CustomerNote nvarchar
+  DeclineReason int
+  PlacedAt datetime2
+  AcceptedAt datetime2
+  CompletedAt datetime2
+  CancelledAt datetime2
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  CancellationReason nvarchar
+  CreatedBy int
+  DeclinedAt datetime2
+  EstimatedReadyAt datetime2
+  RefundedAmount decimal
+  UpdatedBy int
 }
 
-Table OrderItem {
-  Id int [pk, increment]
-  OrderId int [ref: > Order.Id]
-  ServiceTypeId int [ref: > ServiceType.Id]
-  DocumentFileId int [ref: > DocumentFile.Id]
-  Quantity int
-  PageCount int
-  PaperType varchar
-  ColorMode int
-  Sides int
-  BindingType varchar
-  MaterialName varchar
-  QualityProfile varchar
-  EstimatedGrams decimal
-  UnitPrice decimal
-  LineTotal decimal
+Table OrderStatusHistories {
+  Id int [pk]
+  OrderId int
+  FromStatus int
+  ToStatus int
+  ActorUserId int
+  ActorRole int
+  Reason nvarchar
+  CreatedAt datetime2
+  IpAddress nvarchar
 }
 
-Table OrderStatusHistory {
-  Id int [pk, increment]
-  OrderId int [ref: > Order.Id]
-  FromStatus order_status
-  ToStatus order_status
-  ActorUserId int [ref: > User.Id]
-  ActorRole user_role
-  Reason varchar
-  CreatedAt datetime [note: 'append-only']
+Table PriceRules {
+  Id int [pk]
+  ShopServiceId int
+  RuleType int
+  OptionKey nvarchar
+  Multiplier decimal
+  FlatExtra decimal
+  MinQuantity int
+  MaxQuantity int
+  IsActive bit
+  Description nvarchar
+  DisplayOrder int
 }
 
-Table WalletTransaction {
-  Id int [pk, increment]
-  UserId int [ref: > User.Id]
-  OrderId int [ref: > Order.Id]
-  Type wallet_txn_type
-  Amount decimal
-  BalanceAfter decimal
-  RefCode varchar [unique]
+Table Quotes {
+  Id int [pk]
+  CustomerId int
+  ShopId int
+  SubTotal decimal
+  EstimatedMinutes int
+  DistanceMeters float
+  BreakdownJson nvarchar
+  IsIndicative bit
+  ExpiresAt datetime2
+  CreatedAt datetime2
+  TravelMinutes int
+}
+
+Table RefreshTokens {
+  Id int [pk]
+  UserId int
+  Token nvarchar [unique]
+  CreatedAt datetime2
+  ExpiresAt datetime2
+  RevokedAt datetime2
+  CreatedByIp nvarchar
+  ReplacedByToken nvarchar
+  RevokedByIp nvarchar
+}
+
+Table Reviews {
+  Id int [pk]
+  OrderId int [unique]
+  CustomerId int
+  ShopId int
+  Rating int
+  Comment nvarchar
+  ShopReply nvarchar
+  RepliedAt datetime2
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  CreatedBy int
+  IsVisible bit
+  RepliedByUserId int
+  UpdatedBy int
+}
+
+Table ServiceTypes {
+  Id int [pk]
+  Code nvarchar [unique]
+  Name nvarchar
+  ServiceGroup int
+  PricingModel int
+  UnitOfMeasure nvarchar
+  RequiresFile bit
+  Description nvarchar
+  IsActive bit
+  IsDeleted bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  CreatedBy int
+  DisplayOrder int
+  IconUrl nvarchar
+  UpdatedBy int
+}
+
+Table Shops {
+  Id int [pk]
+  OwnerId int
+  Name nvarchar
+  Description nvarchar
+  AddressLine nvarchar
+  District nvarchar
+  City nvarchar
+  Latitude float
+  Longitude float
+  PhoneNumber nvarchar
+  OpenTime time
+  CloseTime time
   Status int
-  ConfirmedBy int [ref: > User.Id]
-  CreatedAt datetime
+  ReviewNote nvarchar
+  RatingAverage float
+  RatingCount int
+  ApprovedAt datetime2
+  ApprovedBy int
+  IsDeleted bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  BusinessLicenseNo nvarchar
+  CoverImageUrl nvarchar
+  CreatedBy int
+  Email nvarchar
+  IsTemporarilyClosed bit
+  LogoUrl nvarchar
+  TaxCode nvarchar
+  UpdatedBy int
 }
 
-Table Voucher {
-  Id int [pk, increment]
-  Code varchar [unique]
+Table ShopServices {
+  Id int [pk]
+  ShopId int
+  ServiceTypeId int
+  UnitPrice decimal
+  SetupFee decimal
+  MinQuantity int
+  LeadTimeMinutes int
+  IsActive bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  CreatedBy int
+  MaxQuantity int
+  Notes nvarchar
+  UpdatedBy int
+}
+
+Table ShopStaff {
+  Id int [pk]
+  ShopId int
+  UserId int
+  Position nvarchar
+  JoinedAt datetime2
+  IsActive bit
+  InvitedByUserId int
+  RevokedAt datetime2
+}
+
+Table Users {
+  Id int [pk]
+  FullName nvarchar
+  Email nvarchar [unique]
+  PhoneNumber nvarchar
+  PasswordHash nvarchar
+  Role int
+  Status int
+  WalletBalance decimal
+  DefaultAddress nvarchar
+  Latitude float
+  Longitude float
+  EmailVerifiedAt datetime2
+  IsDeleted bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  AvatarUrl nvarchar
+  CreatedBy int
+  LastLoginAt datetime2
+  UpdatedBy int
+}
+
+Table Vouchers {
+  Id int [pk]
+  Code nvarchar [unique]
   DiscountType int
   DiscountValue decimal
   MinOrderAmount decimal
   MaxDiscountAmount decimal
   UsageLimit int
   UsedCount int
-  ValidFrom datetime
-  ValidTo datetime
-  IsActive bool
+  ValidFrom datetime2
+  ValidTo datetime2
+  IsActive bit
+  CreatedAt datetime2
+  UpdatedAt datetime2
+  CreatedBy int
+  Description nvarchar
+  Name nvarchar
+  PerUserLimit int
+  UpdatedBy int
 }
 
-Table Review {
-  Id int [pk, increment]
-  OrderId int [ref: - Order.Id, note: 'one review per order']
-  CustomerId int [ref: > User.Id]
-  ShopId int [ref: > Shop.Id]
-  Rating int
-  Comment varchar
-  ShopReply varchar
-  CreatedAt datetime
-}
-
-Table Complaint {
-  Id int [pk, increment]
-  OrderId int [ref: > Order.Id]
-  CustomerId int [ref: > User.Id]
-  ShopId int [ref: > Shop.Id]
-  Reason int
-  Description varchar
-  Status complaint_status
-  ProposedResolution int
-  RefundAmount decimal
-  ReplacementOrderId int [ref: > Order.Id]
-  ResolvedBy int [ref: > User.Id]
-  CreatedAt datetime
-}
-
-Table Favourite {
-  Id int [pk, increment]
-  CustomerId int [ref: > User.Id]
-  ShopId int [ref: > Shop.Id]
-  CreatedAt datetime
-
-  Indexes { (CustomerId, ShopId) [unique] }
-}
-
-Table Notification {
-  Id int [pk, increment]
-  UserId int [ref: > User.Id]
-  Title varchar
-  Content varchar
+Table WalletTransactions {
+  Id int [pk]
+  UserId int
+  OrderId int
   Type int
-  RelatedOrderId int [ref: > Order.Id]
-  IsRead bool
-  CreatedAt datetime
+  Amount decimal
+  BalanceAfter decimal
+  RefCode nvarchar [unique]
+  Status int
+  ConfirmedBy int
+  CreatedAt datetime2
+  ConfirmedAt datetime2
+  BankReference nvarchar
+  Description nvarchar
 }
 
-Table AuditLog {
-  Id int [pk, increment]
-  ActorUserId int [ref: > User.Id]
-  Action varchar
-  EntityName varchar
-  EntityId varchar
-  OldValue text
-  NewValue text
-  IpAddress varchar
-  CreatedAt datetime [note: 'append-only']
-}
+// Relationships (FK -> PK)
+Ref: ShopServices.ServiceTypeId > ServiceTypes.Id
+Ref: OrderItems.ServiceTypeId > ServiceTypes.Id
+Ref: AuditLogs.ActorUserId > Users.Id
+Ref: DocumentFiles.OwnerUserId > Users.Id
+Ref: Notifications.UserId > Users.Id
+Ref: RefreshTokens.UserId > Users.Id
+Ref: Shops.OwnerId > Users.Id
+Ref: Favourites.CustomerId > Users.Id
+Ref: Quotes.CustomerId > Users.Id
+Ref: ShopStaff.UserId > Users.Id
+Ref: Orders.CustomerId > Users.Id
+Ref: Complaints.CustomerId > Users.Id
+Ref: OrderStatusHistories.ActorUserId > Users.Id
+Ref: Reviews.CustomerId > Users.Id
+Ref: WalletTransactions.UserId > Users.Id
+Ref: Orders.VoucherId > Vouchers.Id
+Ref: OrderItems.DocumentFileId > DocumentFiles.Id
+Ref: Favourites.ShopId > Shops.Id
+Ref: Machines.ShopId > Shops.Id
+Ref: Materials.ShopId > Shops.Id
+Ref: Quotes.ShopId > Shops.Id
+Ref: ShopServices.ShopId > Shops.Id
+Ref: ShopStaff.ShopId > Shops.Id
+Ref: Orders.ShopId > Shops.Id
+Ref: Complaints.ShopId > Shops.Id
+Ref: Reviews.ShopId > Shops.Id
+Ref: Orders.MachineId > Machines.Id
+Ref: Orders.QuoteId > Quotes.Id
+Ref: PriceRules.ShopServiceId > ShopServices.Id
+Ref: Complaints.OrderId > Orders.Id
+Ref: Complaints.ReplacementOrderId > Orders.Id
+Ref: OrderItems.OrderId > Orders.Id
+Ref: OrderStatusHistories.OrderId > Orders.Id
+Ref: Reviews.OrderId > Orders.Id
+Ref: WalletTransactions.OrderId > Orders.Id
