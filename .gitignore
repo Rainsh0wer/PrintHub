@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.pyc
+
+# Word lock/temp files
+~$*.docx
+~$*.doc
