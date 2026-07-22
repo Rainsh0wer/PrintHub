@@ -3,9 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Application.Common.Services;
 using PrintHub.Application.Features.Auth;
+using PrintHub.Application.Features.Complaints;
 using PrintHub.Application.Features.Favourites;
 using PrintHub.Application.Features.Orders;
 using PrintHub.Application.Features.Quotes;
+using PrintHub.Application.Features.Reviews;
 using PrintHub.Application.Features.Shops;
 using PrintHub.Application.Features.Wallet;
 
@@ -39,6 +41,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IShopOrderService, ShopOrderService>();
         services.AddScoped<IWalletService, WalletService>();
+        services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IComplaintService, ComplaintService>();
 
         return services;
     }
