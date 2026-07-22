@@ -5,11 +5,13 @@ using PrintHub.Application.Common.Services;
 using PrintHub.Application.Features.Auth;
 using PrintHub.Application.Features.Complaints;
 using PrintHub.Application.Features.Favourites;
+using PrintHub.Application.Features.Notifications;
 using PrintHub.Application.Features.Orders;
 using PrintHub.Application.Features.Quotes;
 using PrintHub.Application.Features.Reports;
 using PrintHub.Application.Features.Reviews;
 using PrintHub.Application.Features.Shops;
+using PrintHub.Application.Features.Users;
 using PrintHub.Application.Features.Wallet;
 
 namespace PrintHub.Application;
@@ -45,6 +47,8 @@ public static class DependencyInjection
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IComplaintService, ComplaintService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         return services;
     }

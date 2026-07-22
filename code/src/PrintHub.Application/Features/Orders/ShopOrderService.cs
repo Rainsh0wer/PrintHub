@@ -2,6 +2,7 @@ using AutoMapper;
 using PrintHub.Application.Common;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Application.Common.Models;
+using PrintHub.Application.Features.Notifications;
 using PrintHub.Application.Features.Orders.Dtos;
 using PrintHub.Application.Specifications.Orders;
 using PrintHub.Domain.Entities;
@@ -21,13 +22,16 @@ public class ShopOrderService : IShopOrderService
     private readonly ICurrentUser _currentUser;
     private readonly IMapper _mapper;
     private readonly IProductionQueue _production;
+    private readonly INotificationService _notifications;
 
-    public ShopOrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper, IProductionQueue production)
+    public ShopOrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper,
+        IProductionQueue production, INotificationService notifications)
     {
         _uow = uow;
         _currentUser = currentUser;
         _mapper = mapper;
         _production = production;
+        _notifications = notifications;
     }
 
     public async Task<Result<PagedResult<OrderSummaryDto>>> ListForShopAsync(
@@ -56,6 +60,10 @@ public class ShopOrderService : IShopOrderService
 
         await AppendHistoryAsync(order.Id, from, OrderStatus.Accepted, "Order accepted by shop.", ct);
         await _uow.SaveChangesAsync(ct);
+
+        await _notifications.CreateAsync(order.CustomerId, NotificationType.OrderStatus,
+            "Order accepted", $"Your order {order.OrderCode} has been accepted by the shop.", order.Id, ct: ct);
+
         return Result.Success(await LoadDetailAsync(order.Id, ct));
     }
 
@@ -97,6 +105,10 @@ public class ShopOrderService : IShopOrderService
         var reason = string.IsNullOrWhiteSpace(request.Note) ? request.Reason.ToString() : $"{request.Reason}: {request.Note}";
         await AppendHistoryAsync(order.Id, from, OrderStatus.Declined, reason, ct);
         await _uow.SaveChangesAsync(ct);
+
+        await _notifications.CreateAsync(order.CustomerId, NotificationType.OrderStatus,
+            "Order declined", $"Your order {order.OrderCode} was declined and fully refunded.", order.Id, ct: ct);
+
         return Result.Success(await LoadDetailAsync(order.Id, ct));
     }
 
@@ -151,6 +163,10 @@ public class ShopOrderService : IShopOrderService
 
         await AppendHistoryAsync(order.Id, from, target, "Production complete; ready for hand-over.", ct);
         await _uow.SaveChangesAsync(ct);
+
+        await _notifications.CreateAsync(order.CustomerId, NotificationType.OrderStatus,
+            "Order ready", $"Your order {order.OrderCode} is ready.", order.Id, ct: ct);
+
         return Result.Success(await LoadDetailAsync(order.Id, ct));
     }
 
@@ -169,6 +185,10 @@ public class ShopOrderService : IShopOrderService
 
         await AppendHistoryAsync(order.Id, from, OrderStatus.Completed, "Handed over to customer.", ct);
         await _uow.SaveChangesAsync(ct);
+
+        await _notifications.CreateAsync(order.CustomerId, NotificationType.OrderStatus,
+            "Order completed", $"Your order {order.OrderCode} has been completed.", order.Id, ct: ct);
+
         return Result.Success(await LoadDetailAsync(order.Id, ct));
     }
 
