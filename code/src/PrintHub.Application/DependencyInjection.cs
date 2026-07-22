@@ -4,6 +4,7 @@ using PrintHub.Application.Common.Interfaces;
 using PrintHub.Application.Common.Services;
 using PrintHub.Application.Features.Auth;
 using PrintHub.Application.Features.Favourites;
+using PrintHub.Application.Features.Orders;
 using PrintHub.Application.Features.Quotes;
 using PrintHub.Application.Features.Shops;
 
@@ -34,6 +35,7 @@ public static class DependencyInjection
         services.AddScoped<IShopStaffService, ShopStaffService>();
         services.AddScoped<IShopResourceService, ShopResourceService>();
         services.AddScoped<IQuoteService, QuoteService>();
+        services.AddScoped<IOrderService, OrderService>();
 
         return services;
     }
