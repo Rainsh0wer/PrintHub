@@ -20,7 +20,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services ----
 builder.Services
-    .AddControllers(options => options.Filters.Add<ValidationFilter>())
+    .AddControllers(options =>
+    {
+        options.Filters.Add<ValidationFilter>();
+        // Content negotiation: honour the client's Accept header and offer CSV + XML
+        // (alongside JSON) so the report endpoints can serve all three.
+        options.RespectBrowserAcceptHeader = true;
+        options.OutputFormatters.Add(new CsvOutputFormatter());
+    })
+    .AddXmlSerializerFormatters()
     .AddOData(options => options
         .Select().Filter().OrderBy().Expand().Count().SetMaxTop(100)
         .AddRouteComponents("odata", EdmModelBuilder.Build()));

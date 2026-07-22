@@ -7,6 +7,7 @@ using PrintHub.Application.Features.Complaints;
 using PrintHub.Application.Features.Favourites;
 using PrintHub.Application.Features.Orders;
 using PrintHub.Application.Features.Quotes;
+using PrintHub.Application.Features.Reports;
 using PrintHub.Application.Features.Reviews;
 using PrintHub.Application.Features.Shops;
 using PrintHub.Application.Features.Wallet;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IComplaintService, ComplaintService>();
+        services.AddScoped<IReportService, ReportService>();
 
         return services;
     }
