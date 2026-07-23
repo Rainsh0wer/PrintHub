@@ -16,6 +16,13 @@ public record ChangePasswordRequest(
     string NewPassword,
     string ConfirmNewPassword);
 
+public record ForgotPasswordRequest(string Email);
+
+public record ResetPasswordRequest(string Email, string Token, string NewPassword);
+
+/// <summary>Generic message; ResetToken is included only in this dev build (would be emailed).</summary>
+public record ForgotPasswordResponse(string Message, string? ResetToken);
+
 /// <summary>Public view of a user account. Never carries the password hash.</summary>
 public record UserDto(
     int Id,

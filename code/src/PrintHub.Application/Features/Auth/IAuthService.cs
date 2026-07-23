@@ -14,4 +14,6 @@ public interface IAuthService
     Task<Result<AuthResponse>> RefreshAsync(RefreshRequest request, CancellationToken ct = default);
     Task<Result> LogoutAsync(string refreshToken, CancellationToken ct = default);
     Task<Result> ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken ct = default);
+    Task<Result<ForgotPasswordResponse>> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken ct = default);
+    Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
 }

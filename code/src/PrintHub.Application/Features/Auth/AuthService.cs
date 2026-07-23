@@ -17,6 +17,9 @@ namespace PrintHub.Application.Features.Auth;
 /// </summary>
 public class AuthService : IAuthService
 {
+    private const string ResetMarker = "pwd-reset";
+    private static readonly TimeSpan ResetValidity = TimeSpan.FromMinutes(30);
+
     private readonly IUnitOfWork _uow;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwt;
@@ -127,6 +130,53 @@ public class AuthService : IAuthService
         {
             token.RevokedAt = DateTime.UtcNow;
             tokens.Update(token);
+        }
+
+        await _uow.SaveChangesAsync(ct);
+        return Result.Success();
+    }
+
+    public async Task<Result<ForgotPasswordResponse>> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken ct = default)
+    {
+        var user = await _uow.Repository<User>().FirstOrDefaultAsync(new UserByEmailSpecification(request.Email.Trim()), ct);
+        const string message = "If that email is registered, a password reset link has been generated.";
+        if (user is null)
+            return Result.Success(new ForgotPasswordResponse(message, null));
+
+        var token = Guid.NewGuid().ToString("N");
+        await _uow.Repository<RefreshToken>().AddAsync(new RefreshToken
+        {
+            UserId = user.Id,
+            Token = token,
+            CreatedByIp = ResetMarker,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.Add(ResetValidity)
+        }, ct);
+        await _uow.SaveChangesAsync(ct);
+
+        // Dev build returns the token directly; a real deployment emails it.
+        return Result.Success(new ForgotPasswordResponse(message, token));
+    }
+
+    public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default)
+    {
+        var users = _uow.Repository<User>();
+        var tokens = _uow.Repository<RefreshToken>();
+        var user = await users.FirstOrDefaultAsync(new UserByEmailSpecification(request.Email.Trim()), ct);
+        var reset = await tokens.FirstOrDefaultAsync(new RefreshTokenByValueSpecification(request.Token), ct);
+
+        if (user is null || reset is null || reset.UserId != user.Id
+            || reset.CreatedByIp != ResetMarker || reset.RevokedAt is not null || reset.ExpiresAt <= DateTime.UtcNow)
+            return Result.Failure("This reset link is invalid or has expired.");
+
+        user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
+        users.Update(user);
+
+        var active = await tokens.ListAsync(new ActiveRefreshTokensByUserSpecification(user.Id), ct);
+        foreach (var t in active)
+        {
+            t.RevokedAt = DateTime.UtcNow;
+            tokens.Update(t);
         }
 
         await _uow.SaveChangesAsync(ct);

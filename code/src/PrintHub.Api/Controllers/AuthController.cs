@@ -61,6 +61,18 @@ public class AuthController : ControllerBase
             .ToActionResult(successMessage: "Your password has been changed.");
     }
 
+    /// <summary>UC-03 — request a password reset token for an email.</summary>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, CancellationToken ct)
+        => (await _auth.ForgotPasswordAsync(request, ct)).ToActionResult();
+
+    /// <summary>UC-03 — reset the password using the emailed token.</summary>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken ct)
+        => (await _auth.ResetPasswordAsync(request, ct)).ToActionResult(successMessage: "Your password has been reset. Please log in.");
+
     /// <summary>Returns the identity carried by the current access token.</summary>
     [HttpGet("me")]
     [Authorize]
