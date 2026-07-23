@@ -7,6 +7,7 @@ using PrintHub.Infrastructure.Messaging;
 using PrintHub.Infrastructure.Persistence;
 using PrintHub.Infrastructure.Quoting;
 using PrintHub.Infrastructure.Security;
+using PrintHub.Infrastructure.Storage;
 
 namespace PrintHub.Infrastructure;
 
@@ -42,6 +43,8 @@ public static class DependencyInjection
         // Async production pipeline (RabbitMQ publisher; degrades gracefully if the broker is down).
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMq"));
         services.AddSingleton<IProductionQueue, RabbitMqProductionQueue>();
+
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
 
         return services;
     }

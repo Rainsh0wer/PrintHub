@@ -5,3 +5,7 @@ __pycache__/
 # Word lock/temp files
 ~$*.docx
 ~$*.doc
+
+# Uploaded files (runtime)
+uploads/
+code/**/uploads/

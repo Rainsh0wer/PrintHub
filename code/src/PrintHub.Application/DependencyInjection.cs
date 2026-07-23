@@ -5,6 +5,7 @@ using PrintHub.Application.Common.Services;
 using PrintHub.Application.Features.Auth;
 using PrintHub.Application.Features.Catalog;
 using PrintHub.Application.Features.Complaints;
+using PrintHub.Application.Features.Documents;
 using PrintHub.Application.Features.Favourites;
 using PrintHub.Application.Features.Notifications;
 using PrintHub.Application.Features.Orders;
@@ -55,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IServiceTypeAdminService, ServiceTypeAdminService>();
         services.AddScoped<IVoucherAdminService, VoucherAdminService>();
         services.AddScoped<IVoucherService, VoucherService>();
+        services.AddScoped<IDocumentService, DocumentService>();
 
         return services;
     }
