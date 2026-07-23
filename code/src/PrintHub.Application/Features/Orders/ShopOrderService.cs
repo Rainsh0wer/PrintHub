@@ -4,6 +4,7 @@ using PrintHub.Application.Common.Interfaces;
 using PrintHub.Application.Common.Models;
 using PrintHub.Application.Features.Notifications;
 using PrintHub.Application.Features.Orders.Dtos;
+using PrintHub.Application.Features.Platform;
 using PrintHub.Application.Specifications.Orders;
 using PrintHub.Domain.Entities;
 using PrintHub.Domain.Enums;
@@ -23,15 +24,17 @@ public class ShopOrderService : IShopOrderService
     private readonly IMapper _mapper;
     private readonly IProductionQueue _production;
     private readonly INotificationService _notifications;
+    private readonly IPlatformSettingsService _settings;
 
     public ShopOrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper,
-        IProductionQueue production, INotificationService notifications)
+        IProductionQueue production, INotificationService notifications, IPlatformSettingsService settings)
     {
         _uow = uow;
         _currentUser = currentUser;
         _mapper = mapper;
         _production = production;
         _notifications = notifications;
+        _settings = settings;
     }
 
     public async Task<Result<PagedResult<OrderSummaryDto>>> ListForShopAsync(
@@ -179,8 +182,9 @@ public class ShopOrderService : IShopOrderService
         order.Status = OrderStatus.Completed;
         order.CompletedAt = DateTime.UtcNow;
         order.ProgressPercent = 100;
-        order.CommissionRate = OrderService.PlatformCommissionRate;
-        order.CommissionAmount = Math.Round(order.TotalAmount * OrderService.PlatformCommissionRate, 2);
+        var rate = await _settings.GetCommissionRateAsync(ct);
+        order.CommissionRate = rate;
+        order.CommissionAmount = Math.Round(order.TotalAmount * rate, 2);
         _uow.Repository<Order>().Update(order);
 
         await AppendHistoryAsync(order.Id, from, OrderStatus.Completed, "Handed over to customer.", ct);

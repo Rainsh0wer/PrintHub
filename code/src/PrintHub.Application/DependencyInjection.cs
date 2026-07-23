@@ -9,6 +9,7 @@ using PrintHub.Application.Features.Documents;
 using PrintHub.Application.Features.Favourites;
 using PrintHub.Application.Features.Notifications;
 using PrintHub.Application.Features.Orders;
+using PrintHub.Application.Features.Platform;
 using PrintHub.Application.Features.Quotes;
 using PrintHub.Application.Features.Reports;
 using PrintHub.Application.Features.Reviews;
@@ -57,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IVoucherAdminService, VoucherAdminService>();
         services.AddScoped<IVoucherService, VoucherService>();
         services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<IPlatformSettingsService, PlatformSettingsService>();
 
         return services;
     }

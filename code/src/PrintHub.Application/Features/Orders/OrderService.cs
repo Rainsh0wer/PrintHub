@@ -4,6 +4,7 @@ using PrintHub.Application.Common;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Application.Common.Models;
 using PrintHub.Application.Features.Orders.Dtos;
+using PrintHub.Application.Features.Platform;
 using PrintHub.Application.Features.Vouchers;
 using PrintHub.Application.Specifications.Orders;
 using PrintHub.Domain.Entities;
@@ -19,20 +20,20 @@ namespace PrintHub.Application.Features.Orders;
 /// </summary>
 public class OrderService : IOrderService
 {
-    /// <summary>Platform commission taken on completion (UC-39 will make this admin-configurable).</summary>
-    internal const decimal PlatformCommissionRate = 0.10m;
-
     private readonly IUnitOfWork _uow;
     private readonly ICurrentUser _currentUser;
     private readonly IMapper _mapper;
     private readonly IVoucherService _vouchers;
+    private readonly IPlatformSettingsService _settings;
 
-    public OrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper, IVoucherService vouchers)
+    public OrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper,
+        IVoucherService vouchers, IPlatformSettingsService settings)
     {
         _uow = uow;
         _currentUser = currentUser;
         _mapper = mapper;
         _vouchers = vouchers;
+        _settings = settings;
     }
 
     public async Task<Result<OrderDetailDto>> PlaceOrderAsync(int customerId, PlaceOrderRequest request, CancellationToken ct = default)
@@ -224,8 +225,9 @@ public class OrderService : IOrderService
         order.Status = OrderStatus.Completed;
         order.CompletedAt = DateTime.UtcNow;
         order.ProgressPercent = 100;
-        order.CommissionRate = PlatformCommissionRate;
-        order.CommissionAmount = Math.Round(order.TotalAmount * PlatformCommissionRate, 2);
+        var rate = await _settings.GetCommissionRateAsync(ct);
+        order.CommissionRate = rate;
+        order.CommissionAmount = Math.Round(order.TotalAmount * rate, 2);
         _uow.Repository<Order>().Update(order);
 
         await AppendHistoryAsync(order.Id, from, OrderStatus.Completed, "Receipt confirmed by customer.", ct);
