@@ -1,49 +1,68 @@
-﻿<!DOCTYPE html>
+@using PrintHub.Web.Services
+@{
+    var role = Context.Session.GetString(SessionKeys.UserRole);
+    var name = Context.Session.GetString(SessionKeys.UserName);
+    var signedIn = !string.IsNullOrEmpty(Context.Session.GetString(SessionKeys.AccessToken));
+    var isShop = role is "ShopOwner" or "ShopStaff";
+    string Active(string c) => (ViewContext.RouteData.Values["controller"]?.ToString() == c) ? "active" : "";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - PrintHub.Web</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/PrintHub.Web.styles.css" asp-append-version="true" />
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " · PrintHub" : "PrintHub — Print & Fabrication Marketplace")</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/printhub.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PrintHub.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+    <header class="topbar">
+        <div class="wrap">
+            <a class="brand" asp-controller="Home" asp-action="Index">
+                <span class="regmark cmyk"></span> PrintHub
+            </a>
+            <nav class="nav">
+                <a class="@Active("Shops")" asp-controller="Shops" asp-action="Index">Shops</a>
+                @if (signedIn && role == "Customer")
+                {
+                    <a class="@Active("Quotes")" asp-controller="Quotes" asp-action="Index">Compare</a>
+                    <a class="@Active("Orders")" asp-controller="Orders" asp-action="Index">Orders</a>
+                    <a class="@Active("Wallet") hide-sm" asp-controller="Wallet" asp-action="Index">Wallet</a>
+                }
+                @if (isShop)
+                {
+                    <a class="hide-sm" href="#">Shop console</a>
+                }
+                @if (signedIn)
+                {
+                    <span class="who">@name · @role</span>
+                    <a asp-controller="Account" asp-action="Logout">Sign out</a>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login">Sign in</a>
+                    <a class="btn accent sm" asp-controller="Account" asp-action="Register">Get started</a>
+                }
+            </nav>
+        </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - PrintHub.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="foot">
+        <div class="wrap between">
+            <div class="stack" style="--gap:.4rem">
+                <span class="brand" style="font-size:1rem"><span class="regmark"></span> PrintHub</span>
+                <span class="muted">A marketplace for print &amp; fabrication shops.</span>
+            </div>
+            <div class="eyebrow">PRN232 · Built on ASP.NET Core</div>
         </div>
     </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

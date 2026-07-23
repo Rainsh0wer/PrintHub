@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<div class="wrap" style="max-width:440px;padding-top:56px;padding-bottom:80px">
+    <div class="eyebrow" style="margin-bottom:14px"><span class="regmark cmyk"></span> Welcome back</div>
+    <h1 style="font-size:2.2rem;margin-bottom:6px">Sign in</h1>
+    <p class="muted" style="margin-top:0">Access your jobs, wallet, and orders.</p>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert err" style="margin-bottom:16px">@ViewBag.Error</div>
+    }
+
+    <div class="card">
+        <div class="colorbar"><i></i><i></i><i></i><i></i></div>
+        <form method="post" class="pad stack" style="--gap:1rem">
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+            <div class="form-row">
+                <label class="lbl" for="email">Email</label>
+                <input class="input" id="email" name="email" type="email" required autofocus value="@ViewBag.Email" placeholder="you@example.com" />
+            </div>
+            <div class="form-row">
+                <label class="lbl" for="password">Password</label>
+                <input class="input" id="password" name="password" type="password" required placeholder="••••••••" />
+            </div>
+            <button class="btn accent block" type="submit">Sign in</button>
+        </form>
+    </div>
+
+    <p class="muted" style="margin-top:18px">New to PrintHub? <a asp-controller="Account" asp-action="Register">Create an account</a></p>
+
+    <div class="card" style="margin-top:24px;background:var(--surface-2)">
+        <div class="pad">
+            <div class="eyebrow" style="margin-bottom:8px">Demo accounts · password <span class="mono">Password123!</span></div>
+            <div class="mono muted" style="font-size:.82rem;line-height:1.7">
+                admin@printhub.vn<br>
+                owner.quickprint@printhub.vn<br>
+                customer1@printhub.vn
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Create account";
+}
+
+<div class="wrap" style="max-width:460px;padding-top:56px;padding-bottom:80px">
+    <div class="eyebrow" style="margin-bottom:14px"><span class="regmark cmyk"></span> Join PrintHub</div>
+    <h1 style="font-size:2.2rem;margin-bottom:6px">Create your account</h1>
+    <p class="muted" style="margin-top:0">Start comparing quotes and ordering in minutes.</p>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert err" style="margin-bottom:16px">@ViewBag.Error</div>
+    }
+
+    <div class="card">
+        <div class="colorbar"><i></i><i></i><i></i><i></i></div>
+        <form method="post" class="pad stack" style="--gap:1rem">
+            <div class="form-row">
+                <label class="lbl" for="fullName">Full name</label>
+                <input class="input" id="fullName" name="fullName" required autofocus value="@ViewBag.FullName" />
+            </div>
+            <div class="form-row">
+                <label class="lbl" for="email">Email</label>
+                <input class="input" id="email" name="email" type="email" required value="@ViewBag.Email" />
+            </div>
+            <div class="form-row">
+                <label class="lbl" for="phoneNumber">Phone <span class="muted" style="text-transform:none;letter-spacing:0">(optional)</span></label>
+                <input class="input" id="phoneNumber" name="phoneNumber" value="@ViewBag.Phone" />
+            </div>
+            <div class="row">
+                <div class="form-row" style="flex:1">
+                    <label class="lbl" for="password">Password</label>
+                    <input class="input" id="password" name="password" type="password" required />
+                </div>
+                <div class="form-row" style="flex:1;margin-top:0">
+                    <label class="lbl" for="confirmPassword">Confirm</label>
+                    <input class="input" id="confirmPassword" name="confirmPassword" type="password" required />
+                </div>
+            </div>
+            <p class="muted" style="font-size:.8rem;margin:0">At least 8 characters, with an uppercase, a lowercase, and a digit.</p>
+            <button class="btn accent block" type="submit">Create account</button>
+        </form>
+    </div>
+
+    <p class="muted" style="margin-top:18px">Already have an account? <a asp-controller="Account" asp-action="Login">Sign in</a></p>
+</div>

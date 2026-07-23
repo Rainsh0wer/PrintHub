@@ -1,0 +1,61 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Shops.Dtos.ShopSummaryDto>
+@{
+    ViewData["Title"] = "Shops";
+    string q = ViewBag.Query ?? "";
+}
+
+<section class="wrap" style="padding-top:44px;padding-bottom:80px">
+    <div class="sec-head">
+        <div>
+            <div class="eyebrow" style="margin-bottom:8px"><span class="regmark"></span> The directory</div>
+            <h1 style="font-size:2.2rem">Find a shop</h1>
+        </div>
+        <span class="mono muted">@Model.TotalCount shops</span>
+    </div>
+
+    <form method="get" class="row" style="margin-bottom:28px;max-width:520px">
+        <input class="input" name="q" value="@q" placeholder="Search by name or district…" />
+        <button class="btn" type="submit">Search</button>
+    </form>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert err">@ViewBag.Error</div>
+    }
+    else if (!Model.Items.Any())
+    {
+        <div class="empty">
+            <div class="regmark"></div>
+            <p>No shops matched “@q”. Try a different name or district.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+            @foreach (var s in Model.Items)
+            {
+                <a class="card ticket" asp-action="Details" asp-route-id="@s.Id" style="color:inherit;text-decoration:none;display:block">
+                    <div class="colorbar"><i></i><i></i><i></i><i></i></div>
+                    <div class="pad stack" style="--gap:.7rem">
+                        <div class="between">
+                            <h3 style="font-size:1.15rem">@s.Name</h3>
+                            <span class="rating">★ @s.RatingAverage.ToString("0.0")</span>
+                        </div>
+                        <div class="code">@s.District@(string.IsNullOrEmpty(s.City) ? "" : " · " + s.City)</div>
+                        <div class="tag-list">
+                            @foreach (var g in s.ServiceGroups)
+                            {
+                                <span class="badge">@g</span>
+                            }
+                        </div>
+                        <hr class="divider">
+                        <div class="between">
+                            <span class="eyebrow">from</span>
+                            <span class="price">@(s.MinUnitPrice.HasValue ? s.MinUnitPrice.Value.ToString("N0") : "—")<span class="cur">₫</span></span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</section>

@@ -1,8 +1,107 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Print & Fabrication Marketplace";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero">
+    <div class="wrap hero-grid">
+        <div>
+            <div class="eyebrow kicker"><span class="regmark cmyk"></span> One job — every shop in reach</div>
+            <h1>Compare print quotes.<br><em>Pick your shop.</em></h1>
+            <p class="lede">Configure a print or fabrication job once. PrintHub prices it across every eligible shop so you order at the best rate — then track it from press to pickup.</p>
+            <div class="cta">
+                <a class="btn accent" asp-controller="Account" asp-action="Register">Create an account</a>
+                <a class="btn ghost" asp-controller="Shops" asp-action="Index">Browse shops</a>
+            </div>
+        </div>
+
+        <div class="crop">
+            <div class="card ticket" aria-hidden="true">
+                <div class="colorbar"><i></i><i></i><i></i><i></i></div>
+                <div class="pad stack" style="--gap:.9rem">
+                    <div class="between">
+                        <span class="code">JOB · PH-260723-A4</span>
+                        <span class="badge"><span class="dot busy"></span> comparing</span>
+                    </div>
+                    <dl class="field">
+                        <dt>Item</dt><dd>A4 B&amp;W · 120 pages · duplex</dd>
+                        <dt>Finish</dt><dd>Spiral binding ×1</dd>
+                    </dl>
+                    <hr class="divider">
+                    <div class="stack" style="--gap:.5rem">
+                        <div class="between quote-row">
+                            <span><strong>Campus Copy Center</strong> <span class="muted mono">· Hai Bà Trưng</span></span>
+                            <span class="price">60,000<span class="cur">₫</span></span>
+                        </div>
+                        <div class="between quote-row best">
+                            <span><strong>QuickPrint</strong> <span class="rating">★ 4.7</span> <span class="badge" style="border-color:var(--accent);color:var(--accent-ink)">best price</span></span>
+                            <span class="price" style="color:var(--accent-ink)">54,000<span class="cur">₫</span></span>
+                        </div>
+                        <div class="between quote-row">
+                            <span><strong>MakerLab</strong> <span class="muted mono">· 90 min</span></span>
+                            <span class="price">72,000<span class="cur">₫</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="sec">
+    <div class="wrap">
+        <div class="sec-head">
+            <h2>Three steps, one ticket</h2>
+            <span class="eyebrow">the flow</span>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="card"><div class="pad stack" style="--gap:.6rem">
+                <span class="code mono">01</span>
+                <h3 style="font-size:1.25rem">Configure</h3>
+                <p class="muted" style="margin:0">Pick a service, upload your file, set quantity and finishing. One spec, no back-and-forth.</p>
+            </div></div>
+            <div class="card"><div class="pad stack" style="--gap:.6rem">
+                <span class="code mono">02</span>
+                <h3 style="font-size:1.25rem">Compare</h3>
+                <p class="muted" style="margin:0">See real quotes from every shop that can do the job — sorted by price, time, or rating.</p>
+            </div></div>
+            <div class="card"><div class="pad stack" style="--gap:.6rem">
+                <span class="code mono">03</span>
+                <h3 style="font-size:1.25rem">Collect</h3>
+                <p class="muted" style="margin:0">Pay from your wallet and track the order from accepted, to in production, to ready.</p>
+            </div></div>
+        </div>
+    </div>
+</section>
+
+<section class="sec" style="padding-top:0">
+    <div class="wrap">
+        <div class="sec-head">
+            <h2>What you can make</h2>
+            <span class="eyebrow">services</span>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(4,1fr)">
+            @foreach (var svc in new[] {
+                ("Documents", "B&W / colour, A4–A1, plotting"),
+                ("Finishing", "Spiral & thermal binding, lamination"),
+                ("3D printing", "FDM by material and time"),
+                ("Laser", "Cutting & engraving") })
+            {
+                <div class="card"><div class="pad stack" style="--gap:.5rem">
+                    <span class="regmark"></span>
+                    <h3 style="font-size:1.1rem">@svc.Item1</h3>
+                    <p class="muted" style="margin:0;font-size:.9rem">@svc.Item2</p>
+                </div></div>
+            }
+        </div>
+        <div class="center" style="margin-top:36px">
+            <a class="btn accent" asp-controller="Shops" asp-action="Index">Find a shop near you</a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <style>
+        .quote-row { padding:.55rem .75rem; border:1px solid var(--line); border-radius:var(--r); background:var(--surface); }
+        .quote-row.best { border-color:var(--accent); background:var(--accent-wash); }
+    </style>
+}
