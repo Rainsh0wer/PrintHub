@@ -4,6 +4,7 @@ using PrintHub.Application.Common;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Application.Common.Models;
 using PrintHub.Application.Features.Orders.Dtos;
+using PrintHub.Application.Features.Vouchers;
 using PrintHub.Application.Specifications.Orders;
 using PrintHub.Domain.Entities;
 using PrintHub.Domain.Enums;
@@ -24,12 +25,14 @@ public class OrderService : IOrderService
     private readonly IUnitOfWork _uow;
     private readonly ICurrentUser _currentUser;
     private readonly IMapper _mapper;
+    private readonly IVoucherService _vouchers;
 
-    public OrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper)
+    public OrderService(IUnitOfWork uow, ICurrentUser currentUser, IMapper mapper, IVoucherService vouchers)
     {
         _uow = uow;
         _currentUser = currentUser;
         _mapper = mapper;
+        _vouchers = vouchers;
     }
 
     public async Task<Result<OrderDetailDto>> PlaceOrderAsync(int customerId, PlaceOrderRequest request, CancellationToken ct = default)
@@ -50,7 +53,17 @@ public class OrderService : IOrderService
             return Result<OrderDetailDto>.NotFound("Customer not found.");
 
         // Financials come from the quote, never the client — the quote is authoritative.
-        var discount = 0m;                       // voucher application (UC-14) is a later slice
+        var discount = 0m;
+        int? voucherId = null;
+        if (!string.IsNullOrWhiteSpace(request.VoucherCode))
+        {
+            var applied = await _vouchers.ValidateForOrderAsync(customerId, request.VoucherCode, quote.SubTotal, ct);
+            if (applied.IsFailure)
+                return Result<OrderDetailDto>.Fail(applied.Error!, applied.ErrorType);
+            discount = applied.Value!.Discount;
+            voucherId = applied.Value.VoucherId;
+        }
+
         var total = quote.SubTotal - discount;
         if (customer.WalletBalance < total)
             return Result<OrderDetailDto>.Conflict("Insufficient wallet balance. Please top up your wallet and try again.");
@@ -67,6 +80,7 @@ public class OrderService : IOrderService
                 CustomerId = customerId,
                 ShopId = quote.ShopId,
                 QuoteId = quote.Id,
+                VoucherId = voucherId,
                 Status = OrderStatus.AwaitingAcceptance,
                 FulfilmentMethod = request.FulfilmentMethod,
                 PickupSlotStart = request.PickupSlotStart,
@@ -86,6 +100,16 @@ public class OrderService : IOrderService
 
             order.OrderCode = $"PH-{now:yyMMdd}-{order.Id:D4}";
             _uow.Repository<Order>().Update(order);
+
+            if (voucherId is int vid)
+            {
+                var voucher = await _uow.Repository<Voucher>().GetByIdAsync(vid, ct);
+                if (voucher is not null)
+                {
+                    voucher.UsedCount++;
+                    _uow.Repository<Voucher>().Update(voucher);
+                }
+            }
 
             // Debit the wallet and record the ledger entry against the resulting balance.
             customer.WalletBalance -= total;

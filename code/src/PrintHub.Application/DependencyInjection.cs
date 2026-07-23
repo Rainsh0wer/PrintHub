@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddScoped<IServiceTypeAdminService, ServiceTypeAdminService>();
         services.AddScoped<IVoucherAdminService, VoucherAdminService>();
+        services.AddScoped<IVoucherService, VoucherService>();
 
         return services;
     }

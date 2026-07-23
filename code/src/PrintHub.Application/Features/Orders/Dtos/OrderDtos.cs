@@ -25,7 +25,8 @@ public record PlaceOrderRequest(
     DateTime? PickupSlotEnd,
     string? DeliveryAddress,
     string? CustomerNote,
-    IReadOnlyList<PlaceOrderItemInput> Items);
+    IReadOnlyList<PlaceOrderItemInput> Items,
+    string? VoucherCode = null);
 
 /// <summary>Reason carried on cancel/decline transitions.</summary>
 public record CancelOrderRequest(string? Reason);
