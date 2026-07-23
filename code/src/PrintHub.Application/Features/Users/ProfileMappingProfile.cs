@@ -10,5 +10,9 @@ public class ProfileMappingProfile : Profile
     {
         CreateMap<User, ProfileDto>()
             .ForCtorParam(nameof(ProfileDto.Role), o => o.MapFrom(s => s.Role.ToString()));
+
+        CreateMap<User, UserListItemDto>()
+            .ForCtorParam(nameof(UserListItemDto.Role), o => o.MapFrom(s => s.Role.ToString()))
+            .ForCtorParam(nameof(UserListItemDto.Status), o => o.MapFrom(s => s.Status.ToString()));
     }
 }
