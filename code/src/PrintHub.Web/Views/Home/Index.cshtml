@@ -1,107 +1,113 @@
 @{
     ViewData["Title"] = "Print & Fabrication Marketplace";
+    Layout = "_LandingLayout";
 }
 
-<section class="hero">
-    <div class="wrap hero-grid">
-        <div>
-            <div class="eyebrow kicker"><span class="regmark cmyk"></span> One job — every shop in reach</div>
-            <h1>Compare print quotes.<br><em>Pick your shop.</em></h1>
-            <p class="lede">Configure a print or fabrication job once. PrintHub prices it across every eligible shop so you order at the best rate — then track it from press to pickup.</p>
-            <div class="cta">
-                <a class="btn accent" asp-controller="Account" asp-action="Register">Create an account</a>
-                <a class="btn ghost" asp-controller="Shops" asp-action="Index">Browse shops</a>
-            </div>
-        </div>
-
-        <div class="crop">
-            <div class="card ticket" aria-hidden="true">
-                <div class="colorbar"><i></i><i></i><i></i><i></i></div>
-                <div class="pad stack" style="--gap:.9rem">
-                    <div class="between">
-                        <span class="code">JOB · PH-260723-A4</span>
-                        <span class="badge"><span class="dot busy"></span> comparing</span>
-                    </div>
-                    <dl class="field">
-                        <dt>Item</dt><dd>A4 B&amp;W · 120 pages · duplex</dd>
-                        <dt>Finish</dt><dd>Spiral binding ×1</dd>
-                    </dl>
-                    <hr class="divider">
-                    <div class="stack" style="--gap:.5rem">
-                        <div class="between quote-row">
-                            <span><strong>Campus Copy Center</strong> <span class="muted mono">· Hai Bà Trưng</span></span>
-                            <span class="price">60,000<span class="cur">₫</span></span>
-                        </div>
-                        <div class="between quote-row best">
-                            <span><strong>QuickPrint</strong> <span class="rating">★ 4.7</span> <span class="badge" style="border-color:var(--accent);color:var(--accent-ink)">best price</span></span>
-                            <span class="price" style="color:var(--accent-ink)">54,000<span class="cur">₫</span></span>
-                        </div>
-                        <div class="between quote-row">
-                            <span><strong>MakerLab</strong> <span class="muted mono">· 90 min</span></span>
-                            <span class="price">72,000<span class="cur">₫</span></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<section class="ld-hero">
+    <div class="wrap">
+        <span class="ld-pill">◒ Print &amp; fabrication marketplace</span>
+        <h1 style="margin-top:1.2rem">Every print job,<br>priced by every shop.</h1>
+        <p>Configure a job once — documents, binding, 3D printing, laser cutting — and PrintHub quotes it across every eligible shop. Order at the best price and track it to pickup.</p>
+        <div class="cta">
+            <a class="btn on-dark lg" asp-controller="Account" asp-action="Register">Get started</a>
+            <a class="btn dark-outline lg" asp-controller="Shops" asp-action="Index">Browse shops</a>
         </div>
     </div>
 </section>
 
-<section class="sec">
-    <div class="wrap">
-        <div class="sec-head">
-            <h2>Three steps, one ticket</h2>
-            <span class="eyebrow">the flow</span>
-        </div>
-        <div class="grid" style="grid-template-columns:repeat(3,1fr)">
-            <div class="card"><div class="pad stack" style="--gap:.6rem">
-                <span class="code mono">01</span>
-                <h3 style="font-size:1.25rem">Configure</h3>
-                <p class="muted" style="margin:0">Pick a service, upload your file, set quantity and finishing. One spec, no back-and-forth.</p>
-            </div></div>
-            <div class="card"><div class="pad stack" style="--gap:.6rem">
-                <span class="code mono">02</span>
-                <h3 style="font-size:1.25rem">Compare</h3>
-                <p class="muted" style="margin:0">See real quotes from every shop that can do the job — sorted by price, time, or rating.</p>
-            </div></div>
-            <div class="card"><div class="pad stack" style="--gap:.6rem">
-                <span class="code mono">03</span>
-                <h3 style="font-size:1.25rem">Collect</h3>
-                <p class="muted" style="margin:0">Pay from your wallet and track the order from accepted, to in production, to ready.</p>
-            </div></div>
-        </div>
+<section class="ld-sec" style="padding-top:0">
+    <div class="wrap grid" style="grid-template-columns:repeat(4,1fr);--gap:16px">
+        @foreach (var f in new[] {
+            ("⚡", "Compare in seconds", "One spec, live quotes from every shop."),
+            ("◉", "Pay from your wallet", "Top up once, order in a tap."),
+            ("◔", "Track to pickup", "Accepted → in production → ready."),
+            ("★", "Rated by students", "Real reviews from real orders.") })
+        {
+            <div class="ld-feature">
+                <div class="ic">@f.Item1</div>
+                <h3 style="font-size:1.05rem">@f.Item2</h3>
+                <p class="muted" style="margin:.4rem 0 0;font-size:.9rem">@f.Item3</p>
+            </div>
+        }
     </div>
 </section>
 
-<section class="sec" style="padding-top:0">
+<section class="ld-sec" id="how">
     <div class="wrap">
-        <div class="sec-head">
-            <h2>What you can make</h2>
-            <span class="eyebrow">services</span>
+        <div style="text-align:center;max-width:44ch;margin:0 auto 44px">
+            <span class="ld-pill">How it works</span>
+            <h2 style="margin-top:1rem">Three steps from file to finished</h2>
         </div>
-        <div class="grid" style="grid-template-columns:repeat(4,1fr)">
-            @foreach (var svc in new[] {
-                ("Documents", "B&W / colour, A4–A1, plotting"),
-                ("Finishing", "Spiral & thermal binding, lamination"),
-                ("3D printing", "FDM by material and time"),
-                ("Laser", "Cutting & engraving") })
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);--gap:20px">
+            @foreach (var s in new[] {
+                ("Configure", "Pick a service, upload your file, set quantity and finishing — one spec covers every shop."),
+                ("Compare", "See real quotes side by side, sorted by price, time, or rating, and choose your shop."),
+                ("Collect", "Pay from your wallet and follow the order from accepted, to in production, to ready for pickup.") })
             {
-                <div class="card"><div class="pad stack" style="--gap:.5rem">
-                    <span class="regmark"></span>
-                    <h3 style="font-size:1.1rem">@svc.Item1</h3>
-                    <p class="muted" style="margin:0;font-size:.9rem">@svc.Item2</p>
-                </div></div>
+                <div class="ld-card">
+                    <h3>@s.Item1</h3>
+                    <p class="muted" style="margin:.6rem 0 0">@s.Item2</p>
+                </div>
             }
         </div>
-        <div class="center" style="margin-top:36px">
-            <a class="btn accent" asp-controller="Shops" asp-action="Index">Find a shop near you</a>
+    </div>
+</section>
+
+<section class="ld-sec" id="services" style="padding-top:0">
+    <div class="wrap">
+        <div class="between" style="margin-bottom:28px">
+            <h2>Print anything, make anything</h2>
+            <a class="btn dark-outline" asp-controller="Shops" asp-action="Index">See all shops</a>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);--gap:16px">
+            @foreach (var svc in new[] {
+                ("Documents", "B&W & colour, A4–A1, plotting"),
+                ("Finishing", "Spiral & thermal binding, lamination"),
+                ("3D printing", "FDM priced by material & time"),
+                ("Laser", "Cutting & engraving") })
+            {
+                <div class="ld-feature">
+                    <div class="ic">◒</div>
+                    <h3 style="font-size:1.05rem">@svc.Item1</h3>
+                    <p class="muted" style="margin:.4rem 0 0;font-size:.9rem">@svc.Item2</p>
+                </div>
+            }
         </div>
     </div>
 </section>
 
-@section Scripts {
-    <style>
-        .quote-row { padding:.55rem .75rem; border:1px solid var(--line); border-radius:var(--r); background:var(--surface); }
-        .quote-row.best { border-color:var(--accent); background:var(--accent-wash); }
-    </style>
-}
+<section class="ld-sec" id="reviews">
+    <div class="wrap">
+        <div style="text-align:center;max-width:42ch;margin:0 auto 40px">
+            <span class="ld-pill">Reviews</span>
+            <h2 style="margin-top:1rem">Trusted by people who print a lot</h2>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);--gap:16px">
+            @foreach (var r in new[] {
+                ("Fast and cheap, right by the gate. Bound my thesis in an hour.", "Minh H.", "Cầu Giấy"),
+                ("Compared three shops and saved 20% on 200 colour pages.", "An B.", "Đống Đa"),
+                ("Laser-cut acrylic came out perfect. Great communication.", "Thao D.", "Hai Bà Trưng") })
+            {
+                <div class="ld-card">
+                    <div class="stars" style="font-size:1rem">★★★★★</div>
+                    <p style="margin:.8rem 0 1rem;color:var(--d-text)">“@r.Item1”</p>
+                    <div class="row" style="--gap:.6rem;align-items:center">
+                        <img class="avatar" src="https://api.dicebear.com/9.x/initials/svg?seed=@r.Item2" alt="" />
+                        <div><strong style="display:block;font-size:.9rem">@r.Item2</strong><span class="muted" style="font-size:.8rem">@r.Item3</span></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="ld-sec" id="shops" style="padding-top:0">
+    <div class="wrap">
+        <div class="ld-card" style="text-align:center;padding:56px 24px;background:linear-gradient(180deg,#141417,#0f0f12)">
+            <span class="ld-pill">For shops</span>
+            <h2 style="margin:1rem 0 .6rem;font-size:clamp(1.8rem,4vw,2.6rem)">Run a print or fab shop? Sell on PrintHub.</h2>
+            <p class="muted" style="max-width:50ch;margin:0 auto 1.8rem">List your rate card, get matched to nearby jobs, and manage your order queue from one console.</p>
+            <a class="btn on-dark lg" asp-controller="Account" asp-action="Register">Become a seller</a>
+        </div>
+    </div>
+</section>

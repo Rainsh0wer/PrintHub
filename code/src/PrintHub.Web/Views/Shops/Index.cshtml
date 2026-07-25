@@ -2,60 +2,88 @@
 @{
     ViewData["Title"] = "Shops";
     string q = ViewBag.Query ?? "";
+    string? group = ViewBag.Group;
+    string GroupCls(string g) => group == g ? "active" : "";
 }
 
-<section class="wrap" style="padding-top:44px;padding-bottom:80px">
-    <div class="sec-head">
+<div class="wrap">
+    <div class="page-head between">
         <div>
-            <div class="eyebrow" style="margin-bottom:8px"><span class="regmark"></span> The directory</div>
-            <h1 style="font-size:2.2rem">Find a shop</h1>
+            <h1>@(string.IsNullOrEmpty(q) ? "All shops" : $"Results for “{q}”")</h1>
+            <span class="muted">@Model.TotalCount shops in Hà Nội</span>
         </div>
-        <span class="mono muted">@Model.TotalCount shops</span>
+        <div class="chips hide-sm">
+            <a class="chip @GroupCls("")" asp-action="Index" asp-route-q="@q">All</a>
+            <a class="chip @GroupCls("Document")" asp-action="Index" asp-route-q="@q" asp-route-group="Document">Documents</a>
+            <a class="chip @GroupCls("Finishing")" asp-action="Index" asp-route-q="@q" asp-route-group="Finishing">Finishing</a>
+            <a class="chip @GroupCls("Fabrication")" asp-action="Index" asp-route-q="@q" asp-route-group="Fabrication">Fabrication</a>
+        </div>
     </div>
 
-    <form method="get" class="row" style="margin-bottom:28px;max-width:520px">
-        <input class="input" name="q" value="@q" placeholder="Search by name or district…" />
-        <button class="btn" type="submit">Search</button>
-    </form>
+    <div class="layout-2col" style="padding-bottom:64px">
+        <aside class="filters">
+            <form method="get">
+                <input type="hidden" name="group" value="@group" />
+                <h4>Search</h4>
+                <input class="input" name="q" value="@q" placeholder="Name or district…" />
+                <button class="btn primary block" style="margin-top:10px" type="submit">Apply</button>
+            </form>
+            <h4>Service group</h4>
+            <a class="check" asp-action="Index" asp-route-q="@q"><input type="radio" readonly checked="@(string.IsNullOrEmpty(group))" /> All services</a>
+            <a class="check" asp-action="Index" asp-route-q="@q" asp-route-group="Document"><input type="radio" readonly checked="@(group=="Document")" /> Documents</a>
+            <a class="check" asp-action="Index" asp-route-q="@q" asp-route-group="Finishing"><input type="radio" readonly checked="@(group=="Finishing")" /> Finishing</a>
+            <a class="check" asp-action="Index" asp-route-q="@q" asp-route-group="Fabrication"><input type="radio" readonly checked="@(group=="Fabrication")" /> Fabrication</a>
+            <h4>Rating</h4>
+            <label class="check"><input type="checkbox" /> 4★ &amp; up</label>
+            <label class="check"><input type="checkbox" /> 3★ &amp; up</label>
+        </aside>
 
-    @if (ViewBag.Error != null)
-    {
-        <div class="alert err">@ViewBag.Error</div>
-    }
-    else if (!Model.Items.Any())
-    {
-        <div class="empty">
-            <div class="regmark"></div>
-            <p>No shops matched “@q”. Try a different name or district.</p>
-        </div>
-    }
-    else
-    {
-        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
-            @foreach (var s in Model.Items)
+        <div>
+            @if (ViewBag.Error != null)
             {
-                <a class="card ticket" asp-action="Details" asp-route-id="@s.Id" style="color:inherit;text-decoration:none;display:block">
-                    <div class="colorbar"><i></i><i></i><i></i><i></i></div>
-                    <div class="pad stack" style="--gap:.7rem">
-                        <div class="between">
-                            <h3 style="font-size:1.15rem">@s.Name</h3>
-                            <span class="rating">★ @s.RatingAverage.ToString("0.0")</span>
-                        </div>
-                        <div class="code">@s.District@(string.IsNullOrEmpty(s.City) ? "" : " · " + s.City)</div>
-                        <div class="tag-list">
-                            @foreach (var g in s.ServiceGroups)
-                            {
-                                <span class="badge">@g</span>
-                            }
-                        </div>
-                        <hr class="divider">
-                        <div class="between">
-                            <span class="eyebrow">from</span>
-                            <span class="price">@(s.MinUnitPrice.HasValue ? s.MinUnitPrice.Value.ToString("N0") : "—")<span class="cur">₫</span></span>
-                        </div>
-                    </div>
-                </a>
+                <div class="alert err">@ViewBag.Error</div>
+            }
+            else if (!Model.Items.Any())
+            {
+                <div class="empty">No shops matched. Try a different search or clear the filters.</div>
+            }
+            else
+            {
+                <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+                    @foreach (var s in Model.Items)
+                    {
+                        <a class="product" asp-action="Details" asp-route-id="@s.Id">
+                            <div class="thumb">
+                                <img src="@s.CoverImageUrl" alt="@s.Name" loading="lazy" onerror="this.style.opacity=0" />
+                                <span class="fav" onclick="event.preventDefault()">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1 7.8 7.8 7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+                                </span>
+                                @if (s.RatingCount > 0 && s.RatingAverage >= 4.5)
+                                {
+                                    <span class="chip-badge">Top rated</span>
+                                }
+                            </div>
+                            <div class="body">
+                                <div class="row" style="--gap:.5rem;align-items:center">
+                                    <img class="avatar" style="width:26px;height:26px" src="@s.LogoUrl" alt="" onerror="this.style.display='none'" />
+                                    <span class="title">@s.Name</span>
+                                </div>
+                                <span class="muted" style="font-size:.85rem">@s.District@(string.IsNullOrEmpty(s.City) ? "" : ", " + s.City)</span>
+                                <div class="tag-list chips" style="gap:6px">
+                                    @foreach (var g in s.ServiceGroups.Take(3))
+                                    {
+                                        <span class="badge">@g</span>
+                                    }
+                                </div>
+                                <div class="between" style="margin-top:auto;padding-top:6px">
+                                    <span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0") <span class="muted">(@s.RatingCount)</span></span>
+                                    <span class="price">@(s.MinUnitPrice.HasValue ? s.MinUnitPrice.Value.ToString("N0") : "—")<span class="cur"> ₫</span></span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
             }
         </div>
-    }
-</section>
+    </div>
+</div>

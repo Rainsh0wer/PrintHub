@@ -11,11 +11,14 @@ public class ShopsController : Controller
 
     public ShopsController(PrintHubApiClient api) => _api = api;
 
-    public async Task<IActionResult> Index(string? q)
+    public async Task<IActionResult> Index(string? q, string? group)
     {
-        var path = $"/api/shops?PageSize=24{(string.IsNullOrWhiteSpace(q) ? "" : $"&Keyword={Uri.EscapeDataString(q)}")}";
+        var path = $"/api/shops?PageSize=24"
+            + (string.IsNullOrWhiteSpace(q) ? "" : $"&Keyword={Uri.EscapeDataString(q)}")
+            + (string.IsNullOrWhiteSpace(group) ? "" : $"&ServiceGroup={Uri.EscapeDataString(group)}");
         var res = await _api.GetAsync<PagedResult<ShopSummaryDto>>(path);
         ViewBag.Query = q;
+        ViewBag.Group = group;
         ViewBag.Error = res.Ok ? null : res.Error;
         return View(res.Data ?? new PagedResult<ShopSummaryDto>());
     }
