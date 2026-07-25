@@ -1,0 +1,49 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Orders.Dtos.OrderSummaryDto>
+@{
+    ViewData["Title"] = "My orders";
+    string Cls(string st) => st switch
+    {
+        "Completed" or "ReadyForPickup" or "OutForDelivery" => "ok",
+        "Cancelled" or "Declined" or "ProductionFailed" => "err",
+        "AwaitingAcceptance" => "warn",
+        _ => "info"
+    };
+}
+
+<div class="wrap" style="padding-bottom:64px">
+    <div class="page-head between">
+        <div><h1>My orders</h1><span class="muted">@Model.TotalCount orders</span></div>
+        <a class="btn primary" asp-controller="Quotes" asp-action="Index">New order</a>
+    </div>
+
+    @if (TempData["err"] != null)
+    {
+        <div class="alert err" style="margin-bottom:16px">@TempData["err"]</div>
+    }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty">You have no orders yet. <a asp-controller="Quotes" asp-action="Index" style="color:var(--primary);font-weight:600">Compare quotes</a> to place your first one.</div>
+    }
+    else
+    {
+        <div class="card" style="overflow:hidden">
+            <table class="tbl">
+                <thead><tr><th>Order</th><th>Shop</th><th>Placed</th><th>Status</th><th style="text-align:right">Total</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var o in Model.Items)
+                    {
+                        <tr>
+                            <td><strong>@o.OrderCode</strong></td>
+                            <td>@o.ShopName</td>
+                            <td class="muted">@(o.PlacedAt?.ToString("dd MMM, HH:mm"))</td>
+                            <td><span class="badge @Cls(o.Status)"><span class="dot @Cls(o.Status)"></span> @o.Status</span></td>
+                            <td style="text-align:right"><span class="price" style="font-size:1rem">@o.TotalAmount.ToString("N0")<span class="cur"> ₫</span></span></td>
+                            <td style="text-align:right"><a class="btn outline sm" asp-action="Details" asp-route-id="@o.Id">Track</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

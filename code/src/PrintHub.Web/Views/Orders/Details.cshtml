@@ -1,0 +1,131 @@
+@model PrintHub.Application.Features.Orders.Dtos.OrderDetailDto
+@{
+    ViewData["Title"] = Model?.OrderCode ?? "Order";
+    string Cls(string st) => st switch
+    {
+        "Completed" or "ReadyForPickup" or "OutForDelivery" => "ok",
+        "Cancelled" or "Declined" or "ProductionFailed" => "err",
+        "AwaitingAcceptance" => "warn",
+        _ => "info"
+    };
+    var steps = new[] { "AwaitingAcceptance", "Accepted", "InProduction", "ReadyForPickup", "Completed" };
+    int curIdx = Model is null ? 0 : Array.IndexOf(steps, Model.Status);
+}
+
+@if (Model is null)
+{
+    <div class="wrap" style="padding:64px 0"><div class="alert err">@ViewBag.Error</div></div>
+    return;
+}
+
+<div class="wrap" style="padding-bottom:64px">
+    <div class="page-head">
+        <a class="eyebrow" asp-action="Index" style="color:var(--text-3)">← My orders</a>
+        <div class="between" style="margin-top:8px">
+            <div class="row" style="--gap:.8rem;align-items:center">
+                <h1>@Model.OrderCode</h1>
+                <span class="badge @Cls(Model.Status)"><span class="dot @Cls(Model.Status)"></span> @Model.Status</span>
+            </div>
+            <span class="muted">@Model.ShopName</span>
+        </div>
+    </div>
+
+    @if (TempData["err"] != null)
+    {
+        <div class="alert err" style="margin-bottom:16px">@TempData["err"]</div>
+    }
+
+    @* progress rail *@
+    @if (Model.Status != "Cancelled" && Model.Status != "Declined")
+    {
+        <div class="steps card pad" style="margin-bottom:22px">
+            @for (int i = 0; i < steps.Length; i++)
+            {
+                var done = curIdx >= 0 && i <= curIdx;
+                <div class="step @(done ? "done" : "")">
+                    <span class="node">@(done ? "✓" : (i + 1).ToString())</span>
+                    <span class="lbl2">@System.Text.RegularExpressions.Regex.Replace(steps[i], "(\\B[A-Z])", " $1")</span>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="layout-2col" style="grid-template-columns:1.5fr .9fr">
+        <div class="stack" style="--gap:20px">
+            <div class="card pad">
+                <h3 style="font-size:1.05rem;margin-bottom:12px">Items</h3>
+                @foreach (var it in Model.Items)
+                {
+                    <div class="between" style="padding:.5rem 0;border-bottom:1px solid var(--border)">
+                        <div>
+                            <strong>@(it.SnapshotFileName ?? $"Service #{it.ServiceTypeId}")</strong>
+                            <div class="muted" style="font-size:.84rem">
+                                Qty @it.Quantity@(it.PageCount.HasValue ? $" · {it.PageCount} pages" : "")@(it.ColorMode != null ? $" · {it.ColorMode}" : "")@(it.Sides != null ? $" · {it.Sides}" : "")
+                            </div>
+                        </div>
+                        <span class="price" style="font-size:1rem">@it.LineTotal.ToString("N0")<span class="cur"> ₫</span></span>
+                    </div>
+                }
+            </div>
+
+            <div class="card pad">
+                <h3 style="font-size:1.05rem;margin-bottom:12px">History</h3>
+                @foreach (var h in Model.History)
+                {
+                    <div class="row" style="--gap:.7rem;padding:.35rem 0">
+                        <span class="muted mono" style="font-size:.78rem;min-width:112px">@h.CreatedAt.ToString("dd MMM HH:mm")</span>
+                        <span style="font-size:.9rem">@h.ToStatus <span class="muted">— @h.Reason</span></span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="stack" style="--gap:20px">
+            <div class="card pad">
+                <h3 style="font-size:1.05rem;margin-bottom:12px">Summary</h3>
+                <div class="between" style="padding:.3rem 0"><span class="muted">Subtotal</span><span>@Model.SubTotal.ToString("N0") ₫</span></div>
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="between" style="padding:.3rem 0"><span class="muted">Discount</span><span style="color:var(--ok)">−@Model.DiscountAmount.ToString("N0") ₫</span></div>
+                }
+                <hr class="divider" style="margin:.5rem 0" />
+                <div class="between" style="padding:.3rem 0"><strong>Total paid</strong><span class="price">@Model.TotalAmount.ToString("N0")<span class="cur"> ₫</span></span></div>
+                @if (Model.RefundedAmount is > 0)
+                {
+                    <div class="between" style="padding:.3rem 0"><span class="muted">Refunded</span><span style="color:var(--ok)">@Model.RefundedAmount.Value.ToString("N0") ₫</span></div>
+                }
+            </div>
+
+            @if (Model.Status is "AwaitingAcceptance" or "Accepted")
+            {
+                <form method="post" asp-action="Cancel" class="card pad stack" style="--gap:.7rem">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <input class="input" name="reason" placeholder="Reason (optional)" />
+                    <button class="btn outline block" type="submit">Cancel order</button>
+                </form>
+            }
+            @if (Model.Status is "ReadyForPickup" or "OutForDelivery")
+            {
+                <form method="post" asp-action="Confirm">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button class="btn primary block lg" type="submit">Confirm receipt</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .steps { display: flex; gap: 6px; }
+        .step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; }
+        .step .node { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border-2); color: var(--text-3); font-weight: 700; font-size: .85rem; z-index: 1; }
+        .step .lbl2 { font-size: .76rem; color: var(--text-3); text-align: center; }
+        .step.done .node { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .step.done .lbl2 { color: var(--text); }
+        .step::after { content: ""; position: absolute; top: 17px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: 0; }
+        .step:last-child::after { display: none; }
+        .step.done::after { background: var(--primary); }
+        .mono { font-variant-numeric: tabular-nums; }
+    </style>
+}

@@ -1,0 +1,133 @@
+@model PrintHub.Web.Models.QuoteVm
+@{
+    ViewData["Title"] = "Compare quotes";
+    var cheapest = Model.Results?.OrderBy(r => r.Total).FirstOrDefault();
+}
+
+<div class="wrap" style="padding-bottom:64px">
+    <div class="page-head">
+        <h1>Compare quotes</h1>
+        <span class="muted">Configure your job once — we price it across every eligible shop.</span>
+    </div>
+
+    @if (TempData["err"] != null)
+    {
+        <div class="alert err" style="margin-bottom:16px">@TempData["err"]</div>
+    }
+
+    <div class="layout-2col" style="grid-template-columns:340px 1fr">
+        <div class="card pad" style="position:sticky;top:128px;align-self:start">
+            <form method="post" class="stack" style="--gap:1rem">
+                @if (Model.ShopId is int sid)
+                {
+                    <input type="hidden" name="ShopId" value="@sid" />
+                    <div class="badge info">Quoting one shop only</div>
+                }
+                <div class="form-row">
+                    <label class="lbl">Service</label>
+                    <select class="input" name="ServiceTypeId" id="svc">
+                        @foreach (var s in Model.Services)
+                        {
+                            <option value="@s.Id" data-model="@s.PricingModel" selected="@(s.Id == Model.ServiceTypeId)">@s.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="row" style="--gap:1rem">
+                    <div class="form-row" style="flex:1">
+                        <label class="lbl">Quantity</label>
+                        <input class="input" type="number" name="Quantity" min="1" value="@Model.Quantity" />
+                    </div>
+                    <div class="form-row" style="flex:1;margin-top:0" data-when="PerPage">
+                        <label class="lbl">Pages</label>
+                        <input class="input" type="number" name="PageCount" min="1" value="@Model.PageCount" />
+                    </div>
+                    <div class="form-row" style="flex:1;margin-top:0" data-when="MaterialAndTime" hidden>
+                        <label class="lbl">Grams</label>
+                        <input class="input" type="number" name="EstimatedGrams" min="1" value="@Model.EstimatedGrams" />
+                    </div>
+                </div>
+                <div class="row" style="--gap:1rem" data-when="PerPage">
+                    <div class="form-row" style="flex:1">
+                        <label class="lbl">Colour</label>
+                        <select class="input" name="ColorMode"><option value="0" selected="@(Model.ColorMode==0)">Black &amp; white</option><option value="1" selected="@(Model.ColorMode==1)">Colour</option></select>
+                    </div>
+                    <div class="form-row" style="flex:1;margin-top:0">
+                        <label class="lbl">Sides</label>
+                        <select class="input" name="Sides"><option value="0" selected="@(Model.Sides==0)">Single</option><option value="1" selected="@(Model.Sides==1)">Double</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="lbl">Sort by</label>
+                    <select class="input" name="SortBy"><option value="0" selected="@(Model.SortBy==0)">Lowest price</option><option value="1" selected="@(Model.SortBy==1)">Fastest</option><option value="2" selected="@(Model.SortBy==2)">Best rated</option></select>
+                </div>
+                <button class="btn primary block lg" type="submit">Compare quotes</button>
+            </form>
+        </div>
+
+        <div>
+            @if (Model.Error != null)
+            {
+                <div class="alert err">@Model.Error</div>
+            }
+            else if (Model.Results is null)
+            {
+                <div class="empty">Configure your job on the left and hit <strong>Compare quotes</strong> to see prices from every eligible shop.</div>
+            }
+            else if (!Model.Results.Any())
+            {
+                <div class="empty">No shop can do this job right now. Try a different service or options.</div>
+            }
+            else
+            {
+                <div class="stack" style="--gap:14px">
+                    @foreach (var q in Model.Results)
+                    {
+                        var best = cheapest != null && q.QuoteId == cheapest.QuoteId;
+                        <div class="card pad quote-card @(best ? "best" : "")">
+                            <div class="between">
+                                <div>
+                                    <div class="row" style="--gap:.6rem;align-items:center">
+                                        <h3 style="font-size:1.15rem">@q.ShopName</h3>
+                                        @if (best) { <span class="badge info">Best price</span> }
+                                        @if (q.IsIndicative) { <span class="badge warn">Indicative</span> }
+                                    </div>
+                                    <div class="muted" style="font-size:.86rem;margin-top:.2rem">
+                                        @q.District · <span class="rating"><span class="stars">★</span> @q.Rating.ToString("0.0")</span> · ~@q.EstimatedMinutes min
+                                    </div>
+                                </div>
+                                <div style="text-align:right">
+                                    <div class="price big">@q.Total.ToString("N0")<span class="cur"> ₫</span></div>
+                                    <form method="post" asp-controller="Orders" asp-action="Place" style="margin-top:8px">
+                                        <input type="hidden" name="quoteId" value="@q.QuoteId" />
+                                        <input type="hidden" name="serviceTypeId" value="@Model.ServiceTypeId" />
+                                        <input type="hidden" name="quantity" value="@Model.Quantity" />
+                                        <input type="hidden" name="pageCount" value="@Model.PageCount" />
+                                        <input type="hidden" name="colorMode" value="@Model.ColorMode" />
+                                        <input type="hidden" name="sides" value="@Model.Sides" />
+                                        <input type="hidden" name="estimatedGrams" value="@Model.EstimatedGrams" />
+                                        <button class="btn @(best ? "primary" : "outline")" type="submit">Place order</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <p class="muted" style="font-size:.82rem;margin-top:14px">Orders are paid from your wallet. Prices lock to the quote you pick.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>.quote-card.best { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary), var(--sh-2); }</style>
+    <script>
+        const svc = document.getElementById('svc');
+        function sync() {
+            const model = svc.options[svc.selectedIndex].dataset.model;
+            document.querySelectorAll('[data-when]').forEach(el => {
+                el.hidden = el.dataset.when !== model;
+            });
+        }
+        svc.addEventListener('change', sync); sync();
+    </script>
+}
