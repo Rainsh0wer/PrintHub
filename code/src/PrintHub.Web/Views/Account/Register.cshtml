@@ -2,45 +2,43 @@
     ViewData["Title"] = "Create account";
 }
 
-<div class="wrap" style="max-width:460px;padding-top:56px;padding-bottom:80px">
-    <div style="text-align:center;margin-bottom:24px">
-        <h1 style="font-size:1.9rem">Create your account</h1>
-        <p class="muted" style="margin-top:.3rem">Start comparing quotes and ordering in minutes.</p>
-    </div>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="text-center mb-4">
+            <div class="ph-logo" style="justify-content:center;color:var(--accent)"><span class="mk" style="background:var(--accent);color:#fff">◒</span> PrintHub</div>
+            <h1 style="font-size:1.5rem;font-weight:900;margin-top:14px">Create your account</h1>
+            <p class="muted" style="font-size:13px">Compare quotes and order in minutes.</p>
+        </div>
 
-    @if (ViewBag.Error != null)
-    {
-        <div class="alert err" style="margin-bottom:16px">@ViewBag.Error</div>
-    }
+        @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
 
-    <div class="card pad">
-        <form method="post" class="stack" style="--gap:1rem">
-            <div class="form-row">
-                <label class="lbl" for="fullName">Full name</label>
-                <input class="input" id="fullName" name="fullName" required autofocus value="@ViewBag.FullName" />
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label">Full name</label>
+                <input class="form-input" name="fullName" required autofocus value="@ViewBag.FullName" />
             </div>
-            <div class="form-row">
-                <label class="lbl" for="email">Email</label>
-                <input class="input" id="email" name="email" type="email" required value="@ViewBag.Email" />
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input class="form-input" name="email" type="email" required value="@ViewBag.Email" />
             </div>
-            <div class="form-row">
-                <label class="lbl" for="phoneNumber">Phone <span class="muted">(optional)</span></label>
-                <input class="input" id="phoneNumber" name="phoneNumber" value="@ViewBag.Phone" />
+            <div class="mb-3">
+                <label class="form-label">Phone <span class="muted">(optional)</span></label>
+                <input class="form-input" name="phoneNumber" value="@ViewBag.Phone" />
             </div>
-            <div class="row" style="--gap:1rem">
-                <div class="form-row" style="flex:1">
-                    <label class="lbl" for="password">Password</label>
-                    <input class="input" id="password" name="password" type="password" required />
+            <div class="row g-2">
+                <div class="col-6 mb-2">
+                    <label class="form-label">Password</label>
+                    <input class="form-input" name="password" type="password" required />
                 </div>
-                <div class="form-row" style="flex:1;margin-top:0">
-                    <label class="lbl" for="confirmPassword">Confirm</label>
-                    <input class="input" id="confirmPassword" name="confirmPassword" type="password" required />
+                <div class="col-6 mb-2">
+                    <label class="form-label">Confirm</label>
+                    <input class="form-input" name="confirmPassword" type="password" required />
                 </div>
             </div>
-            <p class="muted" style="font-size:.8rem;margin:0">At least 8 characters, with an uppercase, a lowercase, and a digit.</p>
-            <button class="btn primary block lg" type="submit">Create account</button>
+            <p class="muted" style="font-size:12px;margin:6px 0 12px">At least 8 characters, with an uppercase, a lowercase, and a digit.</p>
+            <button class="btn-ph btn-block btn-lg" type="submit">Create account</button>
         </form>
-    </div>
 
-    <p class="muted" style="text-align:center;margin-top:18px">Already have an account? <a asp-controller="Account" asp-action="Login" style="color:var(--primary);font-weight:600">Sign in</a></p>
+        <p class="text-center muted mt-3" style="font-size:13px">Already have an account? <a asp-controller="Account" asp-action="Login" class="fw-bold">Sign in</a></p>
+    </div>
 </div>

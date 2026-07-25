@@ -3,84 +3,87 @@
     ViewData["Title"] = "Shops";
     string q = ViewBag.Query ?? "";
     string? group = ViewBag.Group;
-    string GroupCls(string g) => group == g ? "active" : "";
+    string GCls(string g) => group == g ? "active" : "";
 }
 
-<div class="wrap">
+<div class="page-container" style="padding:24px 16px 60px">
     <div class="page-head between">
         <div>
             <h1>@(string.IsNullOrEmpty(q) ? "All shops" : $"Results for “{q}”")</h1>
             <span class="muted">@Model.TotalCount shops in Hà Nội</span>
         </div>
-        <div class="chips hide-sm">
-            <a class="chip @GroupCls("")" asp-action="Index" asp-route-q="@q">All</a>
-            <a class="chip @GroupCls("Document")" asp-action="Index" asp-route-q="@q" asp-route-group="Document">Documents</a>
-            <a class="chip @GroupCls("Finishing")" asp-action="Index" asp-route-q="@q" asp-route-group="Finishing">Finishing</a>
-            <a class="chip @GroupCls("Fabrication")" asp-action="Index" asp-route-q="@q" asp-route-group="Fabrication">Fabrication</a>
-        </div>
     </div>
 
-    <div class="layout-2col" style="padding-bottom:64px">
-        <aside class="filters">
-            <form method="get">
-                <input type="hidden" name="group" value="@group" />
-                <h4>Search</h4>
-                <input class="input" name="q" value="@q" placeholder="Name or district…" />
-                <button class="btn primary block" style="margin-top:10px" type="submit">Apply</button>
-            </form>
-            <h4>Service group</h4>
-            <a class="check" asp-action="Index" asp-route-q="@q"><input type="radio" readonly checked="@(string.IsNullOrEmpty(group))" /> All services</a>
-            <a class="check" asp-action="Index" asp-route-q="@q" asp-route-group="Document"><input type="radio" readonly checked="@(group=="Document")" /> Documents</a>
-            <a class="check" asp-action="Index" asp-route-q="@q" asp-route-group="Finishing"><input type="radio" readonly checked="@(group=="Finishing")" /> Finishing</a>
-            <a class="check" asp-action="Index" asp-route-q="@q" asp-route-group="Fabrication"><input type="radio" readonly checked="@(group=="Fabrication")" /> Fabrication</a>
-            <h4>Rating</h4>
-            <label class="check"><input type="checkbox" /> 4★ &amp; up</label>
-            <label class="check"><input type="checkbox" /> 3★ &amp; up</label>
-        </aside>
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <aside class="filter-sidebar">
+                <div class="filter-title"><i class="fas fa-sliders"></i> Filters</div>
+                <form method="get" class="filter-section">
+                    <input type="hidden" name="group" value="@group" />
+                    <div class="filter-section-title">Search</div>
+                    <input class="form-input" name="q" value="@q" placeholder="Name or district…" />
+                    <button class="btn-ph btn-block mt-2" type="submit">Apply</button>
+                </form>
+                <div class="filter-section">
+                    <div class="filter-section-title">Service group</div>
+                    <a class="@GCls("")" asp-action="Index" asp-route-q="@q"><i class="fas fa-layer-group"></i> All services</a>
+                    <a class="@GCls("Document")" asp-action="Index" asp-route-q="@q" asp-route-group="Document"><i class="fas fa-file-lines"></i> Documents</a>
+                    <a class="@GCls("Finishing")" asp-action="Index" asp-route-q="@q" asp-route-group="Finishing"><i class="fas fa-book"></i> Finishing</a>
+                    <a class="@GCls("Fabrication")" asp-action="Index" asp-route-q="@q" asp-route-group="Fabrication"><i class="fas fa-cube"></i> Fabrication</a>
+                </div>
+                <div class="filter-section">
+                    <div class="filter-section-title">Rating</div>
+                    <label class="filter-check"><input type="checkbox" /> 4★ &amp; up</label>
+                    <label class="filter-check"><input type="checkbox" /> 3★ &amp; up</label>
+                </div>
+            </aside>
+        </div>
 
-        <div>
+        <div class="col-lg-9">
+            <div class="sort-bar">
+                <span class="muted">Sort by</span>
+                <a class="sort-btn active">Relevance</a>
+                <a class="sort-btn">Top rated</a>
+                <a class="sort-btn">Nearest</a>
+                <span class="result-info ms-auto">@Model.TotalCount results</span>
+            </div>
+
             @if (ViewBag.Error != null)
             {
-                <div class="alert err">@ViewBag.Error</div>
+                <div class="alert-ph alert-err">@ViewBag.Error</div>
             }
             else if (!Model.Items.Any())
             {
-                <div class="empty">No shops matched. Try a different search or clear the filters.</div>
+                <div class="empty-ph">No shops matched. Try a different search or clear the filters.</div>
             }
             else
             {
-                <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+                <div class="row g-3">
                     @foreach (var s in Model.Items)
                     {
-                        <a class="product" asp-action="Details" asp-route-id="@s.Id">
-                            <div class="thumb">
-                                <img src="@s.CoverImageUrl" alt="@s.Name" loading="lazy" onerror="this.style.opacity=0" />
-                                <span class="fav" onclick="event.preventDefault()">
-                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1 7.8 7.8 7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
-                                </span>
-                                @if (s.RatingCount > 0 && s.RatingAverage >= 4.5)
-                                {
-                                    <span class="chip-badge">Top rated</span>
-                                }
-                            </div>
-                            <div class="body">
-                                <div class="row" style="--gap:.5rem;align-items:center">
-                                    <img class="avatar" style="width:26px;height:26px" src="@s.LogoUrl" alt="" onerror="this.style.display='none'" />
-                                    <span class="title">@s.Name</span>
+                        <div class="col-6 col-md-4">
+                            <a class="product-card" asp-action="Details" asp-route-id="@s.Id">
+                                <div class="img-wrap">
+                                    <img src="@s.CoverImageUrl" alt="@s.Name" loading="lazy" onerror="this.style.opacity=0" />
+                                    <button class="wishlist-btn" onclick="event.preventDefault()"><i class="far fa-heart"></i></button>
+                                    @if (s.RatingCount > 0 && s.RatingAverage >= 4.5) { <span class="card-badge">Top rated</span> }
                                 </div>
-                                <span class="muted" style="font-size:.85rem">@s.District@(string.IsNullOrEmpty(s.City) ? "" : ", " + s.City)</span>
-                                <div class="tag-list chips" style="gap:6px">
-                                    @foreach (var g in s.ServiceGroups.Take(3))
-                                    {
-                                        <span class="badge">@g</span>
-                                    }
+                                <div class="body">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="@s.LogoUrl" style="width:26px;height:26px;border-radius:50%" onerror="this.style.display='none'" />
+                                        <span class="product-name">@s.Name</span>
+                                    </div>
+                                    <span class="muted" style="font-size:12.5px">@s.District@(string.IsNullOrEmpty(s.City) ? "" : ", " + s.City)</span>
+                                    <div class="d-flex gap-1 flex-wrap">
+                                        @foreach (var g in s.ServiceGroups.Take(3)) { <span class="badge-ph">@g</span> }
+                                    </div>
+                                    <div class="card-meta" style="margin-top:auto">
+                                        <span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0") (@s.RatingCount)</span>
+                                        <span class="price-current">@(s.MinUnitPrice.HasValue ? s.MinUnitPrice.Value.ToString("N0") : "—")<span class="cur"> ₫</span></span>
+                                    </div>
                                 </div>
-                                <div class="between" style="margin-top:auto;padding-top:6px">
-                                    <span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0") <span class="muted">(@s.RatingCount)</span></span>
-                                    <span class="price">@(s.MinUnitPrice.HasValue ? s.MinUnitPrice.Value.ToString("N0") : "—")<span class="cur"> ₫</span></span>
-                                </div>
-                            </div>
-                        </a>
+                            </a>
+                        </div>
                     }
                 </div>
             }

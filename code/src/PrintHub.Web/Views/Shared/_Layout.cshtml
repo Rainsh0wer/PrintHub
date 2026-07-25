@@ -5,89 +5,133 @@
     var avatar = Context.Session.GetString(SessionKeys.UserAvatar);
     var signedIn = !string.IsNullOrEmpty(Context.Session.GetString(SessionKeys.AccessToken));
     var isShop = role is "ShopOwner" or "ShopStaff";
-    string Active(string c) => (ViewContext.RouteData.Values["controller"]?.ToString() == c) ? "active" : "";
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " · PrintHub" : "PrintHub")</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " · PrintHub" : "PrintHub — Print & Fabrication Marketplace")</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <link rel="stylesheet" href="~/css/printhub.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header class="mkt-top">
-        <div class="wrap bar">
-            <a class="logo" asp-controller="Home" asp-action="Index"><span class="mark">◒</span> PrintHub</a>
-            <a class="pill-btn hide-sm" asp-controller="Shops" asp-action="Index">Browse shops</a>
-            <form class="search" method="get" asp-controller="Shops" asp-action="Index">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-                <input name="q" placeholder="Search shops by name or district…" />
-            </form>
-            <div class="top-actions">
-                @if (signedIn && role == "Customer")
-                {
-                    <a class="top-link" asp-controller="Orders" asp-action="Index">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
-                        Orders
-                    </a>
-                    <a class="top-link" asp-controller="Wallet" asp-action="Index">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                        Wallet
-                    </a>
-                }
-                @if (signedIn)
-                {
-                    <a class="top-link" asp-controller="Account" asp-action="Logout">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                        Sign out
-                    </a>
-                    <img class="avatar" src="@avatar" alt="@name" title="@name · @role"
-                         onerror="this.src='https://api.dicebear.com/9.x/initials/svg?seed=@Uri.EscapeDataString(name ?? "U")'" />
-                }
-                else
-                {
-                    <a class="btn ghost sm" asp-controller="Account" asp-action="Login">Sign in</a>
-                    <a class="btn primary sm" asp-controller="Account" asp-action="Register">Get started</a>
-                }
+    <header class="ph-header">
+        <div class="page-container">
+            <div class="ph-top-nav">
+                <div class="d-flex align-items-center">
+                    <a asp-controller="Shops" asp-action="Index">Marketplace</a>
+                    <div class="top-divider"></div>
+                    <a asp-controller="Account" asp-action="Register">Sell on PrintHub</a>
+                    <div class="top-divider"></div>
+                    <span><i class="fas fa-location-dot me-1"></i> Hà Nội</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="javascript:void(0)"><i class="far fa-bell me-1"></i> Notifications</a>
+                    <a href="javascript:void(0)"><i class="far fa-circle-question me-1"></i> Help</a>
+                    @if (signedIn)
+                    {
+                        <div class="dropdown">
+                            <a href="javascript:void(0)" class="d-flex align-items-center gap-2 dropdown-toggle text-white text-decoration-none" data-bs-toggle="dropdown">
+                                <img src="@avatar" class="ph-avatar" onerror="this.style.display='none'" /> <span>@name</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @if (role == "Customer")
+                                {
+                                    <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index">My orders</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Wallet" asp-action="Index">Wallet</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Documents" asp-action="Index">Documents</a></li>
+                                }
+                                else if (isShop)
+                                {
+                                    <li><a class="dropdown-item" asp-controller="ShopConsole" asp-action="Orders">Shop console</a></li>
+                                }
+                                else if (role == "Admin")
+                                {
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Approvals">Platform console</a></li>
+                                }
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Sign out</a></li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="fw-bold" asp-controller="Account" asp-action="Register">Sign up</a>
+                        <div class="top-divider m-0"></div>
+                        <a class="fw-bold" asp-controller="Account" asp-action="Login">Sign in</a>
+                    }
+                </div>
             </div>
-        </div>
-        <div class="mkt-cats">
-            <div class="wrap bar">
-                <span class="muted" style="display:inline-flex;align-items:center;gap:.35rem">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    Hà Nội
-                </span>
-                <a class="@Active("Shops")" asp-controller="Shops" asp-action="Index">All shops</a>
-                @if (signedIn && role == "Customer")
-                {
-                    <a class="@Active("Quotes")" asp-controller="Quotes" asp-action="Index">Compare quotes</a>
-                    <a class="@Active("Orders")" asp-controller="Orders" asp-action="Index">My orders</a>
-                    <a class="@Active("Documents")" asp-controller="Documents" asp-action="Index">Documents</a>
-                }
-                @if (isShop)
-                {
-                    <a asp-controller="ShopConsole" asp-action="Orders">Shop console</a>
-                }
-                @if (!signedIn)
-                {
-                    <a asp-controller="Account" asp-action="Register" style="margin-left:auto;color:var(--primary);font-weight:600">Become a seller</a>
-                }
+
+            <div class="ph-main-nav">
+                <a class="ph-logo" asp-controller="Home" asp-action="Index"><span class="mk">◒</span> PrintHub</a>
+                <div class="ph-search-wrap">
+                    <form class="ph-search-bar" method="get" asp-controller="Shops" asp-action="Index">
+                        <input name="q" placeholder="Search shops by name or district…" value="@Context.Request.Query["q"]" autocomplete="off" />
+                        <button class="ph-search-btn" type="submit"><i class="fas fa-search"></i></button>
+                    </form>
+                    <div class="ph-quick">
+                        <a asp-controller="Shops" asp-action="Index" asp-route-group="Document">Document printing</a>
+                        <a asp-controller="Shops" asp-action="Index" asp-route-group="Finishing">Binding</a>
+                        <a asp-controller="Shops" asp-action="Index" asp-route-group="Fabrication">3D printing</a>
+                        <a asp-controller="Shops" asp-action="Index" asp-route-group="Fabrication">Laser cutting</a>
+                    </div>
+                </div>
+                <div class="ph-actions">
+                    @if (signedIn && role == "Customer")
+                    {
+                        <a class="ph-icon" asp-controller="Quotes" asp-action="Index"><i class="fas fa-scale-balanced"></i><span class="t">Compare</span></a>
+                        <a class="ph-icon" asp-controller="Orders" asp-action="Index"><i class="fas fa-box"></i><span class="t">Orders</span></a>
+                    }
+                    else if (isShop)
+                    {
+                        <a class="ph-icon" asp-controller="ShopConsole" asp-action="Orders"><i class="fas fa-clipboard-list"></i><span class="t">Console</span></a>
+                    }
+                    else if (!signedIn)
+                    {
+                        <a class="ph-icon" asp-controller="Account" asp-action="Login"><i class="fas fa-user"></i><span class="t">Sign in</span></a>
+                    }
+                </div>
             </div>
         </div>
     </header>
 
     <main>@RenderBody()</main>
 
-    <footer class="foot">
-        <div class="wrap between">
-            <span class="logo" style="font-size:1rem"><span class="mark" style="width:24px;height:24px;font-size:.8rem">◒</span> PrintHub</span>
-            <span>A marketplace for print &amp; fabrication shops · PRN232</span>
+    <footer class="site-footer">
+        <div class="page-container">
+            <div class="row g-4 mb-2">
+                <div class="col-md-4 footer-col pe-lg-5">
+                    <div class="ph-logo" style="color:#fff"><span class="mk">◒</span> PrintHub</div>
+                    <p style="font-size:13px;line-height:1.8;color:rgba(255,255,255,.72);margin-top:16px">
+                        The marketplace that prices your print &amp; fabrication job across every nearby shop — so you order at the best rate and track it to pickup.
+                    </p>
+                </div>
+                <div class="col-6 col-md-3 footer-col">
+                    <h5>Customers</h5>
+                    <a class="footer-link" asp-controller="Shops" asp-action="Index">Browse shops</a>
+                    <a class="footer-link" asp-controller="Quotes" asp-action="Index">Compare quotes</a>
+                    <a class="footer-link" asp-controller="Account" asp-action="Register">Create account</a>
+                </div>
+                <div class="col-6 col-md-2 footer-col">
+                    <h5>Shops</h5>
+                    <a class="footer-link" asp-controller="Account" asp-action="Register">Become a seller</a>
+                    <a class="footer-link" href="#">Seller guide</a>
+                    <a class="footer-link" href="#">Pricing rules</a>
+                </div>
+                <div class="col-md-3 footer-col">
+                    <h5>Follow us</h5>
+                    <div class="d-flex gap-3 fs-4"><i class="fab fa-facebook"></i><i class="fab fa-instagram"></i><i class="fab fa-linkedin"></i></div>
+                </div>
+            </div>
+            <div class="footer-bottom">© @DateTime.Now.Year PrintHub · PRN232 · Built on ASP.NET Core</div>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
