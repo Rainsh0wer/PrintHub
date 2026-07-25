@@ -13,6 +13,14 @@ public record ApiResult<T>(bool Ok, T? Data, string? Error, int Status)
     public static ApiResult<T> Fail(string error, int status = 0) => new(false, default, error, status);
 }
 
+public class MeDto
+{
+    public int Id { get; set; }
+    public string? Email { get; set; }
+    public string? Role { get; set; }
+    public int[]? ShopIds { get; set; }
+}
+
 public static class SessionKeys
 {
     public const string AccessToken = "access_token";

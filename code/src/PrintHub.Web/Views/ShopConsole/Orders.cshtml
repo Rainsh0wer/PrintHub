@@ -1,0 +1,81 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Orders.Dtos.OrderSummaryDto>
+@{
+    ViewData["Title"] = "Order queue";
+    Layout = "_ConsoleLayout";
+    string? cur = ViewBag.Status;
+    string Cls(string st) => st switch
+    {
+        "Completed" or "ReadyForPickup" or "OutForDelivery" => "ok",
+        "Cancelled" or "Declined" or "ProductionFailed" => "err",
+        "AwaitingAcceptance" => "warn",
+        _ => "info"
+    };
+    int Count(string s) => Model.Items.Count(o => o.Status == s);
+    string FCls(string? s) => cur == s ? "active" : "";
+}
+
+@if (ViewBag.NoShop == true)
+{
+    <div class="empty">Your account isn't linked to a shop yet. Apply to open a shop from the marketplace, or ask the owner to add you as staff.</div>
+    return;
+}
+
+<div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:22px">
+    <div class="stat"><div class="k">New requests</div><div class="v" style="color:var(--warn)">@Count("AwaitingAcceptance")</div></div>
+    <div class="stat"><div class="k">In production</div><div class="v" style="color:var(--primary)">@Count("InProduction")</div></div>
+    <div class="stat"><div class="k">Ready</div><div class="v" style="color:var(--ok)">@(Count("ReadyForPickup") + Count("OutForDelivery"))</div></div>
+    <div class="stat"><div class="k">Total shown</div><div class="v">@Model.TotalCount</div></div>
+</div>
+
+<div class="chips" style="margin-bottom:16px">
+    <a class="chip @FCls(null)" asp-action="Orders">All</a>
+    <a class="chip @FCls("AwaitingAcceptance")" asp-action="Orders" asp-route-status="AwaitingAcceptance">New</a>
+    <a class="chip @FCls("Accepted")" asp-action="Orders" asp-route-status="Accepted">Accepted</a>
+    <a class="chip @FCls("InProduction")" asp-action="Orders" asp-route-status="InProduction">In production</a>
+    <a class="chip @FCls("ReadyForPickup")" asp-action="Orders" asp-route-status="ReadyForPickup">Ready</a>
+</div>
+
+<div class="card" style="overflow:hidden">
+    <table class="tbl">
+        <thead><tr><th>Order</th><th>Placed</th><th>Status</th><th style="text-align:right">Total</th><th style="text-align:right">Action</th></tr></thead>
+        <tbody>
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="5" class="muted" style="text-align:center;padding:44px">No orders in this view.</td></tr>
+            }
+            @foreach (var o in Model.Items)
+            {
+                <tr>
+                    <td><strong>@o.OrderCode</strong></td>
+                    <td class="muted">@(o.PlacedAt?.ToString("dd MMM, HH:mm"))</td>
+                    <td><span class="badge @Cls(o.Status)"><span class="dot @Cls(o.Status)"></span> @o.Status</span></td>
+                    <td style="text-align:right"><span class="price" style="font-size:1rem">@o.TotalAmount.ToString("N0") ₫</span></td>
+                    <td style="text-align:right">
+                        <div class="row" style="--gap:.4rem;justify-content:flex-end">
+                            @switch (o.Status)
+                            {
+                                case "AwaitingAcceptance":
+                                    <form method="post" asp-action="Accept"><input type="hidden" name="id" value="@o.Id" /><button class="btn primary sm">Accept</button></form>
+                                    <form method="post" asp-action="Decline"><input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="reason" value="0" /><button class="btn outline sm">Decline</button></form>
+                                    break;
+                                case "Accepted":
+                                    <form method="post" asp-action="Start"><input type="hidden" name="id" value="@o.Id" /><button class="btn primary sm">Start production</button></form>
+                                    break;
+                                case "InProduction":
+                                    <form method="post" asp-action="Ready"><input type="hidden" name="id" value="@o.Id" /><button class="btn primary sm">Mark ready</button></form>
+                                    break;
+                                case "ReadyForPickup":
+                                case "OutForDelivery":
+                                    <form method="post" asp-action="Handover"><input type="hidden" name="id" value="@o.Id" /><button class="btn primary sm">Hand over</button></form>
+                                    break;
+                                default:
+                                    <span class="muted">—</span>
+                                    break;
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -29,6 +29,7 @@ public class AccountController : Controller
             return View();
         }
         StoreSession(res.Data);
+        await StoreShopIdsAsync();
         return LocalRedirect(string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl);
     }
 
@@ -69,5 +70,12 @@ public class AccountController : Controller
         s.SetString(SessionKeys.UserRole, auth.User.Role);
         if (!string.IsNullOrEmpty(auth.User.AvatarUrl))
             s.SetString(SessionKeys.UserAvatar, auth.User.AvatarUrl);
+    }
+
+    private async Task StoreShopIdsAsync()
+    {
+        var me = await _api.GetAsync<MeDto>("/api/auth/me");
+        if (me.Ok && me.Data?.ShopIds is { Length: > 0 } ids)
+            HttpContext.Session.SetString(SessionKeys.ShopIds, string.Join(",", ids));
     }
 }

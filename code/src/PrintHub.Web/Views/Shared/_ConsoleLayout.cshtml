@@ -1,0 +1,67 @@
+@using PrintHub.Web.Services
+@{
+    var role = Context.Session.GetString(SessionKeys.UserRole);
+    var name = Context.Session.GetString(SessionKeys.UserName);
+    var avatar = Context.Session.GetString(SessionKeys.UserAvatar);
+    var isAdmin = role == "Admin";
+    string A(string c) => ViewContext.RouteData.Values["controller"]?.ToString() == c ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] ?? "Console") · PrintHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/printhub.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="console">
+        <aside class="side">
+            <a class="logo" asp-controller="Home" asp-action="Index"><span class="mark">◒</span> PrintHub</a>
+            @if (isAdmin)
+            {
+                <span class="side-label">Platform</span>
+                <a class="@A("Admin")" asp-controller="Admin" asp-action="Approvals">Shop approvals</a>
+                <a class="@A("AdminUsers")" asp-controller="AdminUsers" asp-action="Index">Users</a>
+                <a class="@A("AdminCatalog")" asp-controller="AdminCatalog" asp-action="Index">Service types</a>
+                <a class="@A("AdminVouchers")" asp-controller="AdminVouchers" asp-action="Index">Vouchers</a>
+                <a class="@A("AdminComplaints")" asp-controller="AdminComplaints" asp-action="Index">Complaints</a>
+                <a class="@A("AdminReports")" asp-controller="AdminReports" asp-action="Index">Reports</a>
+            }
+            else
+            {
+                <span class="side-label">Shop</span>
+                <a class="@A("ShopConsole")" asp-controller="ShopConsole" asp-action="Orders">Order queue</a>
+                <a class="@A("ShopRateCard")" asp-controller="ShopRateCard" asp-action="Index">Rate card</a>
+                <a class="@A("ShopResources")" asp-controller="ShopResources" asp-action="Machines">Machines</a>
+                <a asp-controller="ShopResources" asp-action="Materials">Materials</a>
+                <a class="@A("ShopStaff")" asp-controller="ShopStaff" asp-action="Index">Staff</a>
+                <a class="@A("ShopReports")" asp-controller="ShopReports" asp-action="Index">Revenue</a>
+            }
+            <div class="spacer"></div>
+            <a asp-controller="Shops" asp-action="Index">← Marketplace</a>
+            <a asp-controller="Account" asp-action="Logout">Sign out</a>
+        </aside>
+
+        <div class="console-main">
+            <header class="console-top">
+                <strong>@(isAdmin ? "Platform console" : "Shop console")</strong>
+                <span class="muted">/ @ViewData["Title"]</span>
+                <div style="margin-left:auto" class="row" style="--gap:.6rem;align-items:center">
+                    <img class="avatar" src="@avatar" alt="" onerror="this.style.display='none'" />
+                    <span class="muted">@name</span>
+                </div>
+            </header>
+            <div class="console-body">
+                @if (TempData["err"] != null) { <div class="alert err" style="margin-bottom:16px">@TempData["err"]</div> }
+                @if (TempData["ok"] != null) { <div class="alert ok" style="margin-bottom:16px">@TempData["ok"]</div> }
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

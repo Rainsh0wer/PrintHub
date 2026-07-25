@@ -199,8 +199,27 @@ label.lbl { display: block; font-size: .8rem; font-weight: 600; color: var(--tex
 .ld-check .tick { color: #4ade80; }
 .ld-foot { border-top: 1px solid var(--d-border); padding: 40px 0; color: var(--d-text-2); }
 
+/* ---------------- console dashboard (shop owner / admin) ---------------- */
+.console { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; background: var(--bg); }
+.side { background: var(--surface); border-right: 1px solid var(--border); padding: 18px 14px; display: flex; flex-direction: column; gap: 3px; position: sticky; top: 0; height: 100vh; }
+.side .logo { padding: 6px 10px 16px; }
+.side .side-label { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); font-weight: 700; padding: 14px 10px 6px; }
+.side a { display: flex; align-items: center; gap: .7rem; padding: .58rem .8rem; border-radius: var(--r-sm); color: var(--text-2); font-weight: 500; font-size: .92rem; }
+.side a:hover { background: var(--surface-2); color: var(--text); }
+.side a.active { background: var(--primary-soft); color: var(--primary-600); font-weight: 600; }
+.side a svg { flex: 0 0 auto; }
+.side .spacer { flex: 1; }
+.console-main { display: flex; flex-direction: column; min-width: 0; }
+.console-top { min-height: 64px; border-bottom: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 16px; padding: 0 26px; position: sticky; top: 0; z-index: 30; }
+.console-body { padding: 28px 26px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; }
+.stat .k { font-size: .78rem; color: var(--text-2); font-weight: 500; }
+.stat .v { font-family: var(--display); font-size: 1.8rem; font-weight: 800; margin-top: 4px; }
+
 /* ---------------- utils ---------------- */
 @media (max-width: 900px) {
+  .console { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; }
   .layout-2col { grid-template-columns: 1fr; }
   .filters { position: static; }
   .hide-sm { display: none !important; }
