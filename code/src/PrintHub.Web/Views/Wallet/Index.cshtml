@@ -1,0 +1,75 @@
+@model PrintHub.Application.Features.Wallet.Dtos.WalletLedgerDto
+@{
+    ViewData["Title"] = "Wallet";
+    string TypeCls(string t) => t switch { "TopUp" or "Refund" => "ok", "Payment" => "err", _ => "info" };
+}
+
+<div class="wrap" style="padding-bottom:64px">
+    <div class="page-head"><h1>Wallet</h1><span class="muted">Top up once, then order in a tap.</span></div>
+
+    @if (TempData["err"] != null) { <div class="alert err" style="margin-bottom:16px">@TempData["err"]</div> }
+    @if (ViewBag.Error != null) { <div class="alert err" style="margin-bottom:16px">@ViewBag.Error</div> }
+
+    <div class="layout-2col" style="grid-template-columns:1fr 360px">
+        <div class="card" style="overflow:hidden">
+            <div class="pad"><h3 style="font-size:1.05rem">Transactions</h3></div>
+            <table class="tbl">
+                <thead><tr><th>Type</th><th>Reference</th><th>Date</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead>
+                <tbody>
+                    @if (Model?.Transactions?.Items?.Any() != true)
+                    {
+                        <tr><td colspan="5" class="muted" style="text-align:center;padding:40px">No transactions yet.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var t in Model.Transactions.Items)
+                        {
+                            <tr>
+                                <td><span class="badge @TypeCls(t.Type)">@t.Type</span></td>
+                                <td class="muted">@t.RefCode</td>
+                                <td class="muted">@t.CreatedAt.ToString("dd MMM, HH:mm")</td>
+                                <td>@t.Status</td>
+                                <td style="text-align:right;font-weight:700;color:@(t.Amount < 0 ? "var(--err)" : "var(--ok)")">
+                                    @(t.Amount < 0 ? "" : "+")@t.Amount.ToString("N0") ₫
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="stack" style="--gap:20px">
+            <div class="card pad" style="background:linear-gradient(135deg,var(--primary),#7c6cff);color:#fff">
+                <span style="opacity:.85;font-size:.82rem;font-weight:600">Available balance</span>
+                <div style="font-family:var(--display);font-size:2.6rem;font-weight:800;margin-top:4px">
+                    @((Model?.Balance ?? 0).ToString("N0")) <span style="font-size:1.2rem;opacity:.8">₫</span>
+                </div>
+            </div>
+
+            <form method="post" asp-action="TopUp" class="card pad stack" style="--gap:.8rem">
+                <h3 style="font-size:1.05rem">Top up</h3>
+                <div class="chips">
+                    @foreach (var v in new[] { 50000, 100000, 200000, 500000 })
+                    {
+                        <button type="button" class="chip topq" data-v="@v">@v.ToString("N0")</button>
+                    }
+                </div>
+                <div class="form-row">
+                    <label class="lbl">Amount (₫)</label>
+                    <input class="input" type="number" name="amount" id="amt" min="10000" step="1000" value="100000" />
+                </div>
+                <button class="btn primary block lg" type="submit">Continue to transfer</button>
+                <p class="muted" style="font-size:.78rem;margin:0">You'll get bank-transfer instructions; your balance is credited once the transfer is confirmed.</p>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.topq').forEach(b => b.addEventListener('click', () => {
+            document.getElementById('amt').value = b.dataset.v;
+        }));
+    </script>
+}
