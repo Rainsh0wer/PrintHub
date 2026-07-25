@@ -67,5 +67,7 @@ public class AccountController : Controller
         s.SetString(SessionKeys.UserName, auth.User.FullName);
         s.SetString(SessionKeys.UserEmail, auth.User.Email);
         s.SetString(SessionKeys.UserRole, auth.User.Role);
+        if (!string.IsNullOrEmpty(auth.User.AvatarUrl))
+            s.SetString(SessionKeys.UserAvatar, auth.User.AvatarUrl);
     }
 }

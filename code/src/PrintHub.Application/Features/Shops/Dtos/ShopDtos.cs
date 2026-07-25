@@ -10,7 +10,9 @@ public record ShopSummaryDto(
     int RatingCount,
     IEnumerable<string> ServiceGroups,
     decimal? MinUnitPrice,
-    double? DistanceMeters);
+    double? DistanceMeters,
+    string? LogoUrl,
+    string? CoverImageUrl);
 
 /// <summary>Full shop profile shown on the detail page (UC-10).</summary>
 public record ShopDetailDto(
@@ -25,9 +27,14 @@ public record ShopDetailDto(
     TimeOnly CloseTime,
     double RatingAverage,
     int RatingCount,
+    string? LogoUrl,
+    string? CoverImageUrl,
     IEnumerable<ShopServiceDto> Services,
     IEnumerable<MachineDto> Machines,
-    IEnumerable<ReviewDto> Reviews);
+    IEnumerable<ReviewDto> Reviews,
+    IEnumerable<ShopGalleryImageDto> Gallery);
+
+public record ShopGalleryImageDto(string Url, string? Caption);
 
 public record ShopServiceDto(
     string ServiceTypeCode,
@@ -36,13 +43,16 @@ public record ShopServiceDto(
     decimal UnitPrice,
     decimal SetupFee,
     int MinQuantity,
-    int LeadTimeMinutes);
+    int LeadTimeMinutes,
+    string? IconUrl);
 
-public record MachineDto(string Name, string MachineType, string Status);
+public record MachineDto(string Name, string MachineType, string Status, string? PhotoUrl);
 
 public record ReviewDto(
     int Rating,
     string? Comment,
     string CustomerName,
+    string? CustomerAvatarUrl,
     DateTime CreatedAt,
-    string? ShopReply);
+    string? ShopReply,
+    string? PhotoUrls);

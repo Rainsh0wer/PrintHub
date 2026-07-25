@@ -17,19 +17,24 @@ public class ShopMappingProfile : Profile
                 s.Services.Where(x => x.IsActive).Select(x => (decimal?)x.UnitPrice).Min()))
             .ForCtorParam(nameof(ShopSummaryDto.DistanceMeters), o => o.MapFrom(_ => (double?)null));
 
-        CreateMap<Shop, ShopDetailDto>();
+        CreateMap<Shop, ShopDetailDto>()
+            .ForCtorParam(nameof(ShopDetailDto.Gallery), o => o.MapFrom(s => s.GalleryImages.OrderBy(g => g.DisplayOrder)));
+
+        CreateMap<ShopGalleryImage, ShopGalleryImageDto>();
 
         CreateMap<ShopService, ShopServiceDto>()
             .ForCtorParam(nameof(ShopServiceDto.ServiceTypeCode), o => o.MapFrom(s => s.ServiceType.Code))
             .ForCtorParam(nameof(ShopServiceDto.ServiceTypeName), o => o.MapFrom(s => s.ServiceType.Name))
-            .ForCtorParam(nameof(ShopServiceDto.ServiceGroup), o => o.MapFrom(s => s.ServiceType.ServiceGroup.ToString()));
+            .ForCtorParam(nameof(ShopServiceDto.ServiceGroup), o => o.MapFrom(s => s.ServiceType.ServiceGroup.ToString()))
+            .ForCtorParam(nameof(ShopServiceDto.IconUrl), o => o.MapFrom(s => s.ServiceType.IconUrl));
 
         CreateMap<Machine, MachineDto>()
             .ForCtorParam(nameof(MachineDto.MachineType), o => o.MapFrom(s => s.MachineType.ToString()))
             .ForCtorParam(nameof(MachineDto.Status), o => o.MapFrom(s => s.Status.ToString()));
 
         CreateMap<Review, ReviewDto>()
-            .ForCtorParam(nameof(ReviewDto.CustomerName), o => o.MapFrom(s => s.Customer.FullName));
+            .ForCtorParam(nameof(ReviewDto.CustomerName), o => o.MapFrom(s => s.Customer.FullName))
+            .ForCtorParam(nameof(ReviewDto.CustomerAvatarUrl), o => o.MapFrom(s => s.Customer.AvatarUrl));
 
         CreateMap<Shop, ShopApplicationDto>()
             .ForCtorParam(nameof(ShopApplicationDto.Status), o => o.MapFrom(s => s.Status.ToString()));

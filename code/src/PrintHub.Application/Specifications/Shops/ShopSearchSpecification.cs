@@ -67,5 +67,6 @@ public sealed class ShopDetailByIdSpecification : BaseSpecification<Shop>
         AddInclude("Services.ServiceType");
         AddInclude(s => s.Machines);
         AddInclude("Reviews.Customer");
+        AddInclude(s => s.GalleryImages);
     }
 }

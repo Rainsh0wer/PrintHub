@@ -44,6 +44,7 @@ public class PrintHubDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
+    public DbSet<ShopGalleryImage> ShopGalleryImages => Set<ShopGalleryImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

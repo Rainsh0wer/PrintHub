@@ -24,6 +24,13 @@ public static class DataSeeder
             return;
 
         var hash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword);
+
+        // Deterministic placeholder imagery (no account needed): DiceBear for
+        // avatars/logos, Lorem Picsum for photos. Seeded so results are stable.
+        static string Avatar(string s) => $"https://api.dicebear.com/9.x/initials/svg?seed={Uri.EscapeDataString(s)}&fontWeight=600&backgroundType=gradientLinear";
+        static string Logo(string s) => $"https://api.dicebear.com/9.x/initials/svg?seed={Uri.EscapeDataString(s)}&radius=16&fontWeight=700&backgroundColor=0091c7,0ea5e9,7c3aed,f97316,16a34a";
+        static string Photo(string seed, int w, int h) => $"https://picsum.photos/seed/{Uri.EscapeDataString(seed)}/{w}/{h}";
+
         User NewUser(string name, string email, UserRole role, decimal wallet = 0, string? district = null) => new()
         {
             FullName = name,
@@ -33,7 +40,8 @@ public static class DataSeeder
             Role = role,
             WalletBalance = wallet,
             DefaultAddress = district is null ? null : $"{district}, Hà Nội",
-            EmailVerifiedAt = DateTime.UtcNow
+            EmailVerifiedAt = DateTime.UtcNow,
+            AvatarUrl = Avatar(name)
         };
 
         // ---- Users ----
@@ -54,7 +62,8 @@ public static class DataSeeder
         ServiceType St(string code, string name, ServiceGroup group, PricingModel model, string unit, bool requiresFile = true) => new()
         {
             Code = code, Name = name, ServiceGroup = group, PricingModel = model,
-            UnitOfMeasure = unit, RequiresFile = requiresFile, IsActive = true
+            UnitOfMeasure = unit, RequiresFile = requiresFile, IsActive = true,
+            IconUrl = $"https://api.dicebear.com/9.x/icons/svg?seed={Uri.EscapeDataString(code)}&backgroundColor=eef2f6&radius=20"
         };
 
         var docBwA4 = St("DOC_BW_A4", "A4 Black & White Printing", ServiceGroup.Document, PricingModel.PerPage, "page");
@@ -83,6 +92,7 @@ public static class DataSeeder
             Latitude = 21.0362, Longitude = 105.7827, PhoneNumber = "0901111111",
             OpenTime = new TimeOnly(7, 30), CloseTime = new TimeOnly(21, 0),
             Status = ShopStatus.Active, RatingAverage = 4.6, RatingCount = 2,
+            LogoUrl = Logo("QuickPrint"), CoverImageUrl = Photo("quickprint-cover", 1200, 480),
             ApprovedAt = DateTime.UtcNow.AddMonths(-6), ApprovedBy = admin.Id
         };
         var campusCopy = new Shop
@@ -93,6 +103,7 @@ public static class DataSeeder
             Latitude = 21.0045, Longitude = 105.8437, PhoneNumber = "0902222222",
             OpenTime = new TimeOnly(8, 0), CloseTime = new TimeOnly(20, 0),
             Status = ShopStatus.Active, RatingAverage = 4.2, RatingCount = 1,
+            LogoUrl = Logo("Campus Copy"), CoverImageUrl = Photo("campuscopy-cover", 1200, 480),
             ApprovedAt = DateTime.UtcNow.AddMonths(-4), ApprovedBy = admin.Id
         };
         var makerLab = new Shop
@@ -103,9 +114,21 @@ public static class DataSeeder
             Latitude = 21.0070, Longitude = 105.8430, PhoneNumber = "0903333333",
             OpenTime = new TimeOnly(9, 0), CloseTime = new TimeOnly(18, 0),
             Status = ShopStatus.Active, RatingAverage = 0, RatingCount = 0,
+            LogoUrl = Logo("MakerLab"), CoverImageUrl = Photo("makerlab-cover", 1200, 480),
             ApprovedAt = DateTime.UtcNow.AddMonths(-2), ApprovedBy = admin.Id
         };
         db.Shops.AddRange(quickPrint, campusCopy, makerLab);
+
+        db.ShopGalleryImages.AddRange(
+            new ShopGalleryImage { Shop = quickPrint, Url = Photo("qp-g1", 700, 500), Caption = "Bound thesis copies", DisplayOrder = 1 },
+            new ShopGalleryImage { Shop = quickPrint, Url = Photo("qp-g2", 700, 500), Caption = "Counter service", DisplayOrder = 2 },
+            new ShopGalleryImage { Shop = quickPrint, Url = Photo("qp-g3", 700, 500), Caption = "Colour proofs", DisplayOrder = 3 },
+            new ShopGalleryImage { Shop = campusCopy, Url = Photo("cc-g1", 700, 500), Caption = "A1 plotting", DisplayOrder = 1 },
+            new ShopGalleryImage { Shop = campusCopy, Url = Photo("cc-g2", 700, 500), Caption = "Business cards", DisplayOrder = 2 },
+            new ShopGalleryImage { Shop = campusCopy, Url = Photo("cc-g3", 700, 500), Caption = "Lamination", DisplayOrder = 3 },
+            new ShopGalleryImage { Shop = makerLab, Url = Photo("ml-g1", 700, 500), Caption = "FDM prints", DisplayOrder = 1 },
+            new ShopGalleryImage { Shop = makerLab, Url = Photo("ml-g2", 700, 500), Caption = "Laser-cut acrylic", DisplayOrder = 2 },
+            new ShopGalleryImage { Shop = makerLab, Url = Photo("ml-g3", 700, 500), Caption = "Prototype parts", DisplayOrder = 3 });
 
         db.ShopStaff.AddRange(
             new ShopStaff { Shop = quickPrint, User = staffQuick, Position = "Counter", JoinedAt = DateTime.UtcNow.AddMonths(-3), IsActive = true },
@@ -147,20 +170,20 @@ public static class DataSeeder
             new PriceRule { ShopService = mlPrint3d, RuleType = PriceRuleType.QualityProfile, OptionKey = "Fine", Multiplier = 1.5m });
 
         db.Machines.AddRange(
-            new Machine { Shop = quickPrint, Name = "Ricoh MP-1", MachineType = MachineType.Printer, ServiceGroup = ServiceGroup.Document, Status = MachineStatus.Idle },
-            new Machine { Shop = quickPrint, Name = "Binder-1", MachineType = MachineType.Finishing, ServiceGroup = ServiceGroup.Finishing, Status = MachineStatus.Idle },
-            new Machine { Shop = campusCopy, Name = "Xerox-Color-1", MachineType = MachineType.Printer, ServiceGroup = ServiceGroup.Document, Status = MachineStatus.Idle },
-            new Machine { Shop = campusCopy, Name = "Plotter-A1", MachineType = MachineType.Plotter, ServiceGroup = ServiceGroup.Document, Status = MachineStatus.Idle },
-            new Machine { Shop = makerLab, Name = "Prusa-MK4", MachineType = MachineType.Printer3D, ServiceGroup = ServiceGroup.Fabrication, Status = MachineStatus.Idle },
-            new Machine { Shop = makerLab, Name = "Laser-60W", MachineType = MachineType.LaserCutter, ServiceGroup = ServiceGroup.Fabrication, Status = MachineStatus.Maintenance });
+            new Machine { Shop = quickPrint, Name = "Ricoh MP-1", MachineType = MachineType.Printer, ServiceGroup = ServiceGroup.Document, Status = MachineStatus.Idle, PhotoUrl = Photo("machine-ricoh", 600, 400) },
+            new Machine { Shop = quickPrint, Name = "Binder-1", MachineType = MachineType.Finishing, ServiceGroup = ServiceGroup.Finishing, Status = MachineStatus.Idle, PhotoUrl = Photo("machine-binder", 600, 400) },
+            new Machine { Shop = campusCopy, Name = "Xerox-Color-1", MachineType = MachineType.Printer, ServiceGroup = ServiceGroup.Document, Status = MachineStatus.Idle, PhotoUrl = Photo("machine-xerox", 600, 400) },
+            new Machine { Shop = campusCopy, Name = "Plotter-A1", MachineType = MachineType.Plotter, ServiceGroup = ServiceGroup.Document, Status = MachineStatus.Idle, PhotoUrl = Photo("machine-plotter", 600, 400) },
+            new Machine { Shop = makerLab, Name = "Prusa-MK4", MachineType = MachineType.Printer3D, ServiceGroup = ServiceGroup.Fabrication, Status = MachineStatus.Idle, PhotoUrl = Photo("machine-prusa", 600, 400) },
+            new Machine { Shop = makerLab, Name = "Laser-60W", MachineType = MachineType.LaserCutter, ServiceGroup = ServiceGroup.Fabrication, Status = MachineStatus.Maintenance, PhotoUrl = Photo("machine-laser", 600, 400) });
 
         db.Materials.AddRange(
-            new Material { Shop = quickPrint, Name = "A4 80gsm", MaterialType = MaterialType.Paper, Unit = "sheet", StockQuantity = 5000, LowStockThreshold = 500, UnitCost = 150 },
-            new Material { Shop = campusCopy, Name = "A4 Glossy 120gsm", MaterialType = MaterialType.Paper, Unit = "sheet", StockQuantity = 800, LowStockThreshold = 200, UnitCost = 500 },
-            new Material { Shop = campusCopy, Name = "A1 Roll", MaterialType = MaterialType.Paper, Unit = "sheet", StockQuantity = 120, LowStockThreshold = 30, UnitCost = 8000 },
-            new Material { Shop = makerLab, Name = "PLA White", MaterialType = MaterialType.Filament, Unit = "gram", StockQuantity = 4000, LowStockThreshold = 500, UnitCost = 400 },
-            new Material { Shop = makerLab, Name = "PETG Black", MaterialType = MaterialType.Filament, Unit = "gram", StockQuantity = 300, LowStockThreshold = 400, UnitCost = 550 },
-            new Material { Shop = makerLab, Name = "Plywood 3mm", MaterialType = MaterialType.Sheet, Unit = "gram", StockQuantity = 6000, LowStockThreshold = 1000, UnitCost = 120 });
+            new Material { Shop = quickPrint, Name = "A4 80gsm", MaterialType = MaterialType.Paper, Unit = "sheet", StockQuantity = 5000, LowStockThreshold = 500, UnitCost = 150, ImageUrl = Photo("mat-a4", 400, 400) },
+            new Material { Shop = campusCopy, Name = "A4 Glossy 120gsm", MaterialType = MaterialType.Paper, Unit = "sheet", StockQuantity = 800, LowStockThreshold = 200, UnitCost = 500, ImageUrl = Photo("mat-glossy", 400, 400) },
+            new Material { Shop = campusCopy, Name = "A1 Roll", MaterialType = MaterialType.Paper, Unit = "sheet", StockQuantity = 120, LowStockThreshold = 30, UnitCost = 8000, ImageUrl = Photo("mat-a1roll", 400, 400) },
+            new Material { Shop = makerLab, Name = "PLA White", MaterialType = MaterialType.Filament, Unit = "gram", StockQuantity = 4000, LowStockThreshold = 500, UnitCost = 400, ImageUrl = Photo("mat-pla", 400, 400) },
+            new Material { Shop = makerLab, Name = "PETG Black", MaterialType = MaterialType.Filament, Unit = "gram", StockQuantity = 300, LowStockThreshold = 400, UnitCost = 550, ImageUrl = Photo("mat-petg", 400, 400) },
+            new Material { Shop = makerLab, Name = "Plywood 3mm", MaterialType = MaterialType.Sheet, Unit = "gram", StockQuantity = 6000, LowStockThreshold = 1000, UnitCost = 120, ImageUrl = Photo("mat-ply", 400, 400) });
 
         await db.SaveChangesAsync();
 
@@ -216,8 +239,8 @@ public static class DataSeeder
 
         // Reviews for completed orders
         db.Reviews.AddRange(
-            new Review { Order = o1, Customer = cust1, Shop = quickPrint, Rating = 5, Comment = "Fast and cheap, right by the gate." },
-            new Review { Order = o2, Customer = cust2, Shop = campusCopy, Rating = 4, Comment = "Good colour quality." });
+            new Review { Order = o1, Customer = cust1, Shop = quickPrint, Rating = 5, Comment = "Fast and cheap, right by the gate.", PhotoUrls = "https://picsum.photos/seed/rev-1a/400/300,https://picsum.photos/seed/rev-1b/400/300" },
+            new Review { Order = o2, Customer = cust2, Shop = campusCopy, Rating = 4, Comment = "Good colour quality.", PhotoUrls = "https://picsum.photos/seed/rev-2a/400/300" });
         await db.SaveChangesAsync();
     }
 }

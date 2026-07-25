@@ -30,6 +30,7 @@ public class DocumentFile : BaseEntity, ISoftDelete
     public DateTime? LastAccessedAt { get; set; }
     /// <summary>Retention deadline after which the file is purged (data-protection policy).</summary>
     public DateTime? PurgeAfter { get; set; }
+    public string? ThumbnailUrl { get; set; }
 
     public bool IsDeleted { get; set; }
 

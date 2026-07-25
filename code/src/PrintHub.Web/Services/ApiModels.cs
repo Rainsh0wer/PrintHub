@@ -20,5 +20,6 @@ public static class SessionKeys
     public const string UserName = "user_name";
     public const string UserEmail = "user_email";
     public const string UserRole = "user_role";
+    public const string UserAvatar = "user_avatar";
     public const string ShopIds = "shop_ids";
 }

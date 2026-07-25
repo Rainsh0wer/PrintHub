@@ -55,4 +55,5 @@ public class Shop : AuditableEntity, ISoftDelete
     public ICollection<Material> Materials { get; set; } = new List<Material>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public ICollection<ShopGalleryImage> GalleryImages { get; set; } = new List<ShopGalleryImage>();
 }

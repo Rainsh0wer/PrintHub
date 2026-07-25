@@ -31,7 +31,8 @@ public record UserDto(
     string? PhoneNumber,
     string Role,
     decimal WalletBalance,
-    string? DefaultAddress);
+    string? DefaultAddress,
+    string? AvatarUrl);
 
 /// <summary>Returned on successful register/login/refresh.</summary>
 public record AuthResponse(

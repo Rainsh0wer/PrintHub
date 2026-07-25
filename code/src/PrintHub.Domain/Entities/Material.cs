@@ -27,6 +27,7 @@ public class Material : AuditableEntity, ISoftDelete
     public string? Sku { get; set; }
     public string? Color { get; set; }
     public decimal? ReorderQuantity { get; set; }
+    public string? ImageUrl { get; set; }
 
     public bool IsDeleted { get; set; }
 

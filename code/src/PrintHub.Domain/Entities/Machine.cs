@@ -20,6 +20,7 @@ public class Machine : AuditableEntity, ISoftDelete
     public string? Model { get; set; }
     public string? SerialNumber { get; set; }
     public DateTime? LastMaintenanceAt { get; set; }
+    public string? PhotoUrl { get; set; }
 
     public bool IsDeleted { get; set; }
 

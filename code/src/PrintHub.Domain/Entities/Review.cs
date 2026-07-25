@@ -21,6 +21,9 @@ public class Review : AuditableEntity
     /// <summary>Moderation flag; a hidden review does not count toward the shop rating display.</summary>
     public bool IsVisible { get; set; } = true;
 
+    /// <summary>Comma-separated photo URLs attached by the customer.</summary>
+    public string? PhotoUrls { get; set; }
+
     // Navigation
     public Order Order { get; set; } = null!;
     public User Customer { get; set; } = null!;
