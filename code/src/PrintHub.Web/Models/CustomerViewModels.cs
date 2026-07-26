@@ -18,4 +18,8 @@ public class QuoteVm
 
     public List<QuoteComparisonDto>? Results { get; set; }
     public string? Error { get; set; }
+
+    // quoteId -> discount amount, populated when a voucher code is entered.
+    public Dictionary<int, decimal> VoucherDiscounts { get; set; } = new();
+    public string? VoucherNote { get; set; }
 }

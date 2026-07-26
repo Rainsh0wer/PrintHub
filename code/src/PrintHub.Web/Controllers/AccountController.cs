@@ -60,6 +60,53 @@ public class AccountController : Controller
     }
 
     [HttpGet]
+    public IActionResult ForgotPassword() => View();
+
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var res = await _api.PostAsync<ForgotPasswordResponse>("/api/auth/forgot-password", new ForgotPasswordRequest(email));
+        ViewBag.Email = email;
+        if (res.Ok && res.Data is not null)
+        {
+            ViewBag.Message = res.Data.Message;
+            ViewBag.DevToken = res.Data.ResetToken;   // dev builds return the token directly
+        }
+        else ViewBag.Error = res.Error ?? "Could not process the request.";
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string? email, string? token)
+    {
+        ViewBag.Email = email;
+        ViewBag.Token = token;
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(string email, string token, string newPassword, string confirmPassword)
+    {
+        ViewBag.Email = email;
+        ViewBag.Token = token;
+        if (newPassword != confirmPassword)
+        {
+            ViewBag.Error = "The two passwords do not match.";
+            return View();
+        }
+
+        var res = await _api.PostAsync<object>("/api/auth/reset-password", new ResetPasswordRequest(email, token, newPassword));
+        if (!res.Ok)
+        {
+            ViewBag.Error = res.Error ?? "This reset link is invalid or has expired.";
+            return View();
+        }
+
+        TempData["ok"] = "Your password has been reset. Please sign in.";
+        return RedirectToAction("Login");
+    }
+
+    [HttpGet]
     public async Task<IActionResult> External(string? access, string? refresh)
     {
         if (string.IsNullOrEmpty(access)) return RedirectToAction("Login");

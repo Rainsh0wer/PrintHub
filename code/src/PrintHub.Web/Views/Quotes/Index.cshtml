@@ -37,6 +37,7 @@
                         <div class="col-6 mb-2"><label class="form-label">Sides</label><select class="form-input" name="Sides"><option value="0" selected="@(Model.Sides==0)">Single</option><option value="1" selected="@(Model.Sides==1)">Double</option></select></div>
                     </div>
                     <div class="mb-3"><label class="form-label">Sort by</label><select class="form-input" name="SortBy"><option value="0" selected="@(Model.SortBy==0)">Lowest price</option><option value="1" selected="@(Model.SortBy==1)">Fastest</option><option value="2" selected="@(Model.SortBy==2)">Best rated</option></select></div>
+                    <div class="mb-3"><label class="form-label">Voucher code <span class="muted" style="font-weight:400">(optional)</span></label><input class="form-input" name="VoucherCode" value="@Model.VoucherCode" placeholder="e.g. WELCOME10" style="text-transform:uppercase" /></div>
                     <button class="btn-ph btn-block btn-lg" type="submit">Compare quotes</button>
                 </form>
             </div>
@@ -48,10 +49,17 @@
             else if (!Model.Results.Any()) { <div class="empty-ph">No shop can do this job right now. Try a different service or options.</div> }
             else
             {
+                @if (Model.VoucherNote != null)
+                {
+                    var applied = Model.VoucherDiscounts.Count > 0;
+                    <div class="alert-ph @(applied ? "alert-ok" : "alert-warn") mb-3">@Model.VoucherNote</div>
+                }
                 <div class="stack" style="--gap:14px">
                     @foreach (var q in Model.Results)
                     {
                         var best = cheapest != null && q.QuoteId == cheapest.QuoteId;
+                        var hasDisc = Model.VoucherDiscounts.TryGetValue(q.QuoteId, out var disc) && disc > 0;
+                        var payable = hasDisc ? q.Total - disc : q.Total;
                         <div class="card-ph pad @(best ? "border-primary" : "")" style="@(best ? "border:2px solid var(--accent)" : "")">
                             <div class="between">
                                 <div>
@@ -63,7 +71,16 @@
                                     <div class="muted mt-1" style="font-size:13.5px">@q.District · <span class="rating"><span class="stars">★</span> @q.Rating.ToString("0.0")</span> · ~@q.EstimatedMinutes min</div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="price-current" style="font-size:1.6rem">@q.Total.ToString("N0")<span class="cur"> ₫</span></div>
+                                    @if (hasDisc)
+                                    {
+                                        <div class="muted" style="text-decoration:line-through;font-size:13px">@q.Total.ToString("N0") ₫</div>
+                                        <div class="price-current" style="font-size:1.6rem">@payable.ToString("N0")<span class="cur"> ₫</span></div>
+                                        <div class="status-badge st-ok" style="margin:2px 0 4px">−@disc.ToString("N0") ₫ voucher</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="price-current" style="font-size:1.6rem">@q.Total.ToString("N0")<span class="cur"> ₫</span></div>
+                                    }
                                     <form method="post" asp-controller="Orders" asp-action="Place" class="mt-2">
                                         <input type="hidden" name="quoteId" value="@q.QuoteId" />
                                         <input type="hidden" name="serviceTypeId" value="@Model.ServiceTypeId" />
@@ -72,6 +89,7 @@
                                         <input type="hidden" name="colorMode" value="@Model.ColorMode" />
                                         <input type="hidden" name="sides" value="@Model.Sides" />
                                         <input type="hidden" name="estimatedGrams" value="@Model.EstimatedGrams" />
+                                        @if (hasDisc) { <input type="hidden" name="voucherCode" value="@Model.VoucherCode" /> }
                                         <button class="@(best ? "btn-ph" : "btn-outline-ph")" type="submit">Place order</button>
                                     </form>
                                 </div>

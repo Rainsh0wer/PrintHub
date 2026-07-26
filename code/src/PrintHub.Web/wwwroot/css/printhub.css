@@ -119,6 +119,7 @@ img { max-width: 100%; }
 .alert-ph { border-radius: var(--radius-sm); padding: .75rem .95rem; font-size: 14px; }
 .alert-err { background: #fdeceb; color: #b42318; }
 .alert-ok { background: #e7f8ef; color: #087443; }
+.alert-warn { background: #fff3e0; color: #b26a00; }
 .alert-info { background: var(--ink-light); color: var(--accent); }
 .badge-ph { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 20px; font-size: 12px; font-weight: 700; background: var(--ink-light); color: var(--accent); }
 .dot { width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; }
