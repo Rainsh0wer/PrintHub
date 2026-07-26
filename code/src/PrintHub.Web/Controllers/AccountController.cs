@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PrintHub.Application.Features.Auth.Dtos;
+using PrintHub.Application.Features.Users.Dtos;
 using PrintHub.Web.Services;
 
 namespace PrintHub.Web.Controllers;
@@ -7,13 +8,20 @@ namespace PrintHub.Web.Controllers;
 public class AccountController : Controller
 {
     private readonly PrintHubApiClient _api;
+    private readonly IConfiguration _configuration;
 
-    public AccountController(PrintHubApiClient api) => _api = api;
+    public AccountController(PrintHubApiClient api, IConfiguration configuration)
+    {
+        _api = api;
+        _configuration = configuration;
+    }
 
     [HttpGet]
-    public IActionResult Login(string? returnUrl)
+    public IActionResult Login(string? returnUrl, string? error)
     {
         ViewBag.ReturnUrl = returnUrl;
+        ViewBag.GoogleLoginUrl = $"{ApiBaseUrl()}/api/auth/google/login";
+        if (error == "google") ViewBag.Error = "Google sign-in failed. Please try again or use email and password.";
         return View();
     }
 
@@ -51,6 +59,32 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    [HttpGet]
+    public async Task<IActionResult> External(string? access, string? refresh)
+    {
+        if (string.IsNullOrEmpty(access)) return RedirectToAction("Login");
+
+        var s = HttpContext.Session;
+        s.SetString(SessionKeys.AccessToken, access);
+        if (!string.IsNullOrEmpty(refresh)) s.SetString(SessionKeys.RefreshToken, refresh);
+
+        var me = await _api.GetAsync<ProfileDto>("/api/users/me");
+        if (!me.Ok || me.Data is null)
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login", new { error = "google" });
+        }
+
+        s.SetString(SessionKeys.UserName, me.Data.FullName);
+        s.SetString(SessionKeys.UserEmail, me.Data.Email);
+        s.SetString(SessionKeys.UserRole, me.Data.Role);
+        if (!string.IsNullOrEmpty(me.Data.AvatarUrl))
+            s.SetString(SessionKeys.UserAvatar, me.Data.AvatarUrl);
+
+        await StoreShopIdsAsync();
+        return RedirectToAction("Index", "Home");
+    }
+
     public async Task<IActionResult> Logout()
     {
         var refresh = HttpContext.Session.GetString(SessionKeys.RefreshToken);
@@ -78,4 +112,6 @@ public class AccountController : Controller
         if (me.Ok && me.Data?.ShopIds is { Length: > 0 } ids)
             HttpContext.Session.SetString(SessionKeys.ShopIds, string.Join(",", ids));
     }
+
+    private string ApiBaseUrl() => (_configuration["Api:BaseUrl"] ?? "http://localhost:5080").TrimEnd('/');
 }

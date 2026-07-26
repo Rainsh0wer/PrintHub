@@ -77,6 +77,38 @@ public class AuthService : IAuthService
         return Result<AuthResponse>.Ok(response);
     }
 
+    public async Task<Result<AuthResponse>> LoginExternalAsync(string email, string fullName, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return Result<AuthResponse>.Fail("The Google account did not return an email address.", ErrorType.Unauthorized);
+
+        var users = _uow.Repository<User>();
+        var user = await users.FirstOrDefaultAsync(new UserByEmailSpecification(email.Trim()), ct);
+
+        // First Google sign-in provisions a Customer account bound to the verified email.
+        if (user is null)
+        {
+            user = new User
+            {
+                FullName = string.IsNullOrWhiteSpace(fullName) ? email.Trim() : fullName.Trim(),
+                Email = email.Trim(),
+                PasswordHash = _passwordHasher.Hash(Guid.NewGuid().ToString("N")),
+                Role = UserRole.Customer,
+                WalletBalance = 0
+            };
+            await users.AddAsync(user, ct);
+            await _uow.SaveChangesAsync(ct);
+        }
+        else if (user.Status == UserStatus.Locked)
+        {
+            return Result<AuthResponse>.Fail("This account has been locked. Please contact support.", ErrorType.Forbidden);
+        }
+
+        var shopIds = await GetShopIdsAsync(user, ct);
+        var response = await IssueTokensAsync(user, shopIds, ct);
+        return Result<AuthResponse>.Ok(response);
+    }
+
     public async Task<Result<AuthResponse>> RefreshAsync(RefreshRequest request, CancellationToken ct = default)
     {
         var tokens = _uow.Repository<RefreshToken>();

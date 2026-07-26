@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintHub.Api.Common;
@@ -18,11 +21,13 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _auth;
     private readonly ICurrentUser _currentUser;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(IAuthService auth, ICurrentUser currentUser)
+    public AuthController(IAuthService auth, ICurrentUser currentUser, IConfiguration configuration)
     {
         _auth = auth;
         _currentUser = currentUser;
+        _configuration = configuration;
     }
 
     /// <summary>UC-01 — register a new customer account.</summary>
@@ -72,6 +77,44 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken ct)
         => (await _auth.ResetPasswordAsync(request, ct)).ToActionResult(successMessage: "Your password has been reset. Please log in.");
+
+    /// <summary>UC-02 external — begin the Google OAuth handshake.</summary>
+    [HttpGet("google/login")]
+    [AllowAnonymous]
+    public IActionResult GoogleLogin()
+    {
+        if (!GoogleConfigured())
+            return BadRequest(ApiResponse.Fail("Google sign-in is not configured on the server."));
+
+        var redirectUrl = Url.Action(nameof(GoogleCallback), "Auth", null, Request.Scheme);
+        return Challenge(new AuthenticationProperties { RedirectUri = redirectUrl }, GoogleDefaults.AuthenticationScheme);
+    }
+
+    /// <summary>OAuth callback: provisions/looks up the account, then hands tokens back to the web app.</summary>
+    [HttpGet("google/callback")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleCallback(CancellationToken ct)
+    {
+        var webBase = _configuration["Web:BaseUrl"] ?? "http://localhost:5100";
+        var result = await HttpContext.AuthenticateAsync("External");
+        if (!result.Succeeded || result.Principal is null)
+            return Redirect($"{webBase}/Account/Login?error=google");
+
+        var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value ?? "";
+        var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value ?? email;
+        await HttpContext.SignOutAsync("External");
+
+        var auth = await _auth.LoginExternalAsync(email, name, ct);
+        if (!auth.IsSuccess || auth.Value is null)
+            return Redirect($"{webBase}/Account/Login?error=google");
+
+        var query = $"access={Uri.EscapeDataString(auth.Value.AccessToken)}&refresh={Uri.EscapeDataString(auth.Value.RefreshToken)}";
+        return Redirect($"{webBase}/Account/External?{query}");
+    }
+
+    private bool GoogleConfigured() =>
+        !string.IsNullOrWhiteSpace(_configuration["Authentication:Google:ClientId"])
+        && !string.IsNullOrWhiteSpace(_configuration["Authentication:Google:ClientSecret"]);
 
     /// <summary>Returns the identity carried by the current access token.</summary>
     [HttpGet("me")]

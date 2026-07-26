@@ -49,7 +49,7 @@ builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
           ?? throw new InvalidOperationException("Missing 'Jwt' configuration section.");
 
-builder.Services
+var authBuilder = builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -68,6 +68,23 @@ builder.Services
             NameClaimType = JwtRegisteredClaimNames.Sub
         };
     });
+
+// Google sign-in (UC-02 external). Wired only when credentials are present in .env.json.
+// The "External" cookie holds the OAuth correlation during the handshake.
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder
+        .AddCookie("External")
+        .AddGoogle(options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+            options.SignInScheme = "External";
+            options.CallbackPath = "/signin-google";
+        });
+}
 
 builder.Services.AddAuthorization();
 
