@@ -10,8 +10,6 @@
         <a class="btn-ph" asp-controller="Quotes" asp-action="Index">New order</a>
     </div>
 
-    @if (TempData["err"] != null) { <div class="alert-ph alert-err mb-3">@TempData["err"]</div> }
-
     @if (!Model.Items.Any())
     {
         <div class="empty-ph">You have no orders yet. <a asp-controller="Quotes" asp-action="Index" class="fw-bold">Compare quotes</a> to place your first one.</div>

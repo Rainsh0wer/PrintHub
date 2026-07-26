@@ -5,8 +5,6 @@
 
 <div class="page-container" style="max-width:720px;padding:24px 16px 60px">
     <div class="page-head"><h1>My profile</h1></div>
-    @if (TempData["err"] != null) { <div class="alert-ph alert-err mb-3">@TempData["err"]</div> }
-    @if (TempData["ok"] != null) { <div class="alert-ph alert-ok mb-3">@TempData["ok"]</div> }
     @if (Model is null) { <div class="alert-ph alert-err">@ViewBag.Error</div>; return; }
 
     <div class="card-ph pad mb-4 d-flex align-items-center gap-3">

@@ -1,0 +1,23 @@
+@{
+    int code = ViewBag.Code ?? 404;
+    ViewData["Title"] = code.ToString();
+    var (title, msg) = code switch
+    {
+        404 => ("Page not found", "The page you're looking for doesn't exist or has moved."),
+        403 => ("Access denied", "You don't have permission to view this page."),
+        500 => ("Something went wrong", "An unexpected error occurred. Please try again."),
+        _ => ("Something went wrong", "An unexpected error occurred.")
+    };
+}
+
+<div class="page-container status-page">
+    <div>
+        <div class="status-code">@code</div>
+        <h1 class="fw-900 mt-2" style="font-size:2rem">@title</h1>
+        <p class="muted mt-2" style="font-size:1.05rem;max-width:44ch;margin-inline:auto">@msg</p>
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <a class="btn-ph btn-lg" asp-controller="Home" asp-action="Index">Back home</a>
+            <a class="btn-outline-ph btn-lg" asp-controller="Shops" asp-action="Index">Browse shops</a>
+        </div>
+    </div>
+</div>

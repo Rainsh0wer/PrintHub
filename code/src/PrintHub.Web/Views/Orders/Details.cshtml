@@ -33,8 +33,6 @@
         <span class="muted">@Model.ShopName</span>
     </div>
 
-    @if (TempData["err"] != null) { <div class="alert-ph alert-err mb-3">@TempData["err"]</div> }
-
     @if (Model.Status != "Cancelled" && Model.Status != "Declined")
     {
         <div class="card-ph pad steps mb-4">

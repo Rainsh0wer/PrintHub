@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="~/css/printhub.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body data-ok="@TempData["ok"]" data-err="@TempData["err"]">
     <div class="console">
         <aside class="side">
             <a class="ph-logo" asp-controller="Home" asp-action="Index"><span class="mk">◒</span> PrintHub</a>
@@ -56,12 +56,26 @@
                 </div>
             </header>
             <div class="console-body">
-                @if (TempData["err"] != null) { <div class="alert-ph alert-err mb-3">@TempData["err"]</div> }
-                @if (TempData["ok"] != null) { <div class="alert-ph alert-ok mb-3">@TempData["ok"]</div> }
                 @RenderBody()
             </div>
         </div>
     </div>
+    <div class="toast-wrap" id="toasts"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const b = document.body;
+            function toast(msg, cls) {
+                if (!msg) return;
+                const t = document.createElement('div');
+                t.className = 'toast ' + cls;
+                t.innerHTML = '<i class="fas fa-' + (cls === 'ok' ? 'circle-check' : 'circle-exclamation') + '"></i><span>' + msg + '</span>';
+                document.getElementById('toasts').appendChild(t);
+                setTimeout(() => t.remove(), 4300);
+            }
+            toast(b.dataset.ok, 'ok'); toast(b.dataset.err, 'err');
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
