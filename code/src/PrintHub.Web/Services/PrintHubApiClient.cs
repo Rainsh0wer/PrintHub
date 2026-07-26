@@ -29,6 +29,34 @@ public class PrintHubApiClient
     public Task<ApiResult<object>> DeleteAsync(string path, CancellationToken ct = default)
         => SendAsync<object>(HttpMethod.Delete, path, null, ct);
 
+    public async Task<ApiResult<T>> PostFileAsync<T>(string path, IFormFile file, IEnumerable<KeyValuePair<string, string>> fields, CancellationToken ct = default)
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var sc = new StreamContent(file.OpenReadStream());
+            sc.Headers.ContentType = new MediaTypeHeaderValue(string.IsNullOrEmpty(file.ContentType) ? "application/octet-stream" : file.ContentType);
+            content.Add(sc, "file", file.FileName);
+            foreach (var f in fields) content.Add(new StringContent(f.Value), f.Key);
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = content };
+            var token = _http.HttpContext?.Session.GetString(SessionKeys.AccessToken);
+            if (!string.IsNullOrEmpty(token))
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var client = _factory.CreateClient("api");
+            using var response = await client.SendAsync(request, ct);
+            var payload = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(Json, ct);
+            if (response.IsSuccessStatusCode)
+                return new ApiResult<T>(true, payload is null ? default : payload.Data, null, (int)response.StatusCode);
+            return new ApiResult<T>(false, default, payload?.Message ?? $"Upload failed ({(int)response.StatusCode}).", (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return ApiResult<T>.Fail($"Upload failed: {ex.Message}");
+        }
+    }
+
     private async Task<ApiResult<T>> SendAsync<T>(HttpMethod method, string path, object? body, CancellationToken ct)
     {
         try

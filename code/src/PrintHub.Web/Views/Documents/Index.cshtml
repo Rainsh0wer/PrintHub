@@ -1,0 +1,45 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Documents.Dtos.DocumentDto>
+@{
+    ViewData["Title"] = "Documents";
+}
+
+<div class="page-container" style="padding:24px 16px 60px">
+    <div class="page-head"><h1>My documents</h1><span class="muted">Files you can attach when ordering.</span></div>
+    @if (TempData["err"] != null) { <div class="alert-ph alert-err mb-3">@TempData["err"]</div> }
+    @if (TempData["ok"] != null) { <div class="alert-ph alert-ok mb-3">@TempData["ok"]</div> }
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card-ph" style="overflow:hidden">
+                <table class="tbl">
+                    <thead><tr><th>File</th><th>Type</th><th>Size</th><th>Pages</th><th>Uploaded</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.Items.Any()) { <tr><td colspan="6" class="muted text-center" style="padding:44px">No files yet. Upload one to get started.</td></tr> }
+                        @foreach (var d in Model.Items)
+                        {
+                            <tr>
+                                <td><i class="far fa-file me-2 muted"></i><strong>@d.FileName</strong></td>
+                                <td class="muted">@d.ContentType</td>
+                                <td class="muted">@d.FileSizeKb KB</td>
+                                <td class="muted">@(d.DeclaredPageCount?.ToString() ?? "—")</td>
+                                <td class="muted">@d.UploadedAt.ToString("dd MMM, HH:mm")</td>
+                                <td class="text-end"><form method="post" asp-action="Delete"><input type="hidden" name="id" value="@d.Id" /><button class="btn-outline-ph btn-sm">Delete</button></form></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <form method="post" asp-action="Upload" enctype="multipart/form-data" class="card-ph pad">
+                <h3 class="fw-900 mb-2" style="font-size:1.05rem">Upload a file</h3>
+                <label class="form-label">File (PDF, PNG, JPEG, DOCX)</label>
+                <input class="form-input mb-2" type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.docx" required />
+                <label class="form-label">Declared page count</label>
+                <input class="form-input mb-2" type="number" name="declaredPageCount" min="1" value="1" />
+                <label class="d-flex align-items-center gap-2 mb-3" style="font-size:13px"><input type="checkbox" name="rightsDeclared" value="true" /> I confirm I have the rights to print this file.</label>
+                <button class="btn-ph btn-block" type="submit">Upload</button>
+            </form>
+        </div>
+    </div>
+</div>

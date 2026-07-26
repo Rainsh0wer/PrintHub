@@ -94,6 +94,24 @@
             {
                 <form method="post" asp-action="Confirm"><input type="hidden" name="id" value="@Model.Id" /><button class="btn-ph btn-block btn-lg" type="submit">Confirm receipt</button></form>
             }
+            @if (Model.Status == "Completed")
+            {
+                <form method="post" asp-controller="Reviews" asp-action="Create" class="card-ph pad mb-3">
+                    <input type="hidden" name="orderId" value="@Model.Id" />
+                    <h3 class="fw-900 mb-2" style="font-size:1.05rem">Leave a review</h3>
+                    <label class="form-label">Rating</label>
+                    <select class="form-input mb-2" name="rating"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option></select>
+                    <textarea class="form-input mb-2" name="comment" rows="2" placeholder="How did it go?"></textarea>
+                    <button class="btn-ph btn-block" type="submit">Submit review</button>
+                </form>
+                <form method="post" asp-controller="Complaints" asp-action="Raise" class="card-ph pad">
+                    <input type="hidden" name="orderId" value="@Model.Id" />
+                    <h3 class="fw-900 mb-2" style="font-size:1.05rem">Something wrong?</h3>
+                    <select class="form-input mb-2" name="reason"><option value="0">Wrong output</option><option value="1">Missing pages</option><option value="2">Quality defect</option><option value="3">Late</option><option value="4">Other</option></select>
+                    <textarea class="form-input mb-2" name="description" rows="2" placeholder="Describe the problem" required></textarea>
+                    <button class="btn-outline-ph btn-block" type="submit">Raise a complaint</button>
+                </form>
+            }
         </div>
     </div>
 </div>

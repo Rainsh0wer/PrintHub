@@ -1,0 +1,41 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Complaints.Dtos.ComplaintDto>
+@{
+    ViewData["Title"] = "My complaints";
+    string Cls(string s) => s switch { "Resolved" or "Closed" => "st-ok", "Escalated" => "st-warn", "ShopResponded" => "st-info", _ => "st-err" };
+}
+
+<div class="page-container" style="padding:24px 16px 60px">
+    <div class="page-head"><h1>My complaints</h1><span class="muted">Disputes you've raised on completed orders.</span></div>
+    @if (TempData["err"] != null) { <div class="alert-ph alert-err mb-3">@TempData["err"]</div> }
+    @if (TempData["ok"] != null) { <div class="alert-ph alert-ok mb-3">@TempData["ok"]</div> }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty-ph">You haven't raised any complaints. You can raise one from a completed order.</div>
+    }
+    else
+    {
+        <div class="stack" style="--gap:14px">
+            @foreach (var c in Model.Items)
+            {
+                <div class="card-ph pad">
+                    <div class="between">
+                        <div>
+                            <div class="d-flex align-items-center gap-2"><strong>@c.OrderCode</strong><span class="status-badge @Cls(c.Status)">@c.Status</span><span class="badge-ph">@c.Reason</span></div>
+                            <p class="muted mt-1 mb-0" style="font-size:14px">@c.Description</p>
+                            @if (c.ShopResponse != null) { <div class="muted mt-1" style="font-size:13px">Shop: @c.ShopResponse @(c.ProposedResolution != null ? $"({c.ProposedResolution}" + (c.RefundAmount.HasValue ? $" {c.RefundAmount:N0} ₫)" : ")") : "")</div> }
+                            @if (c.AdminRuling != null) { <div class="muted mt-1" style="font-size:13px">Ruling: @c.AdminRuling</div> }
+                        </div>
+                        @if (c.Status == "ShopResponded")
+                        {
+                            <div class="d-flex gap-2">
+                                <form method="post" asp-action="Accept"><input type="hidden" name="id" value="@c.Id" /><button class="btn-ph btn-sm">Accept</button></form>
+                                <form method="post" asp-action="Escalate"><input type="hidden" name="id" value="@c.Id" /><button class="btn-outline-ph btn-sm">Escalate</button></form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
