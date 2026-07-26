@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrintHub.Application.Common.Interfaces;
 using PrintHub.Contracts.Quoting;
+using PrintHub.Infrastructure.Email;
 using PrintHub.Infrastructure.Messaging;
 using PrintHub.Infrastructure.Persistence;
 using PrintHub.Infrastructure.Quoting;
@@ -44,7 +45,17 @@ public static class DependencyInjection
         services.Configure<RabbitMqOptions>(configuration.GetSection("RabbitMq"));
         services.AddSingleton<IProductionQueue, RabbitMqProductionQueue>();
 
-        services.AddSingleton<IFileStorage, LocalFileStorage>();
+        // File storage: Cloudinary when configured, else local disk (graceful default).
+        services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
+        var cloudinary = configuration.GetSection(CloudinaryOptions.SectionName).Get<CloudinaryOptions>();
+        if (cloudinary?.IsConfigured == true)
+            services.AddSingleton<IFileStorage, CloudinaryFileStorage>();
+        else
+            services.AddSingleton<IFileStorage, LocalFileStorage>();
+
+        // Email (SMTP via MailKit); no-ops when the section is blank.
+        services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         return services;
     }

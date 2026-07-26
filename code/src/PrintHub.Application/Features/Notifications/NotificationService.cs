@@ -16,11 +16,13 @@ public class NotificationService : INotificationService
 {
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly IEmailSender _email;
 
-    public NotificationService(IUnitOfWork uow, IMapper mapper)
+    public NotificationService(IUnitOfWork uow, IMapper mapper, IEmailSender email)
     {
         _uow = uow;
         _mapper = mapper;
+        _email = email;
     }
 
     public async Task<Result<PagedResult<NotificationDto>>> ListAsync(int userId, PageRequest page, CancellationToken ct = default)
@@ -69,5 +71,24 @@ public class NotificationService : INotificationService
             CreatedAt = DateTime.UtcNow
         }, ct);
         await _uow.SaveChangesAsync(ct);
+
+        // Mirror the notification to email when SMTP is configured (best-effort).
+        if (_email.IsEnabled)
+        {
+            var user = await _uow.Repository<User>().GetByIdAsync(userId, ct);
+            if (user is not null)
+                await _email.SendAsync(user.Email, user.FullName, title, BuildEmailBody(title, content), ct);
+        }
     }
+
+    private static string BuildEmailBody(string title, string content) =>
+        $"""
+        <div style="font-family:Segoe UI,Arial,sans-serif;max-width:520px;margin:auto">
+          <h2 style="color:#4338ca">PrintHub</h2>
+          <h3>{title}</h3>
+          <p style="color:#333;line-height:1.6">{content}</p>
+          <hr style="border:none;border-top:1px solid #e8eaf3"/>
+          <p style="color:#8b90a0;font-size:12px">This is an automated message from PrintHub.</p>
+        </div>
+        """;
 }
