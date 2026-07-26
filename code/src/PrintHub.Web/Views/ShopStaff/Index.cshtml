@@ -1,0 +1,49 @@
+@model List<PrintHub.Application.Features.Shops.Dtos.StaffDto>
+@{
+    ViewData["Title"] = "Staff";
+    Layout = "_ConsoleLayout";
+}
+
+@if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
+
+<div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Staff</h1><span class="muted">@Model.Count(s => s.IsActive) active</span></div>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-ph" style="overflow:hidden">
+            <table class="tbl">
+                <thead><tr><th>Name</th><th>Email</th><th>Position</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                    @if (!Model.Any()) { <tr><td colspan="5" class="muted text-center" style="padding:44px">No staff yet.</td></tr> }
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td><strong>@s.Name</strong></td>
+                            <td class="muted">@s.Email</td>
+                            <td>@(s.Position ?? "—")</td>
+                            <td><span class="status-badge @(s.IsActive ? "st-ok" : "st-err")">@(s.IsActive ? "Active" : "Revoked")</span></td>
+                            <td class="text-end">
+                                @if (s.IsActive)
+                                {
+                                    <form method="post" asp-action="Revoke"><input type="hidden" name="staffId" value="@s.Id" /><button class="btn-outline-ph btn-sm" type="submit">Revoke</button></form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <form method="post" asp-action="Grant" class="card-ph pad">
+            <h3 class="fw-900 mb-2" style="font-size:1.05rem">Add staff</h3>
+            <label class="form-label">Email</label>
+            <input class="form-input mb-2" name="email" type="email" required placeholder="staff@example.com" />
+            <label class="form-label">Position</label>
+            <input class="form-input mb-3" name="position" placeholder="Counter" />
+            <button class="btn-ph btn-block" type="submit">Grant access</button>
+            <p class="muted mt-2 mb-0" style="font-size:12px">The user must already have a PrintHub account.</p>
+        </form>
+    </div>
+</div>

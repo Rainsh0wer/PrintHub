@@ -1,0 +1,33 @@
+@model List<PrintHub.Application.Features.Shops.Dtos.MachineAdminDto>
+@{
+    ViewData["Title"] = "Machines";
+    Layout = "_ConsoleLayout";
+    string Cls(string s) => s == "Idle" ? "st-ok" : (s == "Offline" ? "st-err" : "st-warn");
+}
+
+@if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
+
+<div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Machines</h1><span class="muted">@Model.Count machines</span></div>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="row g-3">
+    @foreach (var m in Model)
+    {
+        <div class="col-md-4">
+            <div class="card-ph pad">
+                <div class="between"><strong>@m.Name</strong><span class="status-badge @Cls(m.Status)">@m.Status</span></div>
+                <div class="muted mb-3" style="font-size:13px">@m.MachineType · @m.ServiceGroup</div>
+                <form method="post" asp-action="SetStatus" class="d-flex gap-2">
+                    <input type="hidden" name="machineId" value="@m.Id" />
+                    <select class="form-input" name="status">
+                        <option value="0">Idle</option>
+                        <option value="1">Maintenance</option>
+                        <option value="2">Offline</option>
+                    </select>
+                    <button class="btn-outline-ph btn-sm" type="submit">Set</button>
+                </form>
+            </div>
+        </div>
+    }
+    @if (!Model.Any()) { <div class="col-12"><div class="empty-ph">No machines yet.</div></div> }
+</div>

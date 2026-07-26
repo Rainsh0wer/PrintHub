@@ -1,0 +1,22 @@
+@model PrintHub.Application.Features.Reports.Dtos.ShopRevenueReportDto
+@{
+    ViewData["Title"] = "Revenue";
+    Layout = "_ConsoleLayout";
+}
+
+@if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
+
+<div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Revenue</h1><span class="muted">All-time · completed orders</span></div>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="row g-3">
+    <div class="col-md-3"><div class="stat"><div class="k">Completed orders</div><div class="v">@Model.CompletedOrders</div></div></div>
+    <div class="col-md-3"><div class="stat"><div class="k">Gross revenue</div><div class="v" style="color:var(--accent)">@Model.GrossRevenue.ToString("N0")<span style="font-size:1rem"> ₫</span></div></div></div>
+    <div class="col-md-3"><div class="stat"><div class="k">Platform commission</div><div class="v" style="color:var(--price)">@Model.CommissionTotal.ToString("N0")<span style="font-size:1rem"> ₫</span></div></div></div>
+    <div class="col-md-3"><div class="stat"><div class="k">Net to shop</div><div class="v" style="color:#1b5e20">@Model.NetRevenue.ToString("N0")<span style="font-size:1rem"> ₫</span></div></div></div>
+</div>
+
+<div class="card-ph pad mt-4" style="max-width:420px">
+    <div class="between" style="padding:.4rem 0;border-bottom:1px solid var(--border)"><span class="muted">Average order value</span><strong>@Model.AverageOrderValue.ToString("N0") ₫</strong></div>
+    <div class="between" style="padding:.4rem 0"><span class="muted">Net margin</span><strong>@(Model.GrossRevenue > 0 ? (Model.NetRevenue / Model.GrossRevenue * 100).ToString("0.0") : "0") %</strong></div>
+</div>

@@ -1,0 +1,35 @@
+@model List<PrintHub.Application.Features.Shops.Dtos.MaterialAdminDto>
+@{
+    ViewData["Title"] = "Materials";
+    Layout = "_ConsoleLayout";
+}
+
+@if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
+
+<div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Materials</h1><span class="muted">@Model.Count materials</span></div>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="card-ph" style="overflow:hidden">
+    <table class="tbl">
+        <thead><tr><th>Material</th><th>Type</th><th class="text-end">Stock</th><th>Adjust stock / low-stock</th></tr></thead>
+        <tbody>
+            @if (!Model.Any()) { <tr><td colspan="4" class="muted text-center" style="padding:44px">No materials yet.</td></tr> }
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td><strong>@m.Name</strong> @(m.IsLowStock ? Html.Raw("<span class='status-badge st-warn ms-1'>low</span>") : Html.Raw(""))</td>
+                    <td class="muted">@m.MaterialType</td>
+                    <td class="text-end">@m.StockQuantity.ToString("N0") @m.Unit</td>
+                    <td>
+                        <form method="post" asp-action="AdjustStock" class="d-flex gap-2 align-items-center">
+                            <input type="hidden" name="materialId" value="@m.Id" />
+                            <input class="form-input" style="max-width:120px" type="number" step="0.01" name="stockQuantity" value="@m.StockQuantity" />
+                            <input class="form-input" style="max-width:120px" type="number" step="0.01" name="lowStockThreshold" value="@m.LowStockThreshold" />
+                            <button class="btn-outline-ph btn-sm" type="submit">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
