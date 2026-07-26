@@ -136,9 +136,13 @@ dotnet run --project src/PrintHub.ProductionAgent
 | Email | Role |
 |-------|------|
 | admin@printhub.vn | Admin |
-| owner.quickprint@printhub.vn | Shop Owner |
-| staff.quickprint@printhub.vn | Shop Staff |
-| customer1@printhub.vn / customer2 / customer3 | Customer |
+| owner.quickprint@ / owner.campuscopy@ / owner.makerlab@ / owner.printcorner@ / owner.sinhvien@ / owner.colorzone@ / owner.binderpro@ / owner.rainbow@ / owner.photoexpress@printhub.vn | Shop Owner |
+| staff.quickprint@ / staff.campuscopy@ / staff.sinhvien@ / staff.colorzone@ / staff.binderpro@printhub.vn | Shop Staff |
+| customer1@ .. customer12@printhub.vn | Customer |
+
+The seed creates 9 shops (7 active, 1 pending review, 1 suspended — useful for
+exercising the admin approval/governance screens), ~40 orders spanning every
+lifecycle status, wallet ledgers, reviews, documents, and vouchers.
 
 ---
 

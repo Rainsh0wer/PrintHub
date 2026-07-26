@@ -38,9 +38,13 @@ Or just run the API normally — it applies migrations and seeds on first start.
 | Email | Role |
 |-------|------|
 | admin@printhub.vn | Admin |
-| owner.quickprint@printhub.vn | Shop Owner |
-| staff.quickprint@printhub.vn | Shop Staff |
-| customer1@printhub.vn | Customer |
+| owner.quickprint@ / owner.campuscopy@ / owner.makerlab@ / +6 more @printhub.vn | Shop Owner |
+| staff.quickprint@ / staff.campuscopy@ / +3 more @printhub.vn | Shop Staff |
+| customer1@ .. customer12@printhub.vn | Customer |
+
+Seeds 9 shops (7 active / 1 pending / 1 suspended), ~40 orders across every
+status, wallet ledgers, reviews, documents, and vouchers — see
+`DataSeeder.cs` for the full account list.
 
 ## How the script was generated
 
