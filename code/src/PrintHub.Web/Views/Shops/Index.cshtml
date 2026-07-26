@@ -79,7 +79,7 @@
                                     </div>
                                     <div class="card-meta" style="margin-top:auto">
                                         <span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0") (@s.RatingCount)</span>
-                                        <span class="price-current">@(s.MinUnitPrice.HasValue ? s.MinUnitPrice.Value.ToString("N0") : "—")<span class="cur"> ₫</span></span>
+                                        <span class="price-current">@(s.MaxUnitPrice.HasValue ? s.MaxUnitPrice.Value.ToString("N0") : "—")<span class="cur"> ₫</span></span>
                                     </div>
                                 </div>
                             </a>

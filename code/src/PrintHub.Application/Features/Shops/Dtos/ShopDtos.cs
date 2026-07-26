@@ -10,6 +10,7 @@ public record ShopSummaryDto(
     int RatingCount,
     IEnumerable<string> ServiceGroups,
     decimal? MinUnitPrice,
+    decimal? MaxUnitPrice,
     double? DistanceMeters,
     string? LogoUrl,
     string? CoverImageUrl);

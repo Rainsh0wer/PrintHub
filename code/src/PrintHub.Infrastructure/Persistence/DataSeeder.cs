@@ -141,9 +141,9 @@ public static class DataSeeder
         };
 
         // QuickPrint: documents + basic finishing
-        var qpBw = Rate(quickPrint, docBwA4, 500, 1);
+        var qpBw = Rate(quickPrint, docBwA4, 800, 1);
         var qpColor = Rate(quickPrint, docColorA4, 3000, 1);
-        var qpCopy = Rate(quickPrint, photocopy, 400, 1);
+        var qpCopy = Rate(quickPrint, photocopy, 700, 1);
         var qpSpiral = Rate(quickPrint, bindSpiral, 15000, 5);
         var qpLaminate = Rate(quickPrint, laminate, 5000, 3);
         db.ShopServices.AddRange(qpBw, qpColor, qpCopy, qpSpiral, qpLaminate);
@@ -157,13 +157,13 @@ public static class DataSeeder
         var ccA3 = Rate(campusCopy, docBwA3, 1500, 2);
         var ccPlot = Rate(campusCopy, plotA1, 25000, 10);
         var ccThermal = Rate(campusCopy, bindThermal, 20000, 8);
-        var ccCard = Rate(campusCopy, nameCard, 250, 30, setup: 20000, minQty: 100);
+        var ccCard = Rate(campusCopy, nameCard, 600, 30, setup: 20000, minQty: 100);
         db.ShopServices.AddRange(ccColor, ccA3, ccPlot, ccThermal, ccCard);
         db.PriceRules.Add(new PriceRule { ShopService = ccColor, RuleType = PriceRuleType.PaperType, OptionKey = "A3", Multiplier = 2.0m });
 
         // MakerLab: fabrication
-        var mlPrint3d = Rate(makerLab, print3d, 800, 2, setup: 20000);
-        var mlLaser = Rate(makerLab, laserCut, 1200, 3, setup: 30000);
+        var mlPrint3d = Rate(makerLab, print3d, 1500, 2, setup: 20000);
+        var mlLaser = Rate(makerLab, laserCut, 3500, 3, setup: 30000);
         db.ShopServices.AddRange(mlPrint3d, mlLaser);
         db.PriceRules.AddRange(
             new PriceRule { ShopService = mlPrint3d, RuleType = PriceRuleType.Material, OptionKey = "PETG", Multiplier = 1.3m },

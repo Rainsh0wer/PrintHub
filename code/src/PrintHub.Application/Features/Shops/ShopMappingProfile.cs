@@ -15,6 +15,8 @@ public class ShopMappingProfile : Profile
                           .Distinct()))
             .ForCtorParam(nameof(ShopSummaryDto.MinUnitPrice), o => o.MapFrom(s =>
                 s.Services.Where(x => x.IsActive).Select(x => (decimal?)x.UnitPrice).Min()))
+            .ForCtorParam(nameof(ShopSummaryDto.MaxUnitPrice), o => o.MapFrom(s =>
+                s.Services.Where(x => x.IsActive).Select(x => (decimal?)x.UnitPrice).Max()))
             .ForCtorParam(nameof(ShopSummaryDto.DistanceMeters), o => o.MapFrom(_ => (double?)null));
 
         CreateMap<Shop, ShopDetailDto>()
