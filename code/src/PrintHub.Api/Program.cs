@@ -18,6 +18,11 @@ using PrintHub.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Secrets (Cloudinary / SMTP / Google / JWT key) live in a gitignored .env.json,
+// layered last so it overrides appsettings. Optional — features degrade gracefully
+// when a section is left blank.
+builder.Configuration.AddJsonFile(".env.json", optional: true, reloadOnChange: true);
+
 // ---- Services ----
 builder.Services
     .AddControllers(options =>
