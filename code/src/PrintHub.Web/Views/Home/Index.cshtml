@@ -123,4 +123,104 @@
             }
         </div>
     </div>
+
+    @* ── Customer reviews ─────────────────────────────────────────── *@
+    <div class="text-center" style="padding:20px 0 6px">
+        <span class="tag" style="display:inline-block;background:var(--accent);color:#fff;padding:6px 20px;border-radius:var(--radius-pill);font-size:.85rem;font-weight:800">Loved by customers</span>
+        <h2 class="fw-900 mt-3" style="font-size:2.2rem;text-transform:uppercase">What people say</h2>
+    </div>
+    <div class="row g-3 mb-2">
+        @{
+            var testimonials = new[] {
+                ("Bound my thesis in an hour, right by the university gate. Cheapest of three shops.", "Minh Hoang", "Cầu Giấy", 5),
+                ("Compared shops in seconds and saved 20% on 200 colour pages for our club.", "An Bui", "Đống Đa", 5),
+                ("Laser-cut acrylic came out perfect. Loved tracking it from accepted to ready.", "Thao Do", "Hai Bà Trưng", 5),
+                ("Wallet top-up + VietQR made paying painless. Order was ready before I arrived.", "Huy Tran", "Ba Đình", 4),
+                ("The quote comparison is genuinely useful — no more calling five shops.", "Linh Pham", "Thanh Xuân", 5),
+                ("Uploaded my file, picked the fastest shop, done. 3D print quality was great.", "Nam Vo", "Long Biên", 5) };
+        }
+        @foreach (var t in testimonials)
+        {
+            <div class="col-md-4">
+                <div class="card-ph pad h-100">
+                    <div class="stars mb-2" style="font-size:15px">@(new string('★', t.Item4))<span style="color:var(--border)">@(new string('★', 5 - t.Item4))</span></div>
+                    <p style="font-size:14.5px;color:var(--text-secondary)">“@t.Item1”</p>
+                    <div class="d-flex align-items-center gap-2 mt-3">
+                        <img class="ph-avatar" style="border-color:var(--border)" src="https://api.dicebear.com/9.x/initials/svg?seed=@t.Item2" />
+                        <div><strong style="font-size:14px;display:block">@t.Item2</strong><span class="muted" style="font-size:12px">@t.Item3</span></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ── FAQ ─────────────────────────────────────────────────────── *@
+    <div class="row g-4 align-items-start" style="padding:64px 0 20px">
+        <div class="col-lg-4">
+            <span class="fw-900" style="color:var(--accent);font-size:.8rem;letter-spacing:1px">FAQ</span>
+            <h2 class="fw-900 mt-2" style="font-size:2rem;text-transform:uppercase">Frequently asked questions</h2>
+            <p class="muted mt-2">Everything you need to know about ordering and paying on PrintHub.</p>
+            <a class="btn-outline-ph mt-2" asp-controller="Account" asp-action="Register">Create an account</a>
+        </div>
+        <div class="col-lg-8">
+            <div class="accordion" id="faq">
+                @{
+                    var faqs = new[] {
+                        ("How does comparing quotes work?", "Configure your job once — service, quantity, options — and PrintHub asks every eligible shop to price it. You see the quotes side by side and pick the shop you want, sorted by price, time, or rating."),
+                        ("How do I pay?", "Every order is paid from your PrintHub wallet. Top up once via bank transfer (VietQR); your balance is credited when the transfer is confirmed, then ordering is a single tap."),
+                        ("Can I cancel an order?", "Yes — before a shop starts production you can cancel and get a full refund back to your wallet. Once it's in production, the shop's terms apply."),
+                        ("What can I get printed?", "Documents (B&W and colour, A4 to A1, plotting), finishing (spiral & thermal binding, lamination, business cards), 3D printing, and laser cutting & engraving."),
+                        ("How do I open a shop on PrintHub?", "Sign up and apply to open a shop. Once approved, list your rate card and machines and start receiving matched jobs in your console.") };
+                    var i = 0;
+                }
+                @foreach (var f in faqs)
+                {
+                    i++;
+                    <div class="accordion-item" style="border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:10px;overflow:hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button @(i == 1 ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#faq@(i)" style="font-weight:700;box-shadow:none">@f.Item1</button>
+                        </h2>
+                        <div id="faq@(i)" class="accordion-collapse collapse @(i == 1 ? "show" : "")" data-bs-parent="#faq">
+                            <div class="accordion-body muted" style="font-size:14.5px">@f.Item2</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── Contact ─────────────────────────────────────────────────── *@
+    <div class="how" style="background:var(--ink-dark)">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-5">
+                <span class="fw-900" style="color:var(--pop);font-size:.8rem;letter-spacing:1px">GET IN TOUCH</span>
+                <h2 class="fw-900 mt-2" style="font-size:2.2rem;text-transform:uppercase">Contact us</h2>
+                <p style="color:rgba(255,255,255,.72)">Questions about an order, or want to sell on PrintHub? We're here.</p>
+            </div>
+            <div class="col-lg-7">
+                <div class="row g-3">
+                    @foreach (var c in new[] {
+                        ("fa-location-dot", "Address", "FPT University, Hòa Lạc, Hà Nội"),
+                        ("fa-envelope", "Email", "support@printhub.vn"),
+                        ("fa-phone", "Hotline", "1900 6868 (8:00–21:00)"),
+                        ("fa-clock", "Support hours", "Every day, 8:00 – 21:00") })
+                    {
+                        <div class="col-sm-6">
+                            <div class="how-card d-flex gap-3 align-items-start">
+                                <i class="fas @c.Item1" style="color:var(--pop);font-size:1.3rem;margin-top:2px"></i>
+                                <div><strong style="display:block">@c.Item2</strong><span style="color:rgba(255,255,255,.72);font-size:14px">@c.Item3</span></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* ── Final CTA ───────────────────────────────────────────────── *@
+    <div class="text-center" style="padding:60px 0 20px">
+        <h2 class="fw-900" style="font-size:2.6rem;text-transform:uppercase">Ready to print smarter?</h2>
+        <p class="muted mt-2" style="font-size:1.1rem">Compare quotes from every shop in seconds.</p>
+        <a class="btn-pop btn-ph btn-lg mt-3" asp-controller="Quotes" asp-action="Index">Compare quotes now <i class="fas fa-arrow-right"></i></a>
+    </div>
 </div>
