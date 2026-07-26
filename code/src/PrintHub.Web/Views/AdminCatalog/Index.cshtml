@@ -1,0 +1,44 @@
+@model List<PrintHub.Application.Features.Catalog.Dtos.ServiceTypeAdminDto>
+@{
+    ViewData["Title"] = "Service types";
+    Layout = "_ConsoleLayout";
+}
+
+<h1 class="fw-900 mb-3" style="font-size:1.6rem">Service types</h1>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-ph" style="overflow:hidden">
+            <table class="tbl">
+                <thead><tr><th>Code</th><th>Name</th><th>Group</th><th>Pricing</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td class="muted">@s.Code</td>
+                            <td><strong>@s.Name</strong></td>
+                            <td><span class="badge-ph">@s.ServiceGroup</span></td>
+                            <td class="muted">@s.PricingModel</td>
+                            <td><span class="status-badge @(s.IsActive ? "st-ok" : "st-err")">@(s.IsActive ? "Active" : "Off")</span></td>
+                            <td class="text-end">@if (s.IsActive) { <form method="post" asp-action="Deactivate"><input type="hidden" name="id" value="@s.Id" /><button class="btn-outline-ph btn-sm">Deactivate</button></form> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <form method="post" asp-action="Create" class="card-ph pad">
+            <h3 class="fw-900 mb-2" style="font-size:1.05rem">Add service type</h3>
+            <label class="form-label">Code</label><input class="form-input mb-2" name="code" required placeholder="BADGE_A6" />
+            <label class="form-label">Name</label><input class="form-input mb-2" name="name" required />
+            <label class="form-label">Group</label>
+            <select class="form-input mb-2" name="serviceGroup"><option value="0">Document</option><option value="1">Finishing</option><option value="2">Fabrication</option></select>
+            <label class="form-label">Pricing model</label>
+            <select class="form-input mb-2" name="pricingModel"><option value="0">Per page</option><option value="1">Per unit</option><option value="2">Material &amp; time</option></select>
+            <label class="form-label">Unit</label><input class="form-input mb-3" name="unitOfMeasure" required value="unit" />
+            <button class="btn-ph btn-block" type="submit">Create</button>
+        </form>
+    </div>
+</div>

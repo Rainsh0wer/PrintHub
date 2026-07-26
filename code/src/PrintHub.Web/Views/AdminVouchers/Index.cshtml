@@ -1,0 +1,54 @@
+@model List<PrintHub.Application.Features.Vouchers.Dtos.VoucherAdminDto>
+@{
+    ViewData["Title"] = "Vouchers";
+    Layout = "_ConsoleLayout";
+}
+
+<h1 class="fw-900 mb-3" style="font-size:1.6rem">Vouchers</h1>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card-ph" style="overflow:hidden">
+            <table class="tbl">
+                <thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Used</th><th>Valid to</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var v in Model)
+                    {
+                        <tr>
+                            <td><strong>@v.Code</strong><div class="muted" style="font-size:12px">@v.Name</div></td>
+                            <td>@(v.DiscountType == "Percent" ? $"{v.DiscountValue:0}%" : $"{v.DiscountValue:N0} ₫")</td>
+                            <td class="muted">@v.MinOrderAmount.ToString("N0") ₫</td>
+                            <td class="muted">@v.UsedCount / @v.UsageLimit</td>
+                            <td class="muted">@v.ValidTo.ToString("dd MMM yyyy")</td>
+                            <td><span class="status-badge @(v.IsActive ? "st-ok" : "st-err")">@(v.IsActive ? "Active" : "Off")</span></td>
+                            <td class="text-end">@if (v.IsActive) { <form method="post" asp-action="Deactivate"><input type="hidden" name="id" value="@v.Id" /><button class="btn-outline-ph btn-sm">Off</button></form> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <form method="post" asp-action="Create" class="card-ph pad">
+            <h3 class="fw-900 mb-2" style="font-size:1.05rem">Create voucher</h3>
+            <label class="form-label">Code</label><input class="form-input mb-2" name="code" required placeholder="SALE50K" />
+            <label class="form-label">Name</label><input class="form-input mb-2" name="name" />
+            <label class="form-label">Type</label>
+            <select class="form-input mb-2" name="discountType"><option value="0">Percent</option><option value="1">Fixed amount</option></select>
+            <div class="row g-2">
+                <div class="col-6"><label class="form-label">Value</label><input class="form-input mb-2" type="number" name="discountValue" value="10" required /></div>
+                <div class="col-6"><label class="form-label">Min order</label><input class="form-input mb-2" type="number" name="minOrderAmount" value="50000" /></div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6"><label class="form-label">Usage limit</label><input class="form-input mb-2" type="number" name="usageLimit" value="100" /></div>
+                <div class="col-6"><label class="form-label">Per user</label><input class="form-input mb-2" type="number" name="perUserLimit" value="1" /></div>
+            </div>
+            <div class="row g-2">
+                <div class="col-6"><label class="form-label">Valid from</label><input class="form-input mb-3" type="date" name="validFrom" value="2026-07-01" /></div>
+                <div class="col-6"><label class="form-label">Valid to</label><input class="form-input mb-3" type="date" name="validTo" value="2026-12-31" /></div>
+            </div>
+            <button class="btn-ph btn-block" type="submit">Create</button>
+        </form>
+    </div>
+</div>

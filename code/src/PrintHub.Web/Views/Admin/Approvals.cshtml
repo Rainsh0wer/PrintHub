@@ -1,0 +1,53 @@
+@model List<PrintHub.Application.Features.Shops.Dtos.ShopAdminListItemDto>
+@{
+    ViewData["Title"] = "Shop approvals";
+    Layout = "_ConsoleLayout";
+    var active = ViewBag.Active as IEnumerable<PrintHub.Application.Features.Shops.Dtos.ShopSummaryDto> ?? new List<PrintHub.Application.Features.Shops.Dtos.ShopSummaryDto>();
+}
+
+<h1 class="fw-900 mb-3" style="font-size:1.6rem">Shop approvals</h1>
+
+<h3 class="fw-900 mb-2" style="font-size:1.05rem">Pending applications</h3>
+<div class="card-ph mb-4" style="overflow:hidden">
+    <table class="tbl">
+        <thead><tr><th>Shop</th><th>Owner</th><th>Location</th><th>Applied</th><th class="text-end">Action</th></tr></thead>
+        <tbody>
+            @if (!Model.Any()) { <tr><td colspan="5" class="muted text-center" style="padding:40px">No pending applications.</td></tr> }
+            @foreach (var s in Model)
+            {
+                <tr>
+                    <td><strong>@s.Name</strong></td>
+                    <td>@s.OwnerName <span class="muted">· @s.OwnerEmail</span></td>
+                    <td class="muted">@s.District, @s.City</td>
+                    <td class="muted">@s.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td class="text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <form method="post" asp-action="Approve"><input type="hidden" name="id" value="@s.Id" /><button class="btn-ph btn-sm">Approve</button></form>
+                            <form method="post" asp-action="Reject"><input type="hidden" name="id" value="@s.Id" /><input type="hidden" name="reason" value="Does not meet requirements" /><button class="btn-outline-ph btn-sm">Reject</button></form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<h3 class="fw-900 mb-2" style="font-size:1.05rem">Active shops</h3>
+<div class="card-ph" style="overflow:hidden">
+    <table class="tbl">
+        <thead><tr><th>Shop</th><th>Location</th><th>Rating</th><th class="text-end">Action</th></tr></thead>
+        <tbody>
+            @foreach (var s in active)
+            {
+                <tr>
+                    <td><strong>@s.Name</strong></td>
+                    <td class="muted">@s.District, @s.City</td>
+                    <td><span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0")</span></td>
+                    <td class="text-end">
+                        <form method="post" asp-action="Suspend"><input type="hidden" name="id" value="@s.Id" /><input type="hidden" name="reason" value="Policy review" /><button class="btn-outline-ph btn-sm">Suspend</button></form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

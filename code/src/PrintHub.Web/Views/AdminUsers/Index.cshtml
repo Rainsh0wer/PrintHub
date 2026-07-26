@@ -1,0 +1,39 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Users.Dtos.UserListItemDto>
+@{
+    ViewData["Title"] = "Users";
+    Layout = "_ConsoleLayout";
+    string q = ViewBag.Query ?? "";
+}
+
+<div class="between mb-3">
+    <h1 class="fw-900" style="font-size:1.6rem">Users</h1>
+    <form method="get" class="d-flex gap-2"><input class="form-input" name="q" value="@q" placeholder="Search name or email…" style="max-width:260px" /><button class="btn-ph btn-sm">Search</button></form>
+</div>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="card-ph" style="overflow:hidden">
+    <table class="tbl">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Wallet</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+        <tbody>
+            @foreach (var u in Model.Items)
+            {
+                <tr>
+                    <td><strong>@u.FullName</strong></td>
+                    <td class="muted">@u.Email</td>
+                    <td><span class="badge-ph">@u.Role</span></td>
+                    <td>@u.WalletBalance.ToString("N0") ₫</td>
+                    <td><span class="status-badge @(u.Status == "Active" ? "st-ok" : "st-err")">@u.Status</span></td>
+                    <td class="text-end">
+                        @if (u.Role != "Admin")
+                        {
+                            if (u.Status == "Active")
+                            { <form method="post" asp-action="Lock"><input type="hidden" name="id" value="@u.Id" /><button class="btn-outline-ph btn-sm">Lock</button></form> }
+                            else
+                            { <form method="post" asp-action="Unlock"><input type="hidden" name="id" value="@u.Id" /><button class="btn-ph btn-sm">Unlock</button></form> }
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

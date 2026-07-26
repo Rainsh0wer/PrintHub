@@ -1,0 +1,25 @@
+@model PrintHub.Application.Features.Reports.Dtos.PlatformReportDto
+@{
+    ViewData["Title"] = "Platform report";
+    Layout = "_ConsoleLayout";
+}
+
+<h1 class="fw-900 mb-3" style="font-size:1.6rem">Platform report</h1>
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<div class="row g-3">
+    <div class="col-md-3"><div class="stat"><div class="k">Total shops</div><div class="v">@Model.TotalShops</div></div></div>
+    <div class="col-md-3"><div class="stat"><div class="k">Active shops</div><div class="v" style="color:#1b5e20">@Model.ActiveShops</div></div></div>
+    <div class="col-md-3"><div class="stat"><div class="k">Completed orders</div><div class="v">@Model.CompletedOrders</div></div></div>
+    <div class="col-md-3"><div class="stat"><div class="k">Commission earned</div><div class="v" style="color:var(--price)">@Model.CommissionEarned.ToString("N0")<span style="font-size:1rem"> ₫</span></div></div></div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-6"><div class="card-ph pad"><div class="k muted" style="font-size:.85rem">Gross merchandise value (GMV)</div><div class="fw-900" style="font-size:2rem;color:var(--accent)">@Model.Gmv.ToString("N0") ₫</div></div></div>
+    <div class="col-md-6"><div class="card-ph pad"><div class="k muted" style="font-size:.85rem">Top shop by revenue</div><div class="fw-900" style="font-size:1.4rem">@(Model.TopShopName ?? "—")</div><div class="muted">@Model.TopShopRevenue.ToString("N0") ₫</div></div></div>
+</div>
+
+<div class="d-flex gap-2 mt-4">
+    <a class="btn-outline-ph btn-sm" href="http://localhost:5080/api/reports/platform" target="_blank">JSON</a>
+    <span class="muted" style="font-size:12.5px;align-self:center">The report endpoint also serves XML and CSV via content negotiation (Accept header).</span>
+</div>
