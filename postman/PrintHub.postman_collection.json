@@ -1,0 +1,1481 @@
+{
+  "info": {
+    "_postman_id": "b7e1c9a4-3f52-4d18-9c6a-8f2d1e4a7b30",
+    "name": "PrintHub API — Full Demo Collection",
+    "description": "PrintHub — Web-Based Multi-Vendor Printing & Fabrication Service Marketplace (PRN232).\n\n## Chuẩn bị (bắt buộc)\n1. **API**: `dotnet run --project src/PrintHub.Api --urls http://localhost:5080`\n2. **Quote Engine** (bắt buộc cho So sánh báo giá): `dotnet run --project src/PrintHub.QuoteEngine`\n3. *(Tuỳ chọn)* RabbitMQ + `dotnet run --project src/PrintHub.ProductionAgent` — để xem đơn tự động chuyển trạng thái sau ~4 giây.\n\n## Cách chạy\n- Chạy thư mục **0. Login** trước → 4 token tự động lưu vào biến collection.\n- Sau đó chạy thư mục **3. ⭐ LUỒNG CHÍNH** theo đúng thứ tự từ trên xuống — đây là kịch bản demo hoàn chỉnh (đặt hàng → shop sản xuất → hoàn tất → đánh giá → khiếu nại → admin phân xử).\n- Các thư mục còn lại chạy độc lập, thứ tự tuỳ ý.\n- Có thể chạy cả collection bằng **Runner** (mọi biến `quoteId`/`orderId`… tự truyền qua nhau).\n\n## Tài khoản demo (mật khẩu: Password123!)\n| Email | Vai trò |\n|---|---|\n| admin@printhub.vn | Admin |\n| owner.quickprint@printhub.vn | Shop Owner |\n| staff.quickprint@printhub.vn | Shop Staff |\n| customer1@printhub.vn … customer12@ | Customer |\n\n## 4 điểm nhấn kỹ thuật\n| Yêu cầu | Xem ở đâu |\n|---|---|\n| gRPC | `UC-13 So sánh báo giá` (thư mục 3) |\n| RabbitMQ | `UC-33 Bắt đầu sản xuất` (thư mục 3) |\n| OData (2 endpoint) | Thư mục 7 |\n| Content Negotiation (JSON/XML/CSV) | Thư mục 7 |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5080", "type": "string" },
+    { "key": "customerToken", "value": "", "type": "string" },
+    { "key": "customerRefreshToken", "value": "", "type": "string" },
+    { "key": "ownerToken", "value": "", "type": "string" },
+    { "key": "staffToken", "value": "", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "newUserToken", "value": "", "type": "string" },
+    { "key": "newUserEmail", "value": "", "type": "string" },
+    { "key": "resetToken", "value": "", "type": "string" },
+    { "key": "shopId", "value": "1", "type": "string" },
+    { "key": "otherShopId", "value": "2", "type": "string" },
+    { "key": "pendingShopId", "value": "9", "type": "string" },
+    { "key": "serviceTypeId", "value": "1", "type": "string" },
+    { "key": "quoteId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "cancelQuoteId", "value": "", "type": "string" },
+    { "key": "cancelOrderId", "value": "", "type": "string" },
+    { "key": "documentId", "value": "1", "type": "string" },
+    { "key": "machineId", "value": "1", "type": "string" },
+    { "key": "materialId", "value": "1", "type": "string" },
+    { "key": "rateCardEntryId", "value": "1", "type": "string" },
+    { "key": "voucherCode", "value": "WELCOME10", "type": "string" },
+    { "key": "topUpRefCode", "value": "", "type": "string" },
+    { "key": "complaintId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. Login (CHẠY TRƯỚC TIÊN)",
+      "description": "Đăng nhập 4 vai trò. Token tự lưu vào biến collection nhờ script ở tab **Tests** — không cần copy tay.",
+      "item": [
+        {
+          "name": "Login — Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test('Đăng nhập thành công', () => pm.expect(r.success).to.be.true);",
+                  "if (r.data) {",
+                  "  pm.collectionVariables.set('customerToken', r.data.accessToken);",
+                  "  pm.collectionVariables.set('customerRefreshToken', r.data.refreshToken);",
+                  "  console.log('Customer:', r.data.user.fullName, '| số dư ví:', r.data.user.walletBalance);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer1@printhub.vn\",\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "UC-02 — Trả về access token (sống 15 phút) + refresh token (sống 7 ngày, lưu ở bảng RefreshTokens để có thể thu hồi)."
+          }
+        },
+        {
+          "name": "Login — Shop Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) { pm.collectionVariables.set('ownerToken', r.data.accessToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"owner.quickprint@printhub.vn\",\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "Token của chủ shop mang thêm claim `shop` (danh sách shop được phép thao tác) — nền tảng của scoped authorization."
+          }
+        },
+        {
+          "name": "Login — Shop Staff",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) { pm.collectionVariables.set('staffToken', r.data.accessToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"staff.quickprint@printhub.vn\",\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "Nhân viên của QuickPrint (shop 1). Thư mục 8 chứng minh nhân viên này KHÔNG thao tác được shop khác."
+          }
+        },
+        {
+          "name": "Login — Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) { pm.collectionVariables.set('adminToken', r.data.accessToken); }",
+                  "console.log('Đã lấy đủ 4 token. Có thể chạy các thư mục tiếp theo.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@printhub.vn\",\n  \"password\": \"Password123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication & Profile (UC-01..08)",
+      "item": [
+        {
+          "name": "UC-01 Đăng ký tài khoản mới",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) {",
+                  "  pm.collectionVariables.set('newUserToken', r.data.accessToken);",
+                  "  pm.collectionVariables.set('newUserEmail', r.data.user.email);",
+                  "  console.log('Đã tạo tài khoản:', r.data.user.email, '| vai trò mặc định:', r.data.user.role);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyen Van Demo\",\n  \"email\": \"demo{{$timestamp}}@printhub.vn\",\n  \"phoneNumber\": \"0912345678\",\n  \"password\": \"Password123!\",\n  \"confirmPassword\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "description": "UC-01 — Email tự sinh theo timestamp nên chạy lại nhiều lần không bị trùng.\n\nBR-2/BR-3: tài khoản mới luôn là **Customer**, số dư ví = 0, mật khẩu băm bằng BCrypt.\n\nTài khoản này được dùng cho 2 request đổi/đặt lại mật khẩu bên dưới → **không ảnh hưởng tài khoản demo có sẵn**."
+          }
+        },
+        {
+          "name": "UC-05 Đổi mật khẩu (dùng tài khoản vừa tạo)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{newUserToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"NewPassword456!\",\n  \"confirmNewPassword\": \"NewPassword456!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "change-password"] },
+            "description": "UC-05 — Chạy **UC-01 trước** để có `newUserToken`.\n\nQuy tắc: mật khẩu mới **phải khác** mật khẩu cũ (nếu giống → 400).\n\nBR-9: đổi mật khẩu **thu hồi toàn bộ refresh token** đang hoạt động → mọi thiết bị khác bị đăng xuất."
+          }
+        },
+        {
+          "name": "UC-03 Quên mật khẩu (tự lưu reset token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.resetToken) {",
+                  "  pm.collectionVariables.set('resetToken', r.data.resetToken);",
+                  "  console.log('Reset token (chỉ bản dev mới trả về):', r.data.resetToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{newUserEmail}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "forgot-password"] },
+            "description": "UC-03 — Bản dev **trả token trực tiếp** để tiện demo (bản thật gửi qua email SMTP).\n\nBảo mật: thông điệp trả về **luôn giống nhau** dù email có tồn tại hay không → chống dò email (no user enumeration)."
+          }
+        },
+        {
+          "name": "UC-03 Đặt lại mật khẩu",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{newUserEmail}}\",\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"ResetPassword789!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "reset-password"] },
+            "description": "Token lấy tự động từ request phía trên. Token có hạn **30 phút**, dùng 1 lần, và sau khi đặt lại thì mọi refresh token cũ bị thu hồi."
+          }
+        },
+        {
+          "name": "UC-02 Refresh token (xoay vòng)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) {",
+                  "  pm.collectionVariables.set('customerToken', r.data.accessToken);",
+                  "  pm.collectionVariables.set('customerRefreshToken', r.data.refreshToken);",
+                  "  console.log('Đã xoay vòng token — token cũ bị thu hồi.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{customerRefreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api", "auth", "refresh"] },
+            "description": "**Không cần gửi kèm access token cũ** — chỉ cần refresh token. Server tra bảng `RefreshTokens` kiểm tra `RevokedAt`/`ExpiresAt`, rồi cấp cặp token mới và thu hồi token vừa dùng (rotation)."
+          }
+        },
+        {
+          "name": "GET /api/auth/me — claims trong JWT",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/auth/me", "host": ["{{baseUrl}}"], "path": ["api", "auth", "me"] },
+            "description": "Trả về id / email / role / **shopIds** đọc thẳng từ JWT — không truy vấn CSDL. Đây là dữ liệu dùng cho phân quyền theo shop."
+          }
+        },
+        {
+          "name": "UC-06 Xem hồ sơ cá nhân",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "UC-07 Cập nhật hồ sơ",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Minh Hoang\",\n  \"phoneNumber\": \"0987654321\",\n  \"defaultAddress\": \"Cầu Giấy, Hà Nội\",\n  \"avatarUrl\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/me", "host": ["{{baseUrl}}"], "path": ["api", "users", "me"] }
+          }
+        },
+        {
+          "name": "UC-08 Danh sách thông báo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "notifications"],
+              "query": [{ "key": "PageNumber", "value": "1" }, { "key": "PageSize", "value": "20" }]
+            },
+            "description": "Thông báo được tạo tự động khi shop nhận/từ chối/hoàn tất đơn. Nếu đã cấu hình SMTP trong `.env.json`, mỗi thông báo còn được gửi kèm email."
+          }
+        },
+        {
+          "name": "UC-08 Đánh dấu đã đọc",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ids\": null\n}" },
+            "url": { "raw": "{{baseUrl}}/api/notifications/read", "host": ["{{baseUrl}}"], "path": ["api", "notifications", "read"] },
+            "description": "`ids = null` → đánh dấu **tất cả** thông báo chưa đọc. Truyền mảng id để đánh dấu có chọn lọc."
+          }
+        },
+        {
+          "name": "UC-04 Đăng xuất",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{newUserToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"khong-ton-tai\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/logout", "host": ["{{baseUrl}}"], "path": ["api", "auth", "logout"] },
+            "description": "Thu hồi refresh token phía server (idempotent — token không tồn tại vẫn trả 200).\n\n**Lưu ý quan trọng khi cô hỏi:** đăng xuất chỉ chặn việc *xin token mới*; access token đã cấp vẫn hợp lệ tới khi hết hạn (≤15 phút) — đây là đánh đổi cố hữu của JWT, giảm thiểu bằng cách để thời gian sống rất ngắn."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Guest — Tìm kiếm & Khám phá (UC-09..11)",
+      "item": [
+        {
+          "name": "UC-09 Tìm shop (không cần đăng nhập)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test('Chỉ trả shop đang hoạt động', () => pm.expect(r.data.items.length).to.be.above(0));",
+                  "console.log('Số shop hiển thị công khai:', r.data.totalCount, '(shop bị treo & chờ duyệt đã bị loại)');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "shops"],
+              "query": [
+                { "key": "PageNumber", "value": "1" },
+                { "key": "PageSize", "value": "20" },
+                { "key": "Keyword", "value": "print", "disabled": true },
+                { "key": "District", "value": "Cầu Giấy", "disabled": true },
+                { "key": "ServiceGroup", "value": "0", "disabled": true, "description": "0=Document 1=Finishing 2=Fabrication" },
+                { "key": "MinRating", "value": "4", "disabled": true },
+                { "key": "SortBy", "value": "0", "disabled": true, "description": "0=Rating 1=Name" },
+                { "key": "Descending", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "Trong dữ liệu mẫu có 9 shop nhưng chỉ **7 shop Active** hiện ra — 'Rainbow Prints' (bị treo) và 'PhotoPrint Express' (chờ duyệt) tự động bị loại ở tầng truy vấn.\n\nBật các query param đang tắt để demo lọc theo quận / nhóm dịch vụ / điểm đánh giá."
+          }
+        },
+        {
+          "name": "UC-10 Chi tiết shop (bảng giá, máy, review)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}"] }
+          }
+        },
+        {
+          "name": "Danh mục dịch vụ toàn sàn",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/service-types", "host": ["{{baseUrl}}"], "path": ["api", "service-types"] },
+            "description": "14 loại dịch vụ, chia 3 nhóm với 3 mô hình giá khác nhau (PerPage / PerUnit / MaterialAndTime) — cơ sở cho Strategy pattern trong Quote Engine."
+          }
+        },
+        {
+          "name": "UC-23 Review công khai của shop",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}/reviews?PageNumber=1&PageSize=10",
+              "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "reviews"],
+              "query": [{ "key": "PageNumber", "value": "1" }, { "key": "PageSize", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "UC-11 Thêm shop yêu thích",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/favourites/{{shopId}}", "host": ["{{baseUrl}}"], "path": ["api", "favourites", "{{shopId}}"] },
+            "description": "Idempotent — bấm lại lần 2 vẫn 200, không tạo bản ghi trùng (ràng buộc unique CustomerId+ShopId)."
+          }
+        },
+        {
+          "name": "UC-11 Danh sách yêu thích",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/favourites", "host": ["{{baseUrl}}"], "path": ["api", "favourites"] }
+          }
+        },
+        {
+          "name": "UC-11 Bỏ yêu thích",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/favourites/{{shopId}}", "host": ["{{baseUrl}}"], "path": ["api", "favourites", "{{shopId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. ⭐ LUỒNG CHÍNH — Đặt hàng → Sản xuất → Hoàn tất → Khiếu nại",
+      "description": "**KỊCH BẢN DEMO CHÍNH — chạy lần lượt từ trên xuống.**\n\nMỗi request tự dùng đúng token của vai trò tương ứng (Khách / Nhân viên shop / Admin), nên chỉ cần bấm Send liên tục là thấy trọn vẹn vòng đời một đơn hàng qua tay 3 vai trò.\n\nBao trùm **3 trong 5 luồng chính** của SRS: Quote & Order Placement, Order Production & Fulfilment, Complaint & Resolution.",
+      "item": [
+        {
+          "name": "① [Khách] UC-13 ⭐ So sánh báo giá (gRPC)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.length > 0) {",
+                  "  pm.collectionVariables.set('quoteId', r.data[0].quoteId);",
+                  "  const q = r.data[0];",
+                  "  console.log('Shop:', q.shopName, '| giá:', q.total, '| ~', q.estimatedMinutes, 'phút');",
+                  "  if (q.isIndicative) { console.warn('⚠ Quote INDICATIVE — Quote Engine (:5090) chưa chạy → sẽ KHÔNG đặt hàng được.'); }",
+                  "  pm.test('Quote là giá chắc chắn (Quote Engine đang chạy)', () => pm.expect(q.isIndicative).to.be.false);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"serviceTypeId\": {{serviceTypeId}},\n      \"quantity\": 1,\n      \"pageCount\": 100,\n      \"colorMode\": 0,\n      \"sides\": 0\n    }\n  ],\n  \"shopId\": {{shopId}},\n  \"sortBy\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/quotes/compare", "host": ["{{baseUrl}}"], "path": ["api", "quotes", "compare"] },
+            "description": "⭐ **ĐIỂM NHẤN: gRPC**\n\nAPI lọc shop đủ điều kiện (Active + có bán dịch vụ + có máy không Offline), rồi **gọi gRPC sang Quote Engine (cổng 5090)**, truyền bảng giá + luật giá riêng của từng shop để tính.\n\nỞ đây cố tình đặt `shopId = 1` (QuickPrint) để đơn chắc chắn về đúng shop mà tài khoản nhân viên ở bước ④ quản lý.\n\n→ 100 trang × 800đ = **80.000đ**\n\n`colorMode`: 0=Trắng đen, 1=Màu · `sides`: 0=1 mặt, 1=2 mặt (×1.8) · `sortBy`: 0=Giá, 1=Nhanh nhất, 2=Đánh giá.\n\n**Bỏ `shopId` đi** để so giá toàn bộ shop đủ điều kiện — đây mới là kịch bản marketplace thật."
+          }
+        },
+        {
+          "name": "② [Khách] UC-14 Áp thử voucher",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{voucherCode}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/quotes/{{quoteId}}/apply-voucher", "host": ["{{baseUrl}}"], "path": ["api", "quotes", "{{quoteId}}", "apply-voucher"] },
+            "description": "Chỉ **xem trước** mức giảm, CHƯA trừ lượt dùng voucher (chỉ trừ khi đặt hàng thành công).\n\nMã có sẵn: `WELCOME10` (giảm 10%, tối đa 30k, đơn ≥50k) · `STUDENT20K` (giảm thẳng 20k, đơn ≥100k) · `NEWUSER50K` (giảm 50k, đơn ≥150k) · `SUMMER5` (đã hết hạn — dùng để demo lỗi)."
+          }
+        },
+        {
+          "name": "③ [Khách] UC-15 ⭐ Đặt hàng (trừ ví + chốt giá)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) {",
+                  "  pm.collectionVariables.set('orderId', r.data.id);",
+                  "  console.log('Đã đặt đơn', r.data.orderCode, '| tổng:', r.data.totalAmount, '| trạng thái:', r.data.status);",
+                  "}",
+                  "pm.test('Tạo đơn thành công (201)', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quoteId\": {{quoteId}},\n  \"fulfilmentMethod\": 0,\n  \"pickupSlotStart\": null,\n  \"pickupSlotEnd\": null,\n  \"deliveryAddress\": null,\n  \"customerNote\": \"In 1 mặt, kẹp gáy giúp em\",\n  \"items\": [\n    {\n      \"serviceTypeId\": {{serviceTypeId}},\n      \"documentFileId\": null,\n      \"quantity\": 1,\n      \"pageCount\": 100,\n      \"paperType\": null,\n      \"colorMode\": 0,\n      \"sides\": 0,\n      \"bindingType\": null,\n      \"materialName\": null,\n      \"qualityProfile\": null,\n      \"estimatedGrams\": null,\n      \"itemNote\": null\n    }\n  ],\n  \"voucherCode\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] },
+            "description": "⭐ **Giao dịch nguyên tử** (một transaction qua Unit of Work):\n1. Kiểm tra quote **chưa hết hạn** (24h) và **không phải indicative**\n2. Kiểm tra **đủ số dư ví** (thiếu → 409)\n3. Trừ ví + ghi sổ cái\n4. **Snapshot giá từ quote sang đơn** → shop đổi bảng giá sau này KHÔNG ảnh hưởng đơn đã chốt\n5. Sinh mã đơn `PH-yyMMdd-####`, ghi lịch sử, thông báo cho shop\n\n`fulfilmentMethod`: 0=Đến lấy, 1=Giao hàng.\n\nĐổi `\"voucherCode\": null` → `\"WELCOME10\"` để đặt kèm giảm giá."
+          }
+        },
+        {
+          "name": "④ [Khách] UC-16 Theo dõi đơn (AwaitingAcceptance)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}"] },
+            "description": "Chú ý mảng **`statusHistory`** — timeline từng bước chuyển trạng thái (ai làm, lúc nào, lý do). Chạy lại request này sau mỗi bước bên dưới để thấy timeline dài thêm."
+          }
+        },
+        {
+          "name": "⑤ [Nhân viên] UC-31 Hàng đợi đơn của shop",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}/orders?PageNumber=1&PageSize=20&status=3",
+              "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "orders"],
+              "query": [
+                { "key": "PageNumber", "value": "1" },
+                { "key": "PageSize", "value": "20" },
+                { "key": "status", "value": "3", "description": "3 = AwaitingAcceptance (đơn mới chờ shop nhận)" }
+              ]
+            },
+            "description": "Đổi sang token **nhân viên shop**. Đơn vừa đặt ở bước ③ phải xuất hiện ở đây."
+          }
+        },
+        {
+          "name": "⑥ [Nhân viên] UC-32 Nhận đơn",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/accept", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "accept"] },
+            "description": "AwaitingAcceptance → **Accepted**. Tự gửi thông báo cho khách.\n\nMáy trạng thái (`OrderStateMachine`) chỉ cho phép chuyển đúng bước, đúng vai trò — nhảy cóc sẽ bị chặn 409."
+          }
+        },
+        {
+          "name": "⑦ [Nhân viên] UC-33 ⭐ Bắt đầu sản xuất (RabbitMQ)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"machineId\": {{machineId}}\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/start", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "start"] },
+            "description": "⭐ **ĐIỂM NHẤN: RabbitMQ (bất đồng bộ)**\n\nGán máy cụ thể → chuyển **InProduction** → **đẩy message vào hàng đợi `printhub.production`** rồi trả kết quả ngay (không chờ in xong).\n\n- **Có chạy ProductionAgent**: sau ~4 giây nó tự chuyển đơn sang `ReadyForPickup`, ghi lịch sử với actor = **System** (không phải người). Chạy lại bước ④ để thấy.\n- **Không chạy / broker sập**: API vẫn hoạt động bình thường (graceful degradation) — dùng bước ⑧ để chuyển tay.\n\nLưu ý: khách **không** chọn máy — máy do shop tự gán ở bước này."
+          }
+        },
+        {
+          "name": "⑧ [Nhân viên] Đánh dấu hàng đã xong (nếu không chạy Agent)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/ready", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "ready"] },
+            "description": "→ `ReadyForPickup` (hoặc `OutForDelivery` nếu chọn giao hàng).\n\n**Nếu đang chạy ProductionAgent** thì Agent đã tự làm việc này rồi → request này sẽ trả **409** (đúng, vì không thể chuyển 2 lần). Bỏ qua và sang bước ⑨."
+          }
+        },
+        {
+          "name": "⑨ [Khách] UC-19 Xác nhận đã nhận hàng → Completed",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/confirm-receipt", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "confirm-receipt"] },
+            "description": "Quay lại token khách. → **Completed** + tính & ghi **hoa hồng sàn** (đọc tỉ lệ từ bảng PlatformSettings, mặc định 10%).\n\nNhánh thay thế: nhân viên bấm `UC-34 Bàn giao tại quầy` (thư mục 6) cũng cho kết quả Completed."
+          }
+        },
+        {
+          "name": "⑩ [Khách] UC-16 Xem lại timeline đầy đủ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}"] },
+            "description": "Giờ `statusHistory` đã có đủ các bước: Đặt → Nhận → Sản xuất → Sẵn sàng → Hoàn tất, kèm **ai** thực hiện từng bước (có bước actor là `System` nếu Agent chạy)."
+          }
+        },
+        {
+          "name": "⑪ [Khách] UC-23 Đánh giá shop",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"In đẹp, giao nhanh, giá hợp lý!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/review", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "review"] },
+            "description": "Chỉ đơn **Completed** mới đánh giá được, **mỗi đơn đúng 1 lần** (ràng buộc unique trên OrderId → gọi lần 2 trả 409).\n\nĐiểm mới được cộng dồn ngay vào `RatingAverage` / `RatingCount` của shop."
+          }
+        },
+        {
+          "name": "⑫ [Khách] UC-24 Gửi khiếu nại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) {",
+                  "  pm.collectionVariables.set('complaintId', r.data.id);",
+                  "  console.log('Khiếu nại #' + r.data.id, '| trạng thái:', r.data.status);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": {{orderId}},\n  \"reason\": 2,\n  \"description\": \"Bản in bị mờ ở 10 trang cuối, chữ khó đọc.\",\n  \"attachmentUrls\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/complaints", "host": ["{{baseUrl}}"], "path": ["api", "complaints"] },
+            "description": "Bắt đầu **luồng chính #5**. Trạng thái: `Open`.\n\n`reason`: 0=Sai nội dung, 1=Thiếu trang, 2=Lỗi chất lượng, 3=Trễ hẹn, 4=Khác.\n\nChỉ khiếu nại được đơn **Completed**, và mỗi đơn chỉ 1 khiếu nại đang mở."
+          }
+        },
+        {
+          "name": "⑬ [Nhân viên] UC-35 Shop phản hồi (đề xuất hoàn tiền)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proposedResolution\": 1,\n  \"refundAmount\": 20000,\n  \"shopResponse\": \"Xin lỗi quý khách, shop hoàn lại một phần chi phí.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/complaints/{{complaintId}}/respond", "host": ["{{baseUrl}}"], "path": ["api", "complaints", "{{complaintId}}", "respond"] },
+            "description": "Open → **ShopResponded**.\n\n`proposedResolution`: 0=In lại miễn phí (tạo đơn thay thế, liên kết qua `ReplacementOrderId`), 1=Hoàn tiền, 2=Từ chối.\n\nSố tiền hoàn không được vượt tổng giá trị đơn."
+          }
+        },
+        {
+          "name": "⑭ [Khách] UC-24 Không đồng ý → Leo thang lên sàn",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/complaints/{{complaintId}}/escalate", "host": ["{{baseUrl}}"], "path": ["api", "complaints", "{{complaintId}}", "escalate"] },
+            "description": "ShopResponded → **Escalated**, chuyển cho Admin.\n\n*(Nhánh còn lại: khách bấm `accept` → Resolved, đóng khiếu nại luôn — xem thư mục 4.)*"
+          }
+        },
+        {
+          "name": "⑮ [Admin] UC-41 Phán quyết cuối cùng",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"upholdRefund\": true,\n  \"refundAmount\": 20000,\n  \"adminRuling\": \"Bằng chứng cho thấy lỗi thuộc về shop. Chấp nhận hoàn tiền cho khách.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/admin/complaints/{{complaintId}}/adjudicate", "host": ["{{baseUrl}}"], "path": ["api", "admin", "complaints", "{{complaintId}}", "adjudicate"] },
+            "description": "Escalated → **Closed**. Phán quyết của Admin là **cuối cùng** trong hệ thống.\n\n`upholdRefund = true` → cộng tiền vào ví khách (kiểm chứng bằng request 'Số dư + sổ cái ví' ở thư mục 4)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Customer — Tài liệu, Ví, Huỷ đơn (UC-12, 17, 21, 22, 24)",
+      "item": [
+        {
+          "name": "UC-12 Thư viện tài liệu của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "documents"],
+              "query": [{ "key": "PageNumber", "value": "1" }, { "key": "PageSize", "value": "20" }]
+            },
+            "description": "Tài liệu upload 1 lần, dùng lại cho nhiều đơn. `storagePath` **không bao giờ** trả ra ngoài."
+          }
+        },
+        {
+          "name": "UC-12 Upload tài liệu (multipart — chọn file trước khi Send)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [], "description": "⚠ BẤM CHỌN FILE trước khi Send. Chấp nhận PDF/PNG/JPEG/DOCX ≤ 25MB" },
+                { "key": "declaredPageCount", "value": "10", "type": "text" },
+                { "key": "rightsDeclared", "value": "true", "type": "text", "description": "Bắt buộc true — cam kết có quyền in tài liệu" }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/api/documents", "host": ["{{baseUrl}}"], "path": ["api", "documents"] },
+            "description": "Kiểm tra: định dạng, dung lượng ≤25MB, cam kết bản quyền. Tính **SHA-256 checksum**.\n\nLưu lên **Cloudinary** nếu đã điền khoá trong `.env.json`, ngược lại lưu đĩa local — cùng một interface `IFileStorage`, đổi hạ tầng không sửa logic nghiệp vụ."
+          }
+        },
+        {
+          "name": "UC-12 Đổi tên tài liệu",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fileName\": \"BaoCao_DoAn_v2.pdf\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/documents/{{documentId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "{{documentId}}"] },
+            "description": "Đơn hàng cũ vẫn hiển thị **tên file lúc đặt** nhờ cột `SnapshotFileName` — đổi tên ở đây không làm sai lệch lịch sử đơn."
+          }
+        },
+        {
+          "name": "UC-22 Số dư + sổ cái ví",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallet/transactions?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "wallet", "transactions"],
+              "query": [{ "key": "PageNumber", "value": "1" }, { "key": "PageSize", "value": "20" }]
+            },
+            "description": "Mỗi dòng ghi `balanceAfter` → **sổ cái tự kiểm chứng được**: cộng dồn toàn bộ `amount` phải khớp đúng số dư hiện tại.\n\nLoại giao dịch: TopUp (nạp), Payment (trả đơn), Refund (hoàn), Adjustment."
+          }
+        },
+        {
+          "name": "UC-21 Yêu cầu nạp tiền (sinh mã VietQR)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) {",
+                  "  pm.collectionVariables.set('topUpRefCode', r.data.refCode);",
+                  "  console.log('Mã tham chiếu:', r.data.refCode, '| ảnh QR:', r.data.qrImageUrl);",
+                  "  console.log('→ Số dư CHƯA đổi. Chạy request xác nhận bên thư mục Admin.');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"amount\": 500000\n}" },
+            "url": { "raw": "{{baseUrl}}/api/wallet/topup", "host": ["{{baseUrl}}"], "path": ["api", "wallet", "topup"] },
+            "description": "**Luồng chính #4.** Tạo giao dịch trạng thái `Pending` + mã tham chiếu duy nhất + link ảnh VietQR.\n\n**Số dư CHƯA thay đổi** — chỉ cộng khi Admin đối chiếu sao kê và xác nhận (thư mục 6). Đây là điểm thiết kế có chủ đích: tiền chỉ vào ví khi đã xác thực chuyển khoản thật."
+          }
+        },
+        {
+          "name": "UC-24 Chấp nhận cách giải quyết của shop",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/complaints/{{complaintId}}/accept", "host": ["{{baseUrl}}"], "path": ["api", "complaints", "{{complaintId}}", "accept"] },
+            "description": "Nhánh thay thế cho bước ⑭ ở luồng chính: khách **đồng ý** → `Resolved`, đóng khiếu nại, hoàn tiền ngay nếu là Refund.\n\n*(Nếu đã chạy luồng chính tới bước ⑮ thì khiếu nại đã Closed → request này trả 409.)*"
+          }
+        },
+        {
+          "name": "UC-24 Danh sách khiếu nại của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/complaints/mine?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "complaints", "mine"],
+              "query": [{ "key": "PageNumber", "value": "1" }, { "key": "PageSize", "value": "20" }]
+            }
+          }
+        },
+        {
+          "name": "UC-20 Lịch sử đơn hàng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "orders"],
+              "query": [
+                { "key": "PageNumber", "value": "1" },
+                { "key": "PageSize", "value": "20" },
+                { "key": "status", "value": "9", "disabled": true, "description": "3=ChờNhận 4=ĐãNhận 5=ĐangSảnXuất 7=SẵnSàng 9=HoànTất 10=BịTừChối 11=ĐãHuỷ" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UC-17 [demo huỷ] Bước 1 — tạo báo giá",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.length > 0) { pm.collectionVariables.set('cancelQuoteId', r.data[0].quoteId); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"serviceTypeId\": {{serviceTypeId}},\n      \"quantity\": 1,\n      \"pageCount\": 50,\n      \"colorMode\": 0,\n      \"sides\": 0\n    }\n  ],\n  \"shopId\": {{shopId}},\n  \"sortBy\": 0\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/quotes/compare", "host": ["{{baseUrl}}"], "path": ["api", "quotes", "compare"] },
+            "description": "Tạo một đơn **riêng** để demo huỷ, tránh phá vỡ đơn đang chạy ở luồng chính. 50 trang × 800đ = 40.000đ."
+          }
+        },
+        {
+          "name": "UC-17 [demo huỷ] Bước 2 — đặt đơn",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data) { pm.collectionVariables.set('cancelOrderId', r.data.id); console.log('Đơn để huỷ:', r.data.orderCode); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quoteId\": {{cancelQuoteId}},\n  \"fulfilmentMethod\": 0,\n  \"pickupSlotStart\": null,\n  \"pickupSlotEnd\": null,\n  \"deliveryAddress\": null,\n  \"customerNote\": \"Đơn dùng để demo huỷ\",\n  \"items\": [\n    {\n      \"serviceTypeId\": {{serviceTypeId}},\n      \"documentFileId\": null,\n      \"quantity\": 1,\n      \"pageCount\": 50,\n      \"paperType\": null,\n      \"colorMode\": 0,\n      \"sides\": 0,\n      \"bindingType\": null,\n      \"materialName\": null,\n      \"qualityProfile\": null,\n      \"estimatedGrams\": null,\n      \"itemNote\": null\n    }\n  ],\n  \"voucherCode\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          }
+        },
+        {
+          "name": "UC-17 [demo huỷ] Bước 3 — huỷ & hoàn tiền",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Đổi ý, không cần in nữa\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{cancelOrderId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{cancelOrderId}}", "cancel"] },
+            "description": "Quy tắc hoàn tiền theo trạng thái:\n- `AwaitingAcceptance` (shop chưa nhận) → **hoàn 100%**\n- `Accepted` (shop đã cam kết công suất) → có **phí huỷ**\n- `InProduction` trở đi → **không cho huỷ** (409)\n\nKiểm chứng bằng request 'Số dư + sổ cái ví' — sẽ thấy 1 dòng Refund mới."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Shop Owner — Onboarding & Quản lý (UC-25..30)",
+      "description": "**Luồng chính #1 (Shop Onboarding)** + quản trị shop. Toàn bộ dùng {{ownerToken}}.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "UC-25 Shop của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/mine", "host": ["{{baseUrl}}"], "path": ["api", "shops", "mine"] }
+          }
+        },
+        {
+          "name": "UC-25 Nộp đơn mở shop",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{newUserToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo Print Shop {{$timestamp}}\",\n  \"description\": \"Shop nộp đơn tại buổi bảo vệ đồ án\",\n  \"addressLine\": \"123 Đường Demo\",\n  \"district\": \"Cầu Giấy\",\n  \"city\": \"Hà Nội\",\n  \"phoneNumber\": \"0911222333\",\n  \"openTime\": \"08:00:00\",\n  \"closeTime\": \"20:00:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/shops/apply", "host": ["{{baseUrl}}"], "path": ["api", "shops", "apply"] },
+            "description": "Dùng **tài khoản mới tạo ở UC-01** (chủ shop có sẵn đã có shop rồi → BR-66 chặn nộp thêm, trả 409).\n\n→ Trạng thái `PendingReview`, chờ Admin duyệt ở thư mục 6.\n\nBR-69: giờ đóng cửa phải sau giờ mở cửa."
+          }
+        },
+        {
+          "name": "UC-26 Cập nhật hồ sơ shop",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QuickPrint Cầu Giấy\",\n  \"description\": \"In tài liệu siêu tốc ngay cổng trường — cập nhật lúc demo\",\n  \"addressLine\": \"144 Xuân Thủy\",\n  \"district\": \"Cầu Giấy\",\n  \"city\": \"Hà Nội\",\n  \"phoneNumber\": \"0901111111\",\n  \"openTime\": \"07:30:00\",\n  \"closeTime\": \"21:00:00\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/profile", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "profile"] }
+          }
+        },
+        {
+          "name": "UC-27 Xem bảng giá (rate card)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/rate-card", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "rate-card"] },
+            "description": "Đây chính là dữ liệu Quote Engine đọc để tính giá: mỗi dòng = 1 dịch vụ shop bán (đơn giá, phí cài đặt, thời gian) + danh sách **luật giá** đi kèm."
+          }
+        },
+        {
+          "name": "UC-27 Thêm dịch vụ vào bảng giá",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceTypeId\": 3,\n  \"unitPrice\": 1600,\n  \"setupFee\": 0,\n  \"minQuantity\": 1,\n  \"leadTimeMinutes\": 2\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/rate-card", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "rate-card"] },
+            "description": "BR-71: giá không âm. Mỗi shop chỉ được khai **1 dòng cho mỗi loại dịch vụ** — thêm trùng trả 409.\n\n*Chạy lần 2 sẽ trả 409 (vì dịch vụ id 3 đã được thêm ở lần 1) — đó chính là quy tắc đang hoạt động đúng. Đổi `serviceTypeId` sang số khác để thêm mới.*"
+          }
+        },
+        {
+          "name": "UC-27 Sửa giá một dòng",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unitPrice\": 850,\n  \"setupFee\": 0,\n  \"minQuantity\": 1,\n  \"leadTimeMinutes\": 1,\n  \"isActive\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/rate-card/{{rateCardEntryId}}", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "rate-card", "{{rateCardEntryId}}"] },
+            "description": "Đổi giá **không ảnh hưởng** đơn đã đặt trước đó — vì giá đã được snapshot vào đơn lúc đặt."
+          }
+        },
+        {
+          "name": "UC-27 Thêm luật giá (PriceRule)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ruleType\": 1,\n  \"optionKey\": \"Color\",\n  \"multiplier\": 3.0,\n  \"flatExtra\": 0,\n  \"minQuantity\": null,\n  \"maxQuantity\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/rate-card/{{rateCardEntryId}}/rules", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "rate-card", "{{rateCardEntryId}}", "rules"] },
+            "description": "Luật giá = 'công tắc' bật thêm phụ phí khi khách chọn đúng tuỳ chọn đó.\n\n`ruleType`: 0=LoạiGiấy 1=Màu 2=SốMặt 3=KiểuĐóng 4=VậtLiệu 5=ChấtLượng 6=BậcSốLượng.\n\nCông thức: `giá hiệu dụng = đơn giá × (tích các multiplier khớp) + (tổng flatExtra)`.\n\nBR-72: các bậc số lượng (QuantityTier) **không được chồng lấn** → chồng trả 409."
+          }
+        },
+        {
+          "name": "UC-28 Danh sách máy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/machines", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "machines"] }
+          }
+        },
+        {
+          "name": "UC-28 Thêm máy",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Ricoh MP-Demo\",\n  \"machineType\": 0,\n  \"serviceGroup\": 0\n}" },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/machines", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "machines"] },
+            "description": "`machineType`: 0=MáyIn 1=MáyVẽ 2=MáyIn3D 3=MáyCắtLaser 4=MáyHoànThiện · `serviceGroup`: 0=TàiLiệu 1=HoànThiện 2=GiaCông."
+          }
+        },
+        {
+          "name": "UC-28 Đổi trạng thái máy",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": 2\n}" },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/machines/{{machineId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "machines", "{{machineId}}", "status"] },
+            "description": "`status`: 0=Rảnh 1=ĐangChạy 2=BảoTrì 3=Tắt.\n\nBR-75: **không cho tắt máy khi đang chạy đơn** (409).\n\nẢnh hưởng nghiệp vụ: shop **không còn máy khả dụng** cho nhóm dịch vụ nào thì mất tư cách báo giá cho nhóm đó — thử đổi hết máy sang Offline rồi chạy lại 'So sánh báo giá' để thấy shop biến mất."
+          }
+        },
+        {
+          "name": "UC-28 Danh sách vật liệu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/materials", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "materials"] },
+            "description": "Cột `isLowStock` được **tính tự động** (tồn ≤ ngưỡng cảnh báo), không lưu cứng trong CSDL."
+          }
+        },
+        {
+          "name": "UC-28 Điều chỉnh tồn kho",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"stockQuantity\": 4500,\n  \"lowStockThreshold\": 500\n}" },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/materials/{{materialId}}/stock", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "materials", "{{materialId}}", "stock"] },
+            "description": "BR-76: không cho tồn kho âm."
+          }
+        },
+        {
+          "name": "UC-29 Danh sách nhân viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/staff", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "staff"] },
+            "description": "Bảng `ShopStaff` là quan hệ **n-n có thuộc tính** (User ⇄ Shop + chức danh, ngày vào, còn hiệu lực) — cũng chính là nguồn dữ liệu cho claim `shop` trong JWT."
+          }
+        },
+        {
+          "name": "UC-29 Cấp quyền nhân viên",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer5@printhub.vn\",\n  \"position\": \"Thu ngân\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/staff", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "staff"] },
+            "description": "Tự động nâng vai trò Customer → ShopStaff. BR-79: chủ shop không tự cấp quyền cho chính mình.\n\nNgười được cấp phải **đăng nhập lại** thì claim `shop` mới xuất hiện trong token.\n\n*Chạy lần 2 trả 409 vì người này đã là nhân viên rồi — đổi sang email khác (vd `customer6@printhub.vn`) để cấp tiếp.*"
+          }
+        },
+        {
+          "name": "UC-30 Báo cáo doanh thu shop",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}/reports/revenue",
+              "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "reports", "revenue"],
+              "query": [
+                { "key": "from", "value": "2026-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true }
+              ]
+            },
+            "description": "Doanh thu gộp, hoa hồng sàn, doanh thu ròng, giá trị đơn trung bình. Cũng hỗ trợ XML/CSV (xem thư mục 7)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Shop Staff — Các nhánh khác của đơn hàng (UC-32, 34)",
+      "description": "Các nhánh **thay thế** không nằm trong luồng chính: từ chối đơn, bàn giao tại quầy. Dùng {{staffToken}}.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "UC-31 Toàn bộ hàng đợi của shop",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopId}}/orders?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "orders"],
+              "query": [
+                { "key": "PageNumber", "value": "1" },
+                { "key": "PageSize", "value": "20" },
+                { "key": "status", "value": "3", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UC-32 Từ chối đơn (tự động hoàn 100%)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": 1,\n  \"note\": \"Hết giấy A4, không kịp nhập trong hôm nay\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{cancelOrderId}}/decline", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{cancelOrderId}}", "decline"] },
+            "description": "Nhánh thay thế của bước ⑥. **Lý do là bắt buộc**: 0=HếtCôngSuất 1=HếtVậtLiệu 2=FileLỗi 3=KhôngHỗTrợ 4=NghiVấnBảnQuyền.\n\n→ `Declined` + **tự động hoàn 100% tiền vào ví khách** (ghi 1 dòng Refund trong sổ cái).\n\n*Dùng `cancelOrderId` — cần đơn đang ở trạng thái chờ nhận. Nếu đơn đó đã bị huỷ ở thư mục 4 thì trả 409 (đúng).*"
+          }
+        },
+        {
+          "name": "UC-34 Bàn giao tại quầy → Completed",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/handover", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "handover"] },
+            "description": "Nhánh thay thế của bước ⑨: thay vì khách tự xác nhận trên app, **nhân viên bấm bàn giao tại quầy** — cùng cho kết quả `Completed` + ghi hoa hồng.\n\n*Nếu đã chạy bước ⑨ thì đơn đã Completed → trả 409 (đúng).*"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin — Quản trị sàn (UC-36..42)",
+      "description": "Đây cũng chính là bộ API mà **ứng dụng WPF Desktop** gọi. Toàn bộ dùng {{adminToken}}.",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "UC-36 Đơn xin mở shop chờ duyệt",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (r.data && r.data.length > 0) {",
+                  "  pm.collectionVariables.set('pendingShopId', r.data[0].id);",
+                  "  console.log('Shop chờ duyệt:', r.data[0].name, '(id ' + r.data[0].id + ')');",
+                  "} else { console.log('Không còn shop nào chờ duyệt — chạy UC-25 ở thư mục 5 để tạo thêm.'); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/shops/applications", "host": ["{{baseUrl}}"], "path": ["api", "admin", "shops", "applications"] },
+            "description": "**Luồng chính #1.** Dữ liệu mẫu có sẵn 'PhotoPrint Express' đang chờ duyệt. Id tự lưu vào biến để 2 request bên dưới dùng."
+          }
+        },
+        {
+          "name": "UC-36 Duyệt shop",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/shops/{{pendingShopId}}/approve", "host": ["{{baseUrl}}"], "path": ["api", "admin", "shops", "{{pendingShopId}}", "approve"] },
+            "description": "PendingReview → **Active** + **tự nâng vai trò chủ shop lên ShopOwner** + ghi AuditLog.\n\nSau bước này chạy lại 'UC-09 Tìm shop' (thư mục 2) sẽ thấy shop mới xuất hiện công khai."
+          }
+        },
+        {
+          "name": "UC-36 Từ chối shop (bắt buộc nêu lý do)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Thiếu giấy phép kinh doanh và ảnh mặt bằng.\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/shops/{{pendingShopId}}/reject", "host": ["{{baseUrl}}"], "path": ["api", "admin", "shops", "{{pendingShopId}}", "reject"] },
+            "description": "Nhánh thay thế của request trên → `Rejected` kèm lý do lưu ở `ReviewNote`; chủ shop có thể sửa và nộp lại.\n\n*(Nếu vừa duyệt ở trên rồi thì shop đã Active → trả 409, đúng theo máy trạng thái.)*"
+          }
+        },
+        {
+          "name": "UC-37 Tạm treo shop",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Nhiều phản ánh giao trễ hẹn liên tiếp.\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/shops/{{shopId}}/suspend", "host": ["{{baseUrl}}"], "path": ["api", "admin", "shops", "{{shopId}}", "suspend"] },
+            "description": "Shop **biến mất khỏi tìm kiếm** + không nhận đơn mới, **nhưng đơn đang chạy vẫn được hoàn tất** — quyết định thiết kế có chủ đích để không bỏ rơi khách đang chờ hàng.\n\n⚠ Nhớ chạy 'Phục hồi shop' ngay bên dưới để trả về trạng thái ban đầu."
+          }
+        },
+        {
+          "name": "UC-37 Phục hồi shop",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/shops/{{shopId}}/reinstate", "host": ["{{baseUrl}}"], "path": ["api", "admin", "shops", "{{shopId}}", "reinstate"] }
+          }
+        },
+        {
+          "name": "UC-38 Tìm kiếm người dùng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "admin", "users"],
+              "query": [
+                { "key": "PageNumber", "value": "1" },
+                { "key": "PageSize", "value": "20" },
+                { "key": "q", "value": "customer", "disabled": true, "description": "tìm theo tên / email / SĐT" },
+                { "key": "role", "value": "0", "disabled": true, "description": "0=Customer 1=ShopOwner 2=ShopStaff 3=Admin" },
+                { "key": "status", "value": "0", "disabled": true, "description": "0=Active 1=Locked" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "UC-38 Khoá tài khoản",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/users/20/lock", "host": ["{{baseUrl}}"], "path": ["api", "admin", "users", "20", "lock"] },
+            "description": "Khoá tài khoản + **thu hồi toàn bộ refresh token** của người đó (không xin được token mới).\n\nKhông cho phép khoá tài khoản Admin. Id 20 = customer5 trong dữ liệu mẫu."
+          }
+        },
+        {
+          "name": "UC-38 Mở khoá tài khoản",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/users/20/unlock", "host": ["{{baseUrl}}"], "path": ["api", "admin", "users", "20", "unlock"] }
+          }
+        },
+        {
+          "name": "UC-39 Danh mục dịch vụ (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/service-types", "host": ["{{baseUrl}}"], "path": ["api", "admin", "service-types"] }
+          }
+        },
+        {
+          "name": "UC-39 Thêm loại dịch vụ",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DEMO_{{$timestamp}}\",\n  \"name\": \"Dịch vụ demo\",\n  \"serviceGroup\": 0,\n  \"pricingModel\": 0,\n  \"unitOfMeasure\": \"page\",\n  \"requiresFile\": true,\n  \"description\": \"Tạo tại buổi bảo vệ\",\n  \"displayOrder\": 99,\n  \"iconUrl\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/admin/service-types", "host": ["{{baseUrl}}"], "path": ["api", "admin", "service-types"] },
+            "description": "`pricingModel` quyết định **chiến lược tính giá** Quote Engine sẽ dùng (Strategy pattern): 0=PerPage (theo trang) 1=PerUnit (theo cái) 2=MaterialAndTime (theo gram vật liệu).\n\n`serviceGroup`: 0=TàiLiệu 1=HoànThiện 2=GiaCông. Mã `code` phải duy nhất."
+          }
+        },
+        {
+          "name": "UC-39 Cấu hình tỉ lệ hoa hồng sàn",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"rate\": 0.10\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/commission", "host": ["{{baseUrl}}"], "path": ["api", "admin", "commission"] },
+            "description": "Lưu vào bảng `PlatformSettings`. Đơn hoàn tất **sau** thời điểm này dùng tỉ lệ mới; đơn cũ giữ nguyên tỉ lệ đã snapshot — minh hoạ nguyên tắc bất biến của chứng từ đã chốt."
+          }
+        },
+        {
+          "name": "UC-40 Danh sách voucher",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/vouchers", "host": ["{{baseUrl}}"], "path": ["api", "admin", "vouchers"] }
+          }
+        },
+        {
+          "name": "UC-40 Tạo voucher",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"DEMO{{$timestamp}}\",\n  \"name\": \"Voucher demo\",\n  \"discountType\": 0,\n  \"discountValue\": 15,\n  \"minOrderAmount\": 50000,\n  \"maxDiscountAmount\": 40000,\n  \"usageLimit\": 100,\n  \"validFrom\": \"2026-01-01T00:00:00Z\",\n  \"validTo\": \"2026-12-31T23:59:59Z\",\n  \"perUserLimit\": 1,\n  \"description\": \"Tạo tại buổi bảo vệ\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/admin/vouchers", "host": ["{{baseUrl}}"], "path": ["api", "admin", "vouchers"] },
+            "description": "`discountType`: 0=PhầnTrăm (dùng kèm `maxDiscountAmount` làm trần giảm), 1=SốTiềnCốĐịnh."
+          }
+        },
+        {
+          "name": "UC-41 Khiếu nại đã leo thang",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/complaints?PageNumber=1&PageSize=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "admin", "complaints"],
+              "query": [{ "key": "PageNumber", "value": "1" }, { "key": "PageSize", "value": "20" }]
+            },
+            "description": "Chỉ hiện khiếu nại đã `Escalated`. Chạy bước ⑫→⑭ ở luồng chính để tạo một cái."
+          }
+        },
+        {
+          "name": "UC-21 Xác nhận nạp tiền (tiền mới vào ví)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bankReference\": \"FT26072600123456\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/wallet/topups/{{topUpRefCode}}/confirm", "host": ["{{baseUrl}}"], "path": ["api", "admin", "wallet", "topups", "{{topUpRefCode}}", "confirm"] },
+            "description": "Hoàn tất **luồng chính #4**: admin đối chiếu sao kê ngân hàng với mã tham chiếu → **chỉ lúc này số dư khách mới được cộng**.\n\nChạy 'UC-21 Yêu cầu nạp tiền' (thư mục 4) trước để có mã."
+          }
+        },
+        {
+          "name": "UC-42 Báo cáo toàn sàn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reports/platform",
+              "host": ["{{baseUrl}}"], "path": ["api", "reports", "platform"],
+              "query": [
+                { "key": "from", "value": "2026-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true }
+              ]
+            },
+            "description": "Tổng shop / shop hoạt động / đơn hoàn tất / GMV / hoa hồng thu được / shop doanh thu cao nhất."
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. ⭐ Technical Showcase — OData & Content Negotiation",
+      "description": "Chứng minh 2 trong 4 yêu cầu kỹ thuật bắt buộc (2 cái còn lại — gRPC và RabbitMQ — nằm ở bước ① và ⑦ của luồng chính).",
+      "item": [
+        {
+          "name": "OData #1 — $filter + $orderby + $top + $count",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/Shops?$filter=RatingAverage gt 4&$orderby=RatingAverage desc&$top=5&$count=true",
+              "host": ["{{baseUrl}}"], "path": ["odata", "Shops"],
+              "query": [
+                { "key": "$filter", "value": "RatingAverage gt 4" },
+                { "key": "$orderby", "value": "RatingAverage desc" },
+                { "key": "$top", "value": "5" },
+                { "key": "$count", "value": "true" }
+              ]
+            },
+            "description": "⭐ **OData endpoint #1.** Client tự quyết định lọc / sắp xếp / phân trang mà server **không cần viết thêm code** cho từng kiểu truy vấn.\n\nBảo mật: điều kiện 'chỉ shop Active' được ép ở phía **server, trước khi** áp query option của client."
+          }
+        },
+        {
+          "name": "OData #1 — $select (chỉ lấy vài cột)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/Shops?$select=Name,District,RatingAverage&$top=10",
+              "host": ["{{baseUrl}}"], "path": ["odata", "Shops"],
+              "query": [
+                { "key": "$select", "value": "Name,District,RatingAverage" },
+                { "key": "$top", "value": "10" }
+              ]
+            },
+            "description": "Giảm băng thông: client chỉ xin đúng 3 cột cần dùng."
+          }
+        },
+        {
+          "name": "OData #2 — Orders với $expand=Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Trả về đúng định dạng OData', () => pm.expect(pm.response.text()).to.include('@odata.context'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/odata/Orders?$expand=Items&$top=5&$orderby=PlacedAt desc",
+              "host": ["{{baseUrl}}"], "path": ["odata", "Orders"],
+              "query": [
+                { "key": "$expand", "value": "Items" },
+                { "key": "$top", "value": "5" },
+                { "key": "$orderby", "value": "PlacedAt desc" }
+              ]
+            },
+            "description": "⭐ **OData endpoint #2**, có `$expand` (nạp kèm bảng con OrderItems trong 1 lần gọi).\n\n**Điểm bảo mật đáng nói khi vấn đáp:** bộ lọc quyền sở hữu được tiêm ở phía server **TRƯỚC** khi query option của client được áp lên — nên khách chỉ thấy đơn của mình, không thể dùng `$filter` để dò đơn người khác."
+          }
+        },
+        {
+          "name": "Content Negotiation — JSON",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/reports/platform", "host": ["{{baseUrl}}"], "path": ["api", "reports", "platform"] },
+            "description": "Cùng một endpoint — chỉ khác header `Accept`. So sánh 3 request này liên tiếp để thấy rõ."
+          }
+        },
+        {
+          "name": "Content Negotiation — XML",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/reports/platform", "host": ["{{baseUrl}}"], "path": ["api", "reports", "platform"] },
+            "description": "⭐ **CÙNG MỘT ENDPOINT**, chỉ đổi `Accept` → trả về XML.\n\n**Lý do nghiệp vụ (rất đáng nêu khi vấn đáp):** hoá đơn điện tử tại Việt Nam quy định định dạng XML (Nghị định 123/2020) — nên khả năng xuất XML không phải làm cho có, mà xuất phát từ yêu cầu pháp lý thật."
+          }
+        },
+        {
+          "name": "Content Negotiation — CSV",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "text/csv" }],
+            "url": { "raw": "{{baseUrl}}/api/reports/platform", "host": ["{{baseUrl}}"], "path": ["api", "reports", "platform"] },
+            "description": "⭐ Trả CSV để mở trực tiếp bằng Excel — qua `CsvOutputFormatter` tự viết (dùng reflection), đăng ký trong `Program.cs`."
+          }
+        },
+        {
+          "name": "Content Negotiation — báo cáo shop dạng CSV",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "text/csv" }],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{shopId}}/reports/revenue", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{shopId}}", "reports", "revenue"] },
+            "description": "Content negotiation áp dụng cho **cả 2** endpoint báo cáo, không chỉ báo cáo toàn sàn."
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Negative Cases — Chứng minh bảo mật & quy tắc nghiệp vụ",
+      "description": "Các request **cố ý sai** để chứng minh hệ thống chặn đúng. Rất hữu ích khi cô hỏi 'em có kiểm tra bảo mật / ràng buộc không?'.",
+      "item": [
+        {
+          "name": "401 — Gọi API mà không có token",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('Trả 401', () => pm.response.to.have.status(401));"] }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          }
+        },
+        {
+          "name": "403 — Khách gọi API dành riêng cho Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('Trả 403', () => pm.response.to.have.status(403));"] }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/admin/users", "host": ["{{baseUrl}}"], "path": ["api", "admin", "users"] },
+            "description": "Phân quyền theo **vai trò** (`[Authorize(Roles = \"Admin\")]`)."
+          }
+        },
+        {
+          "name": "403 ⭐ — Nhân viên thao tác shop KHÁC (scoped authorization)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('Trả 403', () => pm.response.to.have.status(403));"] }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/shops/{{otherShopId}}/machines", "host": ["{{baseUrl}}"], "path": ["api", "shops", "{{otherShopId}}", "machines"] },
+            "description": "⭐ **ĐIỂM NHẤN BẢO MẬT.** Nhân viên của QuickPrint (shop 1) cố xem máy của Campus Copy (shop 2) → **403**.\n\nĐây là **scoped authorization**: không chỉ kiểm tra 'có phải nhân viên không', mà còn 'nhân viên của **SHOP NÀO**' — dựa trên claim `shop` trong JWT.\n\nSo sánh: chạy lại với shop 1 (thư mục 5) thì thành công."
+          }
+        },
+        {
+          "name": "401 — Sai mật khẩu (thông điệp chung, chống dò email)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer1@printhub.vn\",\n  \"password\": \"SaiMatKhau123!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
+            "description": "BR-5: thông điệp **chung chung** ('Incorrect email or password') — thử đổi sang email không tồn tại, kết quả **giống hệt** → kẻ tấn công không dò được email nào có trong hệ thống."
+          }
+        },
+        {
+          "name": "409 — Đăng ký trùng email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Trung Email\",\n  \"email\": \"customer1@printhub.vn\",\n  \"phoneNumber\": \"0900000000\",\n  \"password\": \"Password123!\",\n  \"confirmPassword\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "description": "BR-1: mỗi email chỉ 1 tài khoản."
+          }
+        },
+        {
+          "name": "400 — Mật khẩu quá yếu (FluentValidation)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Mat Khau Yeu\",\n  \"email\": \"weak{{$timestamp}}@printhub.vn\",\n  \"phoneNumber\": \"0900000000\",\n  \"password\": \"123\",\n  \"confirmPassword\": \"123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
+            "description": "Trả **400 kèm danh sách lỗi chi tiết** — do `ValidationFilter` + FluentValidation chạy **trước khi** request vào controller, nên controller luôn nhận dữ liệu đã hợp lệ."
+          }
+        },
+        {
+          "name": "400 — Mật khẩu mới trùng mật khẩu cũ",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"Password123!\",\n  \"confirmNewPassword\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/change-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "change-password"] },
+            "description": "Quy tắc: mật khẩu mới phải **khác** mật khẩu hiện tại."
+          }
+        },
+        {
+          "name": "400 — Từ chối shop mà bỏ trống lý do",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/admin/shops/{{pendingShopId}}/reject", "host": ["{{baseUrl}}"], "path": ["api", "admin", "shops", "{{pendingShopId}}", "reject"] },
+            "description": "BR-94: mọi hành động bất lợi cho shop (từ chối / treo) **bắt buộc phải có lý do** để đảm bảo minh bạch."
+          }
+        },
+        {
+          "name": "404 — Xem đơn của người khác",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/orders/99999", "host": ["{{baseUrl}}"], "path": ["api", "orders", "99999"] },
+            "description": "Trả **404 thay vì 403** — cố ý không tiết lộ đơn hàng đó có tồn tại hay không (tránh rò rỉ thông tin)."
+          }
+        },
+        {
+          "name": "409 — Voucher đã hết hạn",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SUMMER5\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/quotes/{{quoteId}}/apply-voucher", "host": ["{{baseUrl}}"], "path": ["api", "quotes", "{{quoteId}}", "apply-voucher"] },
+            "description": "`SUMMER5` trong dữ liệu mẫu đã hết hạn và đã dùng hết lượt (`IsActive = false`) → bị từ chối."
+          }
+        }
+      ]
+    }
+  ]
+}

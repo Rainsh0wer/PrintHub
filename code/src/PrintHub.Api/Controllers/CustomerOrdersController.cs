@@ -13,17 +13,21 @@ namespace PrintHub.Api.Controllers;
 /// Customer order lifecycle (UC-15 place, UC-16 track, UC-17 cancel, UC-19 confirm,
 /// UC-20 history). Ownership is enforced in the service against the authenticated
 /// caller, so a crafted order id returns 404/403 rather than another user's order.
+///
+/// Named CustomerOrdersController (not OrdersController) so the "Orders" controller
+/// name stays free for the OData entity set: OData convention routing resolves
+/// /odata/Orders by controller name, and a duplicate would shadow it.
 /// </summary>
 [ApiController]
 [Route("api/orders")]
 [Authorize]
 [Produces("application/json")]
-public class OrdersController : ControllerBase
+public class CustomerOrdersController : ControllerBase
 {
     private readonly IOrderService _orders;
     private readonly ICurrentUser _currentUser;
 
-    public OrdersController(IOrderService orders, ICurrentUser currentUser)
+    public CustomerOrdersController(IOrderService orders, ICurrentUser currentUser)
     {
         _orders = orders;
         _currentUser = currentUser;
