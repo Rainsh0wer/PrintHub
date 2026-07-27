@@ -59,6 +59,28 @@ public sealed class ComplaintsByCustomerCountSpecification : BaseSpecification<C
     }
 }
 
+/// <summary>Complaints raised against one shop, newest first, with order + shop. Paged.</summary>
+public sealed class ComplaintsByShopSpecification : BaseSpecification<Complaint>
+{
+    public ComplaintsByShopSpecification(int shopId, int skip, int take)
+        : base(c => c.ShopId == shopId)
+    {
+        AddInclude(c => c.Order);
+        AddInclude(c => c.Shop);
+        ApplyOrderByDescending(c => c.CreatedAt);
+        ApplyPaging(skip, take);
+    }
+}
+
+/// <summary>Count of a shop's complaints — the paging companion.</summary>
+public sealed class ComplaintsByShopCountSpecification : BaseSpecification<Complaint>
+{
+    public ComplaintsByShopCountSpecification(int shopId)
+        : base(c => c.ShopId == shopId)
+    {
+    }
+}
+
 /// <summary>Escalated complaints awaiting an administrator, oldest first. Paged.</summary>
 public sealed class EscalatedComplaintsSpecification : BaseSpecification<Complaint>
 {

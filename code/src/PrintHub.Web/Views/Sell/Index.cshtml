@@ -1,0 +1,141 @@
+@model List<PrintHub.Application.Features.Shops.Dtos.ShopApplicationDto>
+@{
+    ViewData["Title"] = "Become a seller";
+    var anonymous = ViewBag.Anonymous == true;
+    // BR-66: one shop in PendingReview or Active at a time.
+    var blocking = Model.FirstOrDefault(s => s.Status is "PendingReview" or "Active");
+    string Cls(string s) => s switch { "Active" => "st-ok", "PendingReview" => "st-info", "Rejected" => "st-err", "Suspended" => "st-warn", _ => "st-info" };
+}
+
+<div class="page-container" style="padding:24px 16px 60px">
+
+    @* ── Pitch ──────────────────────────────────────────────────── *@
+    <div class="card-ph pad mb-4" style="background:var(--ink-dark);color:#fff">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-8">
+                <h1 class="fw-900 mb-2" style="font-size:1.9rem;color:#fff">Sell your printing services on PrintHub</h1>
+                <p class="mb-0" style="opacity:.85;font-size:15px">
+                    List your shop, set your own rate card, and receive orders from customers nearby.
+                    No upfront fee — the platform only takes a commission on completed orders.
+                </p>
+            </div>
+            <div class="col-lg-4">
+                <ul class="mb-0" style="opacity:.9;font-size:14px;line-height:2">
+                    <li>Your prices, your rules</li>
+                    <li>Order queue &amp; production tracking</li>
+                    <li>Machines, materials &amp; staff management</li>
+                    <li>Revenue reports</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+    @if (anonymous)
+    {
+        <div class="card-ph pad text-center">
+            <h2 class="fw-900 mb-2" style="font-size:1.2rem">Sign in to apply</h2>
+            <p class="muted mb-3">You need a PrintHub account before you can open a shop.</p>
+            <a class="btn-ph btn-lg" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Sell">Sign in</a>
+            <a class="btn-outline-ph btn-lg ms-2" asp-controller="Account" asp-action="Register">Create an account</a>
+        </div>
+        return;
+    }
+
+    @* ── Existing applications ──────────────────────────────────── *@
+    @if (Model.Any())
+    {
+        <h2 class="fw-900 mb-2" style="font-size:1.15rem">Your shops</h2>
+        <div class="stack mb-4" style="--gap:12px">
+            @foreach (var s in Model)
+            {
+                <div class="card-ph pad">
+                    <div class="between">
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong>@s.Name</strong>
+                                <span class="status-badge @Cls(s.Status)">@s.Status</span>
+                            </div>
+                            <div class="muted mt-1" style="font-size:13px">@s.District, @s.City · applied @s.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                            @if (!string.IsNullOrWhiteSpace(s.ReviewNote))
+                            {
+                                <div class="alert-ph @(s.Status == "Rejected" ? "alert-err" : "alert-warn") mt-2" style="font-size:13px">
+                                    <strong>Administrator note:</strong> @s.ReviewNote
+                                </div>
+                            }
+                        </div>
+                        @if (s.Status == "Active")
+                        {
+                            <a class="btn-ph" asp-controller="ShopConsole" asp-action="Orders">Open shop console</a>
+                        }
+                    </div>
+                    @if (s.Status == "PendingReview")
+                    {
+                        <p class="muted mt-2 mb-0" style="font-size:12.5px">Waiting for an administrator to review your application.</p>
+                    }
+                    else if (s.Status == "Active")
+                    {
+                        <p class="muted mt-2 mb-0" style="font-size:12.5px">
+                            Your shop is live. Next step: add services to your <a asp-controller="ShopRateCard" asp-action="Index">rate card</a> so customers can get quotes.
+                        </p>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @* ── Application form ───────────────────────────────────────── *@
+    @if (blocking != null)
+    {
+        <div class="alert-ph alert-info">
+            You already have a shop in <strong>@blocking.Status</strong> status. You can hold one active or pending shop at a time.
+        </div>
+    }
+    else
+    {
+        <div class="card-ph pad">
+            <h2 class="fw-900 mb-1" style="font-size:1.2rem">Apply to open a shop</h2>
+            <p class="muted mb-3" style="font-size:13px">An administrator verifies every shop before it can receive orders.</p>
+
+            <form method="post" asp-action="Apply" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Shop name *</label>
+                    <input class="form-input" name="name" required maxlength="100" placeholder="e.g. QuickPrint Cầu Giấy" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Contact phone</label>
+                    <input class="form-input" name="phoneNumber" placeholder="09xxxxxxxx" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-input" name="description" rows="2" placeholder="What your shop does best"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Street address *</label>
+                    <input class="form-input" name="addressLine" required placeholder="144 Xuân Thủy" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">District *</label>
+                    <input class="form-input" name="district" required placeholder="Cầu Giấy" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">City *</label>
+                    <input class="form-input" name="city" required value="Hà Nội" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Opens at *</label>
+                    <input class="form-input" type="time" name="openTime" value="08:00" required />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Closes at *</label>
+                    <input class="form-input" type="time" name="closeTime" value="20:00" required />
+                </div>
+                <div class="col-12">
+                    <button class="btn-ph btn-lg" type="submit">Submit application</button>
+                    <span class="muted ms-2" style="font-size:12.5px">Closing time must be later than opening time.</span>
+                </div>
+            </form>
+        </div>
+    }
+</div>

@@ -1,0 +1,100 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Complaints.Dtos.ComplaintDto>
+@{
+    ViewData["Title"] = "Complaints";
+    Layout = "_ConsoleLayout";
+    string Cls(string s) => s switch { "Resolved" or "Closed" => "st-ok", "Escalated" => "st-warn", "ShopResponded" => "st-info", _ => "st-err" };
+}
+
+@if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
+
+<div class="between mb-3">
+    <div>
+        <h1 class="fw-900" style="font-size:1.6rem">Complaints</h1>
+        <span class="muted" style="font-size:13px">Disputes customers raised on your completed orders.</span>
+    </div>
+    <span class="muted">@Model.TotalCount total</span>
+</div>
+
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+@if (!Model.Items.Any())
+{
+    <div class="empty-ph">No complaints. Nice work.</div>
+}
+else
+{
+    <div class="stack" style="--gap:14px">
+        @foreach (var c in Model.Items)
+        {
+            <div class="card-ph pad">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <strong>@c.OrderCode</strong>
+                    <span class="status-badge @Cls(c.Status)">@c.Status</span>
+                    <span class="badge-ph">@c.Reason</span>
+                    <span class="muted" style="font-size:12.5px">@c.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+                <p class="mb-2" style="font-size:14px">@c.Description</p>
+
+                @if (c.ShopResponse != null)
+                {
+                    <div class="alert-ph alert-info mb-2" style="font-size:13px">
+                        <strong>Your response:</strong> @c.ShopResponse
+                        @if (c.ProposedResolution != null)
+                        {
+                            <span> — @c.ProposedResolution@(c.RefundAmount.HasValue ? $" {c.RefundAmount:N0} ₫" : "")</span>
+                        }
+                    </div>
+                }
+                @if (c.AdminRuling != null)
+                {
+                    <div class="alert-ph alert-warn mb-2" style="font-size:13px"><strong>Platform ruling:</strong> @c.AdminRuling</div>
+                }
+
+                @if (c.Status == "Open")
+                {
+                    <form method="post" asp-action="Respond" class="row g-2 align-items-end" style="border-top:1px solid var(--border);padding-top:12px">
+                        <input type="hidden" name="id" value="@c.Id" />
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size:12px">Resolution</label>
+                            <select class="form-input" name="proposedResolution" data-res>
+                                <option value="0">Reprint — free replacement order</option>
+                                <option value="1">Refund — credit the wallet</option>
+                                <option value="2">Reject the complaint</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2" data-refund hidden>
+                            <label class="form-label" style="font-size:12px">Refund (₫)</label>
+                            <input class="form-input" type="number" name="refundAmount" min="1" step="1000" placeholder="≤ order total" />
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label" style="font-size:12px">Message to the customer</label>
+                            <input class="form-input" name="shopResponse" placeholder="Explain what you'll do" required />
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn-ph btn-block" type="submit">Send response</button>
+                        </div>
+                    </form>
+                }
+                else if (c.Status == "ShopResponded")
+                {
+                    <p class="muted mb-0" style="font-size:12.5px">Waiting for the customer to accept or escalate.</p>
+                }
+                else if (c.Status == "Escalated")
+                {
+                    <p class="muted mb-0" style="font-size:12.5px">Escalated to the platform — an administrator will decide.</p>
+                }
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Refund amount only applies to the Refund resolution.
+        document.querySelectorAll('[data-res]').forEach(sel => {
+            const box = sel.closest('form').querySelector('[data-refund]');
+            const sync = () => { box.hidden = sel.value !== '1'; };
+            sel.addEventListener('change', sync); sync();
+        });
+    </script>
+}

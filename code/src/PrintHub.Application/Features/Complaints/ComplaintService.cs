@@ -66,6 +66,18 @@ public class ComplaintService : IComplaintService
         return Result.Success(new PagedResult<ComplaintDto>(mapped, total, page.PageNumber, page.PageSize));
     }
 
+    public async Task<Result<PagedResult<ComplaintDto>>> ListForShopAsync(int shopId, PageRequest page, CancellationToken ct = default)
+    {
+        if (!_currentUser.CanOperateShop(shopId))
+            return Result<PagedResult<ComplaintDto>>.Forbidden("You do not have permission to view this shop's complaints.");
+
+        var repo = _uow.Repository<Complaint>();
+        var total = await repo.CountAsync(new ComplaintsByShopCountSpecification(shopId), ct);
+        var items = await repo.ListAsync(new ComplaintsByShopSpecification(shopId, page.Skip, page.Take), ct);
+        var mapped = _mapper.Map<IReadOnlyList<ComplaintDto>>(items);
+        return Result.Success(new PagedResult<ComplaintDto>(mapped, total, page.PageNumber, page.PageSize));
+    }
+
     public async Task<Result<ComplaintDto>> RespondAsync(int complaintId, RespondComplaintRequest request, CancellationToken ct = default)
     {
         var complaint = await _uow.Repository<Complaint>().FirstOrDefaultAsync(new ComplaintByIdSpecification(complaintId), ct);

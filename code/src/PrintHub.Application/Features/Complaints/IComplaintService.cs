@@ -16,6 +16,9 @@ public interface IComplaintService
     /// <summary>UC-24 — the caller's complaints and their status, newest first, paged.</summary>
     Task<Result<PagedResult<ComplaintDto>>> ListMineAsync(int customerId, PageRequest page, CancellationToken ct = default);
 
+    /// <summary>UC-35 — complaints raised against a shop, newest first, paged. Shop-scoped.</summary>
+    Task<Result<PagedResult<ComplaintDto>>> ListForShopAsync(int shopId, PageRequest page, CancellationToken ct = default);
+
     /// <summary>UC-35 — the shop proposes a reprint or refund (Open → ShopResponded).</summary>
     Task<Result<ComplaintDto>> RespondAsync(int complaintId, RespondComplaintRequest request, CancellationToken ct = default);
 

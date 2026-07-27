@@ -40,22 +40,22 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 @if (role == "Customer")
                                 {
-                                    <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index">My orders</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Wallet" asp-action="Index">Wallet</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Documents" asp-action="Index">Documents</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Complaints" asp-action="Index">My complaints</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Profile" asp-action="Index">Profile</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="Orders" asp-action="Index">My orders</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="Wallet" asp-action="Index">Wallet</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="Documents" asp-action="Index">Documents</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="Complaints" asp-action="Index">My complaints</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="Profile" asp-action="Index">Profile</a></li>
                                 }
                                 else if (isShop)
                                 {
-                                    <li><a class="dropdown-item" asp-controller="ShopConsole" asp-action="Orders">Shop console</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="ShopConsole" asp-action="Orders">Shop console</a></li>
                                 }
                                 else if (role == "Admin")
                                 {
-                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Approvals">Platform console</a></li>
+                                    <li><a class="dropdown-item" style="color:black;" asp-controller="Admin" asp-action="Approvals">Platform console</a></li>
                                 }
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Sign out</a></li>
+                                <li><a class="dropdown-item" style="color:black;" asp-controller="Account" asp-action="Logout">Sign out</a></li>
                             </ul>
                         </div>
                     }
@@ -120,7 +120,7 @@
                 </div>
                 <div class="col-6 col-md-2 footer-col">
                     <h5>Shops</h5>
-                    <a class="footer-link" asp-controller="Account" asp-action="Register">Become a seller</a>
+                    <a class="footer-link" asp-controller="Sell" asp-action="Index">Become a seller</a>
                     <a class="footer-link" href="#">Seller guide</a>
                     <a class="footer-link" href="#">Pricing rules</a>
                 </div>

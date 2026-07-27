@@ -47,6 +47,11 @@ public class ComplaintsController : ControllerBase
         return (await _complaints.ListMineAsync(userId.Value, page, ct)).ToActionResult();
     }
 
+    /// <summary>UC-35 — complaints raised against a shop the caller operates.</summary>
+    [HttpGet("/api/shops/{shopId:int}/complaints")]
+    public async Task<IActionResult> ForShop(int shopId, [FromQuery] PageRequest page, CancellationToken ct)
+        => (await _complaints.ListForShopAsync(shopId, page, ct)).ToActionResult();
+
     /// <summary>UC-35 — the shop proposes a reprint or refund resolution.</summary>
     [HttpPut("{id:int}/respond")]
     public async Task<IActionResult> Respond(int id, RespondComplaintRequest request, CancellationToken ct)
