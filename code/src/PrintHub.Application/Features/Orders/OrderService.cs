@@ -6,7 +6,9 @@ using PrintHub.Application.Common.Models;
 using PrintHub.Application.Features.Orders.Dtos;
 using PrintHub.Application.Features.Platform;
 using PrintHub.Application.Features.Vouchers;
+using PrintHub.Application.Specifications.Complaints;
 using PrintHub.Application.Specifications.Orders;
+using PrintHub.Application.Specifications.Reviews;
 using PrintHub.Domain.Entities;
 using PrintHub.Domain.Enums;
 
@@ -164,7 +166,21 @@ public class OrderService : IOrderService
         if (!isCustomer && !isShop)
             return Result<OrderDetailDto>.Forbidden("You do not have permission to view this order.");
 
-        return Result.Success(_mapper.Map<OrderDetailDto>(order));
+        // Surface whether the order has already been reviewed / complained about, so a
+        // client can show the outcome instead of offering a form that would be rejected.
+        var reviewed = await _uow.Repository<Review>().AnyAsync(new ReviewByOrderSpecification(orderId), ct);
+        var complaint = await _uow.Repository<Complaint>()
+            .FirstOrDefaultAsync(new LatestComplaintByOrderSpecification(orderId), ct);
+
+        var dto = _mapper.Map<OrderDetailDto>(order) with
+        {
+            HasReview = reviewed,
+            ComplaintStatus = complaint?.Status.ToString(),
+            HasOpenComplaint = complaint is not null
+                && complaint.Status is ComplaintStatus.Open or ComplaintStatus.ShopResponded or ComplaintStatus.Escalated
+        };
+
+        return Result.Success(dto);
     }
 
     public async Task<Result<OrderDetailDto>> CancelAsync(int customerId, int orderId, CancelOrderRequest request, CancellationToken ct = default)

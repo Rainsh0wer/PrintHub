@@ -94,21 +94,64 @@
             }
             @if (Model.Status == "Completed")
             {
-                <form method="post" asp-controller="Reviews" asp-action="Create" class="card-ph pad mb-3">
-                    <input type="hidden" name="orderId" value="@Model.Id" />
-                    <h3 class="fw-900 mb-2" style="font-size:1.05rem">Leave a review</h3>
-                    <label class="form-label">Rating</label>
-                    <select class="form-input mb-2" name="rating"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option></select>
-                    <textarea class="form-input mb-2" name="comment" rows="2" placeholder="How did it go?"></textarea>
-                    <button class="btn-ph btn-block" type="submit">Submit review</button>
-                </form>
-                <form method="post" asp-controller="Complaints" asp-action="Raise" class="card-ph pad">
-                    <input type="hidden" name="orderId" value="@Model.Id" />
-                    <h3 class="fw-900 mb-2" style="font-size:1.05rem">Something wrong?</h3>
-                    <select class="form-input mb-2" name="reason"><option value="0">Wrong output</option><option value="1">Missing pages</option><option value="2">Quality defect</option><option value="3">Late</option><option value="4">Other</option></select>
-                    <textarea class="form-input mb-2" name="description" rows="2" placeholder="Describe the problem" required></textarea>
-                    <button class="btn-outline-ph btn-block" type="submit">Raise a complaint</button>
-                </form>
+                @* Review: one per order (BR-60) — show the outcome instead of a form that would be rejected. *@
+                @if (Model.HasReview)
+                {
+                    <div class="card-ph pad mb-3">
+                        <h3 class="fw-900 mb-2" style="font-size:1.05rem">Your review</h3>
+                        <div class="status-badge st-ok">★ Review submitted</div>
+                        <p class="muted mt-2 mb-0" style="font-size:12.5px">You've already reviewed this order — thanks! Each order can be reviewed once.</p>
+                    </div>
+                }
+                else
+                {
+                    <form method="post" asp-controller="Reviews" asp-action="Create" class="card-ph pad mb-3">
+                        <input type="hidden" name="orderId" value="@Model.Id" />
+                        <h3 class="fw-900 mb-2" style="font-size:1.05rem">Leave a review</h3>
+                        <label class="form-label">Rating</label>
+                        <select class="form-input mb-2" name="rating"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option></select>
+                        <textarea class="form-input mb-2" name="comment" rows="2" placeholder="How did it go?"></textarea>
+                        <button class="btn-ph btn-block" type="submit">Submit review</button>
+                    </form>
+                }
+
+                @* Complaint: one open per order (BR-63) — show its progress instead of a second form. *@
+                @if (Model.ComplaintStatus != null)
+                {
+                    var cls = Model.ComplaintStatus switch
+                    {
+                        "Resolved" or "Closed" => "st-ok",
+                        "Escalated" => "st-warn",
+                        "ShopResponded" => "st-info",
+                        _ => "st-err"
+                    };
+                    <div class="card-ph pad">
+                        <h3 class="fw-900 mb-2" style="font-size:1.05rem">Your complaint</h3>
+                        <div class="status-badge @cls">@Model.ComplaintStatus</div>
+                        <p class="muted mt-2 mb-2" style="font-size:12.5px">
+                            @(Model.ComplaintStatus switch
+                            {
+                                "Open" => "Sent to the shop — waiting for their response.",
+                                "ShopResponded" => "The shop proposed a resolution. Accept it or escalate to the platform.",
+                                "Escalated" => "Escalated — an administrator will make the final decision.",
+                                "Resolved" => "Resolved.",
+                                "Closed" => "Closed by the platform.",
+                                _ => ""
+                            })
+                        </p>
+                        <a class="btn-outline-ph btn-block" asp-controller="Complaints" asp-action="Index">View my complaints</a>
+                    </div>
+                }
+                else
+                {
+                    <form method="post" asp-controller="Complaints" asp-action="Raise" class="card-ph pad">
+                        <input type="hidden" name="orderId" value="@Model.Id" />
+                        <h3 class="fw-900 mb-2" style="font-size:1.05rem">Something wrong?</h3>
+                        <select class="form-input mb-2" name="reason"><option value="0">Wrong output</option><option value="1">Missing pages</option><option value="2">Quality defect</option><option value="3">Late</option><option value="4">Other</option></select>
+                        <textarea class="form-input mb-2" name="description" rows="2" placeholder="Describe the problem" required></textarea>
+                        <button class="btn-outline-ph btn-block" type="submit">Raise a complaint</button>
+                    </form>
+                }
             }
         </div>
     </div>

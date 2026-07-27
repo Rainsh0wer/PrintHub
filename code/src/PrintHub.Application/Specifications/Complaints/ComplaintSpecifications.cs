@@ -59,6 +59,16 @@ public sealed class ComplaintsByCustomerCountSpecification : BaseSpecification<C
     }
 }
 
+/// <summary>The most recent complaint on an order — for showing its outcome on the order.</summary>
+public sealed class LatestComplaintByOrderSpecification : BaseSpecification<Complaint>
+{
+    public LatestComplaintByOrderSpecification(int orderId)
+        : base(c => c.OrderId == orderId)
+    {
+        ApplyOrderByDescending(c => c.CreatedAt);
+    }
+}
+
 /// <summary>Complaints raised against one shop, newest first, with order + shop. Paged.</summary>
 public sealed class ComplaintsByShopSpecification : BaseSpecification<Complaint>
 {

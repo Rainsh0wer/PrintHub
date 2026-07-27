@@ -99,4 +99,10 @@ public record OrderDetailDto(
     DateTime? EstimatedReadyAt,
     DateTime? CompletedAt,
     IReadOnlyList<OrderItemDto> Items,
-    IReadOnlyList<OrderStatusHistoryDto> History);
+    IReadOnlyList<OrderStatusHistoryDto> History,
+    /// <summary>True once the customer has reviewed this order (BR-60: one per order).</summary>
+    bool HasReview = false,
+    /// <summary>Status of the complaint on this order, or null if none was ever raised.</summary>
+    string? ComplaintStatus = null,
+    /// <summary>True while a complaint is still running, so no new one may be raised (BR-63).</summary>
+    bool HasOpenComplaint = false);
