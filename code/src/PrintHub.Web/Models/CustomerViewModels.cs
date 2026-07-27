@@ -1,7 +1,15 @@
 using PrintHub.Application.Features.Catalog.Dtos;
 using PrintHub.Application.Features.Quotes.Dtos;
+using PrintHub.Application.Features.Shops.Dtos;
 
 namespace PrintHub.Web.Models;
+
+public class RateCardVm
+{
+    public List<RateCardEntryDto> Entries { get; set; } = new();
+    /// <summary>Service types the shop has not priced yet (one entry per type).</summary>
+    public List<ServiceTypeAdminDto> AvailableServices { get; set; } = new();
+}
 
 public class QuoteVm
 {

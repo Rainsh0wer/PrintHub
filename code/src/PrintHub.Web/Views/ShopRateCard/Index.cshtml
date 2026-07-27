@@ -1,34 +1,195 @@
-@model List<PrintHub.Application.Features.Shops.Dtos.RateCardEntryDto>
+@model PrintHub.Web.Models.RateCardVm
 @{
     ViewData["Title"] = "Rate card";
     Layout = "_ConsoleLayout";
+    var ruleTypes = new[] { "PaperType", "ColorMode", "Sides", "BindingType", "Material", "QualityProfile", "QuantityTier" };
 }
 
 @if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
 
-<div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Rate card</h1><span class="muted">@Model.Count services</span></div>
+<div class="between mb-3">
+    <div>
+        <h1 class="fw-900" style="font-size:1.6rem">Rate card</h1>
+        <span class="muted" style="font-size:13px">This is what the Quote Engine reads to price every job at your shop.</span>
+    </div>
+    <span class="muted">@Model.Entries.Count service(s)</span>
+</div>
 
 @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
 
-<div class="card-ph" style="overflow:hidden">
-    <table class="tbl">
-        <thead><tr><th>Service</th><th>Group</th><th>Pricing</th><th class="text-end">Unit price</th><th class="text-end">Setup</th><th>Lead</th><th>Rules</th><th></th></tr></thead>
-        <tbody>
-            @if (!Model.Any()) { <tr><td colspan="8" class="muted text-center" style="padding:44px">No services on the rate card yet.</td></tr> }
-            @foreach (var e in Model)
-            {
-                <tr>
-                    <td><strong>@e.ServiceTypeName</strong></td>
-                    <td><span class="badge-ph">@e.ServiceGroup</span></td>
-                    <td class="muted">@e.PricingModel</td>
-                    <td class="text-end"><span class="price-current" style="font-size:15px">@e.UnitPrice.ToString("N0") ₫</span></td>
-                    <td class="text-end muted">@(e.SetupFee > 0 ? e.SetupFee.ToString("N0") + " ₫" : "—")</td>
-                    <td class="muted">@e.LeadTimeMinutes min</td>
-                    <td>@(e.PriceRules.Any() ? $"{e.PriceRules.Count()} rule(s)" : "—")</td>
-                    <td>@(e.IsActive ? "" : Html.Raw("<span class='status-badge st-err'>off</span>"))</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+@* ── Add a service ───────────────────────────────────────────────── *@
+<div class="card-ph pad mb-3">
+    <h2 class="fw-900 mb-2" style="font-size:1.05rem">Add a service</h2>
+    @if (!Model.AvailableServices.Any())
+    {
+        <p class="muted mb-0" style="font-size:13px">Every platform service is already on your rate card.</p>
+    }
+    else
+    {
+        <form method="post" asp-action="AddEntry" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Service</label>
+                <select class="form-input" name="serviceTypeId" required>
+                    @foreach (var s in Model.AvailableServices)
+                    {
+                        <option value="@s.Id">@s.Name (@s.PricingModel · @s.UnitOfMeasure)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label">Unit price (₫)</label>
+                <input class="form-input" type="number" name="unitPrice" min="0" step="50" value="800" required />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label">Setup fee (₫)</label>
+                <input class="form-input" type="number" name="setupFee" min="0" step="1000" value="0" />
+            </div>
+            <div class="col-6 col-md-1">
+                <label class="form-label">Min qty</label>
+                <input class="form-input" type="number" name="minQuantity" min="1" value="1" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label">Lead (min/unit)</label>
+                <input class="form-input" type="number" name="leadTimeMinutes" min="0" value="1" />
+            </div>
+            <div class="col-md-1">
+                <button class="btn-ph btn-block" type="submit">Add</button>
+            </div>
+        </form>
+    }
 </div>
-<p class="muted mt-2" style="font-size:12.5px">Pricing rules (duplex, quantity tiers, materials) are configured per service.</p>
+
+@* ── Existing entries ────────────────────────────────────────────── *@
+@if (!Model.Entries.Any())
+{
+    <div class="empty-ph">No services priced yet. Add one above so your shop can start receiving quotes.</div>
+}
+
+@foreach (var e in Model.Entries)
+{
+    <div class="card-ph pad mb-3" style="@(e.IsActive ? "" : "opacity:.72")">
+        <div class="between mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-900" style="font-size:1.05rem">@e.ServiceTypeName</h3>
+                <span class="badge-ph">@e.ServiceGroup</span>
+                <span class="muted" style="font-size:12.5px">@e.PricingModel</span>
+                @if (!e.IsActive) { <span class="status-badge st-err">disabled</span> }
+            </div>
+            <form method="post" asp-action="ToggleEntry">
+                <input type="hidden" name="entryId" value="@e.Id" />
+                <input type="hidden" name="unitPrice" value="@e.UnitPrice" />
+                <input type="hidden" name="setupFee" value="@e.SetupFee" />
+                <input type="hidden" name="minQuantity" value="@e.MinQuantity" />
+                <input type="hidden" name="leadTimeMinutes" value="@e.LeadTimeMinutes" />
+                <input type="hidden" name="isActive" value="@((!e.IsActive).ToString().ToLower())" />
+                <button class="btn-outline-ph" type="submit" style="font-size:12.5px;padding:6px 12px"
+                        onclick="return confirm('@(e.IsActive ? "Disable this service? It will disappear from search and quoting. Existing orders are unaffected." : "Re-enable this service so it can be quoted again?")')">
+                    @(e.IsActive ? "Disable" : "Enable")
+                </button>
+            </form>
+        </div>
+
+        @* edit pricing *@
+        <form method="post" asp-action="UpdateEntry" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="entryId" value="@e.Id" />
+            <input type="hidden" name="isActive" value="@e.IsActive.ToString().ToLower()" />
+            <div class="col-6 col-md-2">
+                <label class="form-label">Unit price (₫)</label>
+                <input class="form-input" type="number" name="unitPrice" min="0" step="50" value="@e.UnitPrice" required />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label">Setup fee (₫)</label>
+                <input class="form-input" type="number" name="setupFee" min="0" step="1000" value="@e.SetupFee" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label">Min qty</label>
+                <input class="form-input" type="number" name="minQuantity" min="1" value="@e.MinQuantity" />
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label">Lead (min/unit)</label>
+                <input class="form-input" type="number" name="leadTimeMinutes" min="0" value="@e.LeadTimeMinutes" />
+            </div>
+            <div class="col-md-2">
+                <button class="btn-ph btn-block" type="submit">Save pricing</button>
+            </div>
+        </form>
+
+        @* price rules *@
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+            <div class="fw-bold mb-2" style="font-size:13px">
+                Pricing rules
+                <span class="muted" style="font-weight:400">— applied on top of the unit price when the customer picks that option</span>
+            </div>
+
+            @if (e.PriceRules.Any())
+            {
+                <table class="tbl mb-2">
+                    <thead><tr><th>Type</th><th>Option</th><th class="text-end">×</th><th class="text-end">+₫</th><th>Qty band</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var r in e.PriceRules)
+                        {
+                            <tr>
+                                <td class="muted">@r.RuleType</td>
+                                <td><strong>@r.OptionKey</strong></td>
+                                <td class="text-end">@(r.Multiplier != 1 ? r.Multiplier.ToString("0.##") : "—")</td>
+                                <td class="text-end">@(r.FlatExtra > 0 ? r.FlatExtra.ToString("N0") : "—")</td>
+                                <td class="muted">@(r.MinQuantity.HasValue || r.MaxQuantity.HasValue ? $"{r.MinQuantity?.ToString() ?? "0"}–{r.MaxQuantity?.ToString() ?? "∞"}" : "—")</td>
+                                <td class="text-end">
+                                    <form method="post" asp-action="RemoveRule">
+                                        <input type="hidden" name="entryId" value="@e.Id" />
+                                        <input type="hidden" name="ruleId" value="@r.Id" />
+                                        <button class="btn-outline-ph" type="submit" style="font-size:12px;padding:4px 10px"
+                                                onclick="return confirm('Remove this pricing rule?')">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="muted mb-2" style="font-size:12.5px">No rules — every job is priced at the flat unit price above.</p>
+            }
+
+            <form method="post" asp-action="AddRule" class="row g-2 align-items-end">
+                <input type="hidden" name="entryId" value="@e.Id" />
+                <div class="col-6 col-md-2">
+                    <label class="form-label" style="font-size:12px">Rule type</label>
+                    <select class="form-input" name="ruleType">
+                        @for (var i = 0; i < ruleTypes.Length; i++)
+                        {
+                            <option value="@i">@ruleTypes[i]</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label" style="font-size:12px">Option key</label>
+                    <input class="form-input" name="optionKey" placeholder="Duplex / Color / A3 / PLA" required />
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label" style="font-size:12px">Multiplier</label>
+                    <input class="form-input" type="number" name="multiplier" step="0.05" min="0.01" value="1" />
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label" style="font-size:12px">Flat extra (₫)</label>
+                    <input class="form-input" type="number" name="flatExtra" step="500" min="0" value="0" />
+                </div>
+                <div class="col-2 col-md-1">
+                    <label class="form-label" style="font-size:12px">Min qty</label>
+                    <input class="form-input" type="number" name="minQuantity" min="1" placeholder="—" />
+                </div>
+                <div class="col-2 col-md-1">
+                    <label class="form-label" style="font-size:12px">Max qty</label>
+                    <input class="form-input" type="number" name="maxQuantity" min="1" placeholder="—" />
+                </div>
+                <div class="col-md-2">
+                    <button class="btn-outline-ph btn-block" type="submit">Add rule</button>
+                </div>
+            </form>
+            <p class="muted mt-2 mb-0" style="font-size:12px">
+                Min/max qty apply to <strong>QuantityTier</strong> rules only, and tiers on the same service must not overlap.
+            </p>
+        </div>
+    </div>
+}
