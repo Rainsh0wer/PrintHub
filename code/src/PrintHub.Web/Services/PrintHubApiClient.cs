@@ -76,13 +76,31 @@ public class PrintHubApiClient
             if (response.IsSuccessStatusCode)
                 return new ApiResult<T>(true, payload is null ? default : payload.Data, null, (int)response.StatusCode);
 
-            var message = payload?.Message
-                ?? (payload?.Errors is { Length: > 0 } errors ? string.Join(" ", errors) : $"Request failed ({(int)response.StatusCode}).");
-            return new ApiResult<T>(false, default, message, (int)response.StatusCode);
+            return new ApiResult<T>(false, default, BuildError(payload, (int)response.StatusCode), (int)response.StatusCode);
         }
         catch (Exception ex)
         {
             return ApiResult<T>.Fail($"Could not reach the API — make sure it is running on :5080. ({ex.Message})");
         }
+    }
+
+    /// <summary>
+    /// Builds the message shown to the user. Validation failures carry the useful
+    /// detail in <c>Errors</c> while <c>Message</c> is only a generic header, so the
+    /// field errors are appended rather than discarded — otherwise every failed form
+    /// just says "Validation failed." with no indication of what to fix.
+    /// </summary>
+    private static string BuildError<T>(ApiResponse<T>? payload, int statusCode)
+    {
+        var details = payload?.Errors is { Length: > 0 } errors
+            ? string.Join(" ", errors.Where(e => !string.IsNullOrWhiteSpace(e)))
+            : null;
+
+        if (!string.IsNullOrWhiteSpace(payload?.Message) && !string.IsNullOrWhiteSpace(details))
+            return $"{payload!.Message} {details}";
+
+        return payload?.Message
+               ?? details
+               ?? $"Request failed ({statusCode}).";
     }
 }
