@@ -1,23 +1,23 @@
 %% Order lifecycle state machine (PrintHub).
 %% Render: https://mermaid.live  → export PNG.  Or paste into draw.io (Insert ▸ Advanced ▸ Mermaid).
+%%
+%% Scope note: an order is created directly in AwaitingAcceptance. Comparing quotes and
+%% the 24-hour expiry belong to the Quote entity, not to the order — see quote-compare-sequence
+%% — so Draft / Quoted / Expired are not order states here even though the enum reserves them.
 stateDiagram-v2
-    [*] --> Draft
-    Draft --> Quoted: compare quotes
-    Quoted --> AwaitingAcceptance: place order (wallet debit + snapshot)
-    Quoted --> Expired: 24h elapsed
+    [*] --> AwaitingAcceptance: place order (wallet debit + quote snapshot)
     AwaitingAcceptance --> Accepted: shop accepts
-    AwaitingAcceptance --> Declined: shop declines / full refund
+    AwaitingAcceptance --> Declined: shop declines (reason) / full refund
     AwaitingAcceptance --> Cancelled: customer cancels / full refund
     Accepted --> InProduction: start production (publish job to RabbitMQ)
-    Accepted --> Cancelled: cancel (cancellation fee)
+    Accepted --> Cancelled: customer cancels / refund less cancellation fee
     InProduction --> ReadyForPickup: agent completed (pickup)
     InProduction --> OutForDelivery: agent completed (delivery)
-    InProduction --> ProductionFailed: agent failure event
-    ProductionFailed --> InProduction: retry (no charge)
-    ProductionFailed --> Declined: give up / full refund
+    InProduction --> ProductionFailed: agent reports machine fault
+    ProductionFailed --> InProduction: shop retries (no extra charge)
+    ProductionFailed --> Declined: shop gives up / full refund
     ReadyForPickup --> Completed: hand over (commission recorded)
     OutForDelivery --> Completed: delivered
     Completed --> [*]
     Declined --> [*]
     Cancelled --> [*]
-    Expired --> [*]

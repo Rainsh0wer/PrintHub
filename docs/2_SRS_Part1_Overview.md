@@ -130,8 +130,8 @@
 | Figure 16 | Use Case Diagram – Shop Staff |
 | Figure 17 | Use Case Diagram – Admin |
 | Figure 18 | Screen Flow – Customer Web Client |
-| Figure 19 | Screen Flow – Shop Desktop Client |
-| Figure 20 | Screen Flow – Admin Desktop Client |
+| Figure 19 | Screen Flow – Shop Web Console |
+| Figure 20 | Screen Flow – Admin Desktop Client (WPF) |
 | Figure 21 | Entity Relationship Diagram – Detail |
 | Figure 22+ | Screen prototypes (see Part 3, Section 3) |
 
@@ -336,10 +336,10 @@ A customer may cancel an order before production begins. Cancellation in `Awaiti
 
 | Status | Meaning | Next possible statuses |
 |---|---|---|
-| Draft | Order is being configured by the customer; not yet quoted | Quoted, (deleted) |
-| Quoted | Comparative quotes generated; awaiting customer confirmation | AwaitingAcceptance, Expired |
-| Expired | Quote validity elapsed before confirmation | (terminal — requires new quote) |
-| AwaitingAcceptance | Order placed and paid; awaiting shop decision | Accepted, Declined, Cancelled |
+| Draft | Reserved. Configuration before an order exists is held on the quote, not on an order record | (not reached) |
+| Quoted | Reserved. Comparison results live on the Quote entity, which carries its own expiry | (not reached) |
+| Expired | Reserved. Expiry applies to a quote (24 hours), not to a placed order | (not reached) |
+| AwaitingAcceptance | Order placed and paid; awaiting shop decision. This is the state an order is created in | Accepted, Declined, Cancelled |
 | Accepted | Shop has accepted and committed capacity | InProduction, Cancelled (with fee) |
 | InProduction | Production job dispatched; agent executing | ReadyForPickup, OutForDelivery, ProductionFailed |
 | ProductionFailed | Machine fault reported by agent | InProduction (retry), Declined (refund) |
@@ -455,8 +455,8 @@ A Customer may simultaneously hold the Shop Owner role, since a shop proprietor 
 #### 1.4.1 Screen Flow
 
 **Figure 18: Screen Flow – Customer Web Client**
-**Figure 19: Screen Flow – Shop Desktop Client**
-**Figure 20: Screen Flow – Admin Desktop Client**
+**Figure 19: Screen Flow – Shop Web Console**
+**Figure 20: Screen Flow – Admin Desktop Client (WPF)**
 
 > **[CẦN BỔ SUNG]** Vẽ 3 screen flow theo danh sách màn hình bên dưới.
 

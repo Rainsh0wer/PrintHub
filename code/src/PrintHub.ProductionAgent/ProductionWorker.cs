@@ -88,9 +88,16 @@ public class ProductionWorker : BackgroundService
         _logger.LogInformation("Producing {OrderCode}...", order.OrderCode);
         await Task.Delay(SimulatedProduction, ct);
 
-        var target = order.FulfilmentMethod == FulfilmentMethod.Delivery
-            ? OrderStatus.OutForDelivery
-            : OrderStatus.ReadyForPickup;
+        // A share of runs are failed on purpose so the ProductionFailed branch of the
+        // lifecycle is exercised: the shop then retries at no charge to the customer, or
+        // gives up and declines with a refund. Set FailureRate to 0 to never fail.
+        var failed = _options.FailureRate > 0 && Random.Shared.NextDouble() < _options.FailureRate;
+
+        var target = failed
+            ? OrderStatus.ProductionFailed
+            : order.FulfilmentMethod == FulfilmentMethod.Delivery
+                ? OrderStatus.OutForDelivery
+                : OrderStatus.ReadyForPickup;
 
         if (!OrderStateMachine.CanTransition(order.Status, target, OrderActor.System))
         {
@@ -100,7 +107,7 @@ public class ProductionWorker : BackgroundService
 
         var from = order.Status;
         order.Status = target;
-        order.ProgressPercent = 100;
+        order.ProgressPercent = failed ? order.ProgressPercent : 100;
         db.OrderStatusHistories.Add(new OrderStatusHistory
         {
             OrderId = order.Id,
@@ -108,12 +115,15 @@ public class ProductionWorker : BackgroundService
             ToStatus = target,
             ActorUserId = null,
             ActorRole = null,
-            Reason = "Production completed by agent.",
+            Reason = failed
+                ? "Production failed: simulated machine fault. The shop can retry or decline with a refund."
+                : "Production completed by agent.",
             CreatedAt = DateTime.UtcNow
         });
         await db.SaveChangesAsync(ct);
 
-        _logger.LogInformation("{OrderCode}: {From} -> {Target}.", order.OrderCode, from, target);
+        if (failed) _logger.LogWarning("{OrderCode}: production FAILED (simulated).", order.OrderCode);
+        else _logger.LogInformation("{OrderCode}: {From} -> {Target}.", order.OrderCode, from, target);
     }
 
     private async Task ConnectWithRetryAsync(CancellationToken ct)

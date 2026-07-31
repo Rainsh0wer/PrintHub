@@ -192,8 +192,13 @@ public class OrderService : IOrderService
         if (!OrderStateMachine.CanTransition(order.Status, OrderStatus.Cancelled, OrderActor.Customer))
             return Result<OrderDetailDto>.Conflict($"An order in status '{order.Status}' can no longer be cancelled.");
 
-        // Cancellation is only permitted before production starts, so a full refund applies.
-        var refund = order.TotalAmount;
+        // BR-47: cancelling before the shop accepts is refunded in full. Once the shop has
+        // accepted it has committed capacity, so it keeps a cancellation fee.
+        var feeRate = order.Status == OrderStatus.Accepted
+            ? await _settings.GetCancellationFeeRateAsync(ct)
+            : 0m;
+        var fee = Math.Round(order.TotalAmount * feeRate, 2);
+        var refund = order.TotalAmount - fee;
         var now = DateTime.UtcNow;
 
         var customer = await _uow.Repository<User>().GetByIdAsync(customerId, ct);
@@ -210,7 +215,9 @@ public class OrderService : IOrderService
                 BalanceAfter = customer.WalletBalance,
                 Status = WalletTransactionStatus.Completed,
                 RefCode = $"REF-{order.OrderCode}",
-                Description = $"Refund for cancelled order {order.OrderCode}",
+                Description = fee > 0
+                    ? $"Refund for cancelled order {order.OrderCode} (cancellation fee {fee:N0} ₫ retained by the shop)"
+                    : $"Refund for cancelled order {order.OrderCode}",
                 CreatedAt = now
             }, ct);
         }
@@ -222,7 +229,9 @@ public class OrderService : IOrderService
         order.RefundedAmount = refund;
         _uow.Repository<Order>().Update(order);
 
-        await AppendHistoryAsync(order.Id, from, OrderStatus.Cancelled, request.Reason ?? "Cancelled by customer.", ct);
+        var historyNote = request.Reason ?? "Cancelled by customer.";
+        if (fee > 0) historyNote += $" Cancellation fee {fee:N0} ₫ retained by the shop.";
+        await AppendHistoryAsync(order.Id, from, OrderStatus.Cancelled, historyNote, ct);
         await _uow.SaveChangesAsync(ct);
 
         return Result.Success(await LoadDetailAsync(order.Id, ct));

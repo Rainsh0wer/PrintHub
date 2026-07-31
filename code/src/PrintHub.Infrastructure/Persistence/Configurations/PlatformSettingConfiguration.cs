@@ -11,5 +11,6 @@ public class PlatformSettingConfiguration : IEntityTypeConfiguration<PlatformSet
         b.ToTable("PlatformSettings");
         b.HasKey(x => x.Id);
         b.Property(x => x.CommissionRate).HasColumnType("decimal(5,4)");
+        b.Property(x => x.CancellationFeeRate).HasColumnType("decimal(5,4)");
     }
 }

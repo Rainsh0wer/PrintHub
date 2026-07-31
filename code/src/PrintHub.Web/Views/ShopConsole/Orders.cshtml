@@ -26,6 +26,7 @@
     <a class="sort-btn @FCls("AwaitingAcceptance")" asp-action="Orders" asp-route-status="AwaitingAcceptance">New</a>
     <a class="sort-btn @FCls("Accepted")" asp-action="Orders" asp-route-status="Accepted">Accepted</a>
     <a class="sort-btn @FCls("InProduction")" asp-action="Orders" asp-route-status="InProduction">In production</a>
+    <a class="sort-btn @FCls("ProductionFailed")" asp-action="Orders" asp-route-status="ProductionFailed">Failed</a>
     <a class="sort-btn @FCls("ReadyForPickup")" asp-action="Orders" asp-route-status="ReadyForPickup">Ready</a>
 </div>
 
@@ -47,13 +48,37 @@
                             {
                                 case "AwaitingAcceptance":
                                     <form method="post" asp-action="Accept"><input type="hidden" name="id" value="@o.Id" /><button class="btn-ph btn-sm">Accept</button></form>
-                                    <form method="post" asp-action="Decline"><input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="reason" value="0" /><button class="btn-outline-ph btn-sm">Decline</button></form>
+                                    @* BR-85: the decline reason must be chosen, not assumed. *@
+                                    <form method="post" asp-action="Decline" class="d-flex gap-1">
+                                        <input type="hidden" name="id" value="@o.Id" />
+                                        <select class="form-input" name="reason" style="font-size:12px;padding:4px">
+                                            <option value="0">No capacity</option>
+                                            <option value="1">Out of material</option>
+                                            <option value="2">File unreadable</option>
+                                            <option value="3">Not supported</option>
+                                            <option value="4">Copyright concern</option>
+                                        </select>
+                                        <button class="btn-outline-ph btn-sm" type="submit">Decline</button>
+                                    </form>
                                     break;
                                 case "Accepted":
                                     <form method="post" asp-action="Start"><input type="hidden" name="id" value="@o.Id" /><button class="btn-ph btn-sm">Start production</button></form>
                                     break;
                                 case "InProduction":
                                     <form method="post" asp-action="Ready"><input type="hidden" name="id" value="@o.Id" /><button class="btn-ph btn-sm">Mark ready</button></form>
+                                    break;
+                                case "ProductionFailed":
+                                    @* BR-91: retrying after a fault costs the customer nothing. *@
+                                    <form method="post" asp-action="Start">
+                                        <input type="hidden" name="id" value="@o.Id" />
+                                        <button class="btn-ph btn-sm" type="submit">Retry production</button>
+                                    </form>
+                                    <form method="post" asp-action="Decline" class="d-flex gap-1">
+                                        <input type="hidden" name="id" value="@o.Id" />
+                                        <input type="hidden" name="reason" value="0" />
+                                        <button class="btn-outline-ph btn-sm" type="submit"
+                                                onclick="return confirm('Give up on this order? The customer is refunded in full.')">Give up + refund</button>
+                                    </form>
                                     break;
                                 case "ReadyForPickup":
                                 case "OutForDelivery":

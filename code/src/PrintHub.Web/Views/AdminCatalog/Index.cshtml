@@ -3,6 +3,7 @@
     ViewData["Title"] = "Service types";
     Layout = "_ConsoleLayout";
     var rate = (decimal)(ViewBag.CommissionRate ?? 0.10m);
+    var cancelRate = (decimal)(ViewBag.CancellationFeeRate ?? 0.10m);
     var updatedAt = ViewBag.CommissionUpdatedAt as DateTime?;
 }
 
@@ -28,6 +29,28 @@
                            value="@((rate * 100m).ToString("0.##"))" required />
                 </div>
                 <button class="btn-ph" type="submit" style="white-space:nowrap">Save rate</button>
+            </form>
+        </div>
+    </div>
+
+    <hr class="divider my-3" />
+
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-7">
+            <h3 class="fw-900 mb-1" style="font-size:1.05rem">Cancellation fee</h3>
+            <p class="muted mb-0" style="font-size:12.5px">
+                Cancelling before the shop accepts is refunded in full. Once a shop has accepted it has
+                committed capacity, so it keeps this share of the total and the customer is refunded the rest.
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <form method="post" asp-action="SetCancellationFee" class="d-flex gap-2 align-items-end">
+                <div class="flex-grow-1">
+                    <label class="form-label">Fee (% of order total)</label>
+                    <input class="form-input" type="number" name="ratePercent" step="0.5" min="0" max="100"
+                           value="@((cancelRate * 100m).ToString("0.##"))" required />
+                </div>
+                <button class="btn-ph" type="submit" style="white-space:nowrap">Save fee</button>
             </form>
         </div>
     </div>

@@ -707,7 +707,7 @@
 | BR-4 | A password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, and one digit. |
 | BR-5 | Authentication failure must return a generic message that does not reveal whether the email exists. |
 | BR-6 | An account with Locked status must not be issued an access token. |
-| BR-7 | The desktop client must accept only Shop Owner, Shop Staff, and Admin roles; Customer-only accounts are rejected. |
+| BR-7 | The desktop client is the administrator console and accepts only the Admin role; all other accounts are rejected and directed to the web application. Shop personnel operate their shop through the web shop console, which covers the full set of shop use cases. |
 | BR-8 | A password reset request must return the same neutral acknowledgement whether or not the email is registered. |
 | BR-9 | A successful password reset or change must revoke all refresh tokens for the account. |
 | BR-10 | Logout must revoke the refresh token server-side; client-side removal alone is not sufficient. |

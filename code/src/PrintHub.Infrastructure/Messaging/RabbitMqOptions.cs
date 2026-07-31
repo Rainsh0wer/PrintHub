@@ -10,4 +10,10 @@ public class RabbitMqOptions
     public string UserName { get; set; } = "guest";
     public string Password { get; set; } = "guest";
     public string VirtualHost { get; set; } = "/";
+
+    /// <summary>
+    /// Production agent only: probability (0–1) that a simulated run fails, so the
+    /// ProductionFailed → retry / decline branch can be demonstrated. 0 disables it.
+    /// </summary>
+    public double FailureRate { get; set; }
 }

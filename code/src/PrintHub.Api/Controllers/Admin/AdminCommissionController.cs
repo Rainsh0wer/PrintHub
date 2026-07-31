@@ -7,9 +7,9 @@ using PrintHub.Domain.Enums;
 
 namespace PrintHub.Api.Controllers.Admin;
 
-/// <summary>Platform commission configuration (UC-39).</summary>
+/// <summary>Platform-wide money settings (UC-39): commission and cancellation fee.</summary>
 [ApiController]
-[Route("api/admin/commission")]
+[Route("api/admin")]
 [Authorize(Roles = nameof(UserRole.Admin))]
 [Produces("application/json")]
 public class AdminCommissionController : ControllerBase
@@ -18,11 +18,20 @@ public class AdminCommissionController : ControllerBase
 
     public AdminCommissionController(IPlatformSettingsService settings) => _settings = settings;
 
-    [HttpGet]
+    [HttpGet("commission")]
     public async Task<IActionResult> Get(CancellationToken ct)
         => (await _settings.GetCommissionAsync(ct)).ToActionResult();
 
-    [HttpPut]
+    [HttpPut("commission")]
     public async Task<IActionResult> Set(SetCommissionRequest request, CancellationToken ct)
         => (await _settings.SetCommissionAsync(request.Rate, ct)).ToActionResult(successMessage: "Commission rate updated.");
+
+    /// <summary>BR-47 — the share a shop keeps when an accepted order is cancelled.</summary>
+    [HttpGet("cancellation-fee")]
+    public async Task<IActionResult> GetCancellationFee(CancellationToken ct)
+        => (await _settings.GetCancellationFeeAsync(ct)).ToActionResult();
+
+    [HttpPut("cancellation-fee")]
+    public async Task<IActionResult> SetCancellationFee(SetCancellationFeeRequest request, CancellationToken ct)
+        => (await _settings.SetCancellationFeeAsync(request.Rate, ct)).ToActionResult(successMessage: "Cancellation fee updated.");
 }

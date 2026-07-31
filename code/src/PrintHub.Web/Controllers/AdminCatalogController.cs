@@ -22,6 +22,9 @@ public class AdminCatalogController : ConsoleBase
         ViewBag.CommissionRate = commission.Data?.CommissionRate ?? 0.10m;
         ViewBag.CommissionUpdatedAt = commission.Data?.UpdatedAt;
 
+        var cancellation = await _api.GetAsync<CancellationFeeDto>("/api/admin/cancellation-fee");
+        ViewBag.CancellationFeeRate = cancellation.Data?.CancellationFeeRate ?? 0.10m;
+
         return View(res.Data ?? new List<ServiceTypeAdminDto>());
     }
 
@@ -66,6 +69,17 @@ public class AdminCatalogController : ConsoleBase
         var res = await _api.PutAsync<CommissionDto>("/api/admin/commission", new { rate = ratePercent / 100m });
         TempData[res.Ok ? "ok" : "err"] = res.Ok
             ? $"Commission set to {ratePercent:0.##}%. Orders completed from now on use the new rate."
+            : res.Error;
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>BR-47 — what a shop keeps when a customer cancels an order it had accepted.</summary>
+    [HttpPost]
+    public async Task<IActionResult> SetCancellationFee(decimal ratePercent)
+    {
+        var res = await _api.PutAsync<CancellationFeeDto>("/api/admin/cancellation-fee", new { rate = ratePercent / 100m });
+        TempData[res.Ok ? "ok" : "err"] = res.Ok
+            ? $"Cancellation fee set to {ratePercent:0.##}% of the order total."
             : res.Error;
         return RedirectToAction(nameof(Index));
     }

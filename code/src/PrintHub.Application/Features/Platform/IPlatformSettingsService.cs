@@ -9,4 +9,9 @@ public interface IPlatformSettingsService
     Task<decimal> GetCommissionRateAsync(CancellationToken ct = default);
     Task<Result<CommissionDto>> GetCommissionAsync(CancellationToken ct = default);
     Task<Result<CommissionDto>> SetCommissionAsync(decimal rate, CancellationToken ct = default);
+
+    /// <summary>BR-47 — fee rate applied when a customer cancels an already-accepted order.</summary>
+    Task<decimal> GetCancellationFeeRateAsync(CancellationToken ct = default);
+    Task<Result<CancellationFeeDto>> GetCancellationFeeAsync(CancellationToken ct = default);
+    Task<Result<CancellationFeeDto>> SetCancellationFeeAsync(decimal rate, CancellationToken ct = default);
 }
