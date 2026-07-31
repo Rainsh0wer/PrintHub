@@ -61,28 +61,103 @@ public class PrintHubApiClient
     {
         try
         {
-            using var request = new HttpRequestMessage(method, path);
-            if (body is not null)
-                request.Content = JsonContent.Create(body, options: Json);
+            var result = await SendOnceAsync<T>(method, path, body, ct);
 
-            var token = _http.HttpContext?.Session.GetString(SessionKeys.AccessToken);
-            if (!string.IsNullOrEmpty(token))
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            // The access token lives ~15 minutes. Rather than dropping the user at a
+            // login screen mid-task, spend the stored refresh token once and replay
+            // the original request.
+            if (result.Status == StatusCodes.Status401Unauthorized && await TryRefreshAsync(ct))
+                result = await SendOnceAsync<T>(method, path, body, ct);
 
-            var client = _factory.CreateClient("api");
-            using var response = await client.SendAsync(request, ct);
-
-            var payload = await response.Content.ReadFromJsonAsync<ApiResponse<T>>(Json, ct);
-            if (response.IsSuccessStatusCode)
-                return new ApiResult<T>(true, payload is null ? default : payload.Data, null, (int)response.StatusCode);
-
-            return new ApiResult<T>(false, default, BuildError(payload, (int)response.StatusCode), (int)response.StatusCode);
+            return result;
         }
         catch (Exception ex)
         {
             return ApiResult<T>.Fail($"Could not reach the API — make sure it is running on :5080. ({ex.Message})");
         }
     }
+
+    private async Task<ApiResult<T>> SendOnceAsync<T>(HttpMethod method, string path, object? body, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(method, path);
+        if (body is not null)
+            request.Content = JsonContent.Create(body, options: Json);
+
+        var token = _http.HttpContext?.Session.GetString(SessionKeys.AccessToken);
+        if (!string.IsNullOrEmpty(token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var client = _factory.CreateClient("api");
+        using var response = await client.SendAsync(request, ct);
+        var status = (int)response.StatusCode;
+
+        // Not every response carries the ApiResponse envelope: the JWT middleware
+        // answers 401/403 with an empty body. Parsing must not turn that into a
+        // "cannot reach the API" error, and the status has to survive so the caller
+        // can react to it (e.g. refresh the token and retry).
+        var payload = await TryReadPayloadAsync<T>(response, ct);
+
+        if (response.IsSuccessStatusCode)
+            return new ApiResult<T>(true, payload is null ? default : payload.Data, null, status);
+
+        return new ApiResult<T>(false, default, BuildError(payload, status), status);
+    }
+
+    private static async Task<ApiResponse<T>?> TryReadPayloadAsync<T>(HttpResponseMessage response, CancellationToken ct)
+    {
+        try
+        {
+            if (response.Content.Headers.ContentLength == 0) return null;
+            return await response.Content.ReadFromJsonAsync<ApiResponse<T>>(Json, ct);
+        }
+        catch (JsonException)
+        {
+            return null;    // a non-JSON error body is not worth failing the request over
+        }
+        catch (NotSupportedException)
+        {
+            return null;    // unexpected content type
+        }
+    }
+
+    /// <summary>
+    /// Exchanges the stored refresh token for a fresh pair and writes both back to the
+    /// session. Returns false when there is nothing to refresh with or the token has
+    /// been revoked, in which case the caller surfaces the original 401.
+    /// </summary>
+    private async Task<bool> TryRefreshAsync(CancellationToken ct)
+    {
+        var session = _http.HttpContext?.Session;
+        var refreshToken = session?.GetString(SessionKeys.RefreshToken);
+        if (session is null || string.IsNullOrEmpty(refreshToken)) return false;
+
+        try
+        {
+            var client = _factory.CreateClient("api");
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/refresh")
+            {
+                Content = JsonContent.Create(new { refreshToken }, options: Json)
+            };
+
+            using var response = await client.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode) return false;
+
+            var payload = await response.Content.ReadFromJsonAsync<ApiResponse<AuthTokens>>(Json, ct);
+            if (payload?.Data is not { } tokens || string.IsNullOrEmpty(tokens.AccessToken)) return false;
+
+            session.SetString(SessionKeys.AccessToken, tokens.AccessToken);
+            if (!string.IsNullOrEmpty(tokens.RefreshToken))
+                session.SetString(SessionKeys.RefreshToken, tokens.RefreshToken);
+            return true;
+        }
+        catch
+        {
+            return false;   // treat any refresh failure as "not signed in"
+        }
+    }
+
+    /// <summary>Only the token pair is needed here, so the full AuthResponse is not deserialised.</summary>
+    private sealed record AuthTokens(string AccessToken, string RefreshToken);
 
     /// <summary>
     /// Builds the message shown to the user. Validation failures carry the useful
@@ -99,8 +174,15 @@ public class PrintHubApiClient
         if (!string.IsNullOrWhiteSpace(payload?.Message) && !string.IsNullOrWhiteSpace(details))
             return $"{payload!.Message} {details}";
 
-        return payload?.Message
-               ?? details
-               ?? $"Request failed ({statusCode}).";
+        if (!string.IsNullOrWhiteSpace(payload?.Message)) return payload!.Message!;
+        if (!string.IsNullOrWhiteSpace(details)) return details!;
+
+        // Empty-bodied responses come from the auth middleware, not the services.
+        return statusCode switch
+        {
+            StatusCodes.Status401Unauthorized => "Your session has expired. Please sign in again.",
+            StatusCodes.Status403Forbidden => "You do not have permission to do that.",
+            _ => $"Request failed ({statusCode})."
+        };
     }
 }
