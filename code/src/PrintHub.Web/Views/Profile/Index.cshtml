@@ -29,4 +29,18 @@
         </div>
         <button class="btn-ph mt-3" type="submit">Save changes</button>
     </form>
+
+    <form method="post" asp-action="ChangePassword" class="card-ph pad mt-3">
+        <h3 class="fw-900 mb-1" style="font-size:1.05rem">Change password</h3>
+        <p class="muted mb-3" style="font-size:12.5px">
+            For your security this signs you out of every device, so you'll need to sign in again.
+        </p>
+        <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Current password</label><input class="form-input" type="password" name="currentPassword" required /></div>
+            <div class="col-md-4"><label class="form-label">New password</label><input class="form-input" type="password" name="newPassword" required /></div>
+            <div class="col-md-4"><label class="form-label">Confirm new password</label><input class="form-input" type="password" name="confirmNewPassword" required /></div>
+        </div>
+        <p class="muted mt-2 mb-0" style="font-size:12px">At least 8 characters with an uppercase letter, a lowercase letter and a digit, and different from your current one.</p>
+        <button class="btn-outline-ph mt-3" type="submit">Change password</button>
+    </form>
 </div>

@@ -27,6 +27,21 @@ public class AdminVouchersController : ConsoleBase
         return RedirectToAction(nameof(Index));
     }
 
+    /// <summary>UC-40 — edit a voucher. The code is immutable, so only the terms are sent.</summary>
+    [HttpPost]
+    public async Task<IActionResult> Update(int id, string? name, decimal discountValue, decimal minOrderAmount,
+        decimal? maxDiscountAmount, int usageLimit, DateTime validFrom, DateTime validTo, bool isActive,
+        int perUserLimit, string? description)
+    {
+        var res = await _api.PutAsync<VoucherAdminDto>($"/api/admin/vouchers/{id}", new
+        {
+            name, discountValue, minOrderAmount, maxDiscountAmount,
+            usageLimit, validFrom, validTo, isActive, perUserLimit, description
+        });
+        TempData[res.Ok ? "ok" : "err"] = res.Ok ? "Voucher updated." : res.Error;
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Deactivate(int id)
     {

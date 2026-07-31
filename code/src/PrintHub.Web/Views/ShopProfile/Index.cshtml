@@ -1,0 +1,57 @@
+@model PrintHub.Application.Features.Shops.Dtos.ShopDetailDto
+@{
+    ViewData["Title"] = "Storefront";
+    Layout = "_ConsoleLayout";
+}
+
+@if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
+@if (Model is null) { <div class="alert-ph alert-err">@(ViewBag.Error ?? "Shop not found.")</div>; return; }
+
+<div class="between mb-3">
+    <div>
+        <h1 class="fw-900" style="font-size:1.6rem">Storefront</h1>
+        <span class="muted" style="font-size:13px">What customers see on your shop page.</span>
+    </div>
+    <a class="btn-outline-ph" asp-controller="Shops" asp-action="Details" asp-route-id="@Model.Id" target="_blank">View public page</a>
+</div>
+
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<form method="post" asp-action="Update" class="card-ph pad">
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label">Shop name</label>
+            <input class="form-input" name="name" value="@Model.Name" required maxlength="100" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Contact phone</label>
+            <input class="form-input" name="phoneNumber" value="@Model.PhoneNumber" />
+        </div>
+        <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" name="description" rows="2">@Model.Description</textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Street address</label>
+            <input class="form-input" name="addressLine" value="@Model.AddressLine" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">District</label>
+            <input class="form-input" name="district" value="@Model.District" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">City</label>
+            <input class="form-input" name="city" value="@Model.City" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Opens at</label>
+            <input class="form-input" type="time" name="openTime" value="@Model.OpenTime.ToString("HH\\:mm")" required />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Closes at</label>
+            <input class="form-input" type="time" name="closeTime" value="@Model.CloseTime.ToString("HH\\:mm")" required />
+        </div>
+    </div>
+    <button class="btn-ph mt-3" type="submit">Save storefront</button>
+    <span class="muted ms-2" style="font-size:12.5px">Closing time must be later than opening time.</span>
+</form>

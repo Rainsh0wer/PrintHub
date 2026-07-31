@@ -21,7 +21,20 @@
                                 <td class="muted">@d.FileSizeKb KB</td>
                                 <td class="muted">@(d.DeclaredPageCount?.ToString() ?? "—")</td>
                                 <td class="muted">@d.UploadedAt.ToString("dd MMM, HH:mm")</td>
-                                <td class="text-end"><form method="post" asp-action="Delete"><input type="hidden" name="id" value="@d.Id" /><button class="btn-outline-ph btn-sm">Delete</button></form></td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <form method="post" asp-action="Rename" class="d-flex gap-2">
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <input class="form-input" name="fileName" value="@d.FileName" required style="font-size:12.5px;max-width:200px" />
+                                            <button class="btn-outline-ph btn-sm" type="submit">Rename</button>
+                                        </form>
+                                        <form method="post" asp-action="Delete">
+                                            <input type="hidden" name="id" value="@d.Id" />
+                                            <button class="btn-outline-ph btn-sm" type="submit"
+                                                    onclick="return confirm('Delete @d.FileName? Files used by an order that is still running cannot be deleted.')">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         }
                     </tbody>

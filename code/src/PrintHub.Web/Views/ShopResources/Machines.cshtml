@@ -2,13 +2,48 @@
 @{
     ViewData["Title"] = "Machines";
     Layout = "_ConsoleLayout";
-    string Cls(string s) => s == "Idle" ? "st-ok" : (s == "Offline" ? "st-err" : "st-warn");
+    string Cls(string s) => s switch { "Idle" => "st-ok", "Offline" => "st-err", "Busy" => "st-info", _ => "st-warn" };
 }
 
 @if (ViewBag.NoShop == true) { <div class="empty-ph">Your account isn't linked to a shop yet.</div>; return; }
 
-<div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Machines</h1><span class="muted">@Model.Count machines</span></div>
+<div class="between mb-3">
+    <div>
+        <h1 class="fw-900" style="font-size:1.6rem">Machines</h1>
+        <span class="muted" style="font-size:13px">A service group with no usable machine drops out of quoting.</span>
+    </div>
+    <span class="muted">@Model.Count machines</span>
+</div>
 @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+<form method="post" asp-action="AddMachine" class="card-ph pad mb-3">
+    <h3 class="fw-900 mb-2" style="font-size:1.05rem">Add a machine</h3>
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Name</label>
+            <input class="form-input" name="name" required placeholder="Ricoh MP-2" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Type</label>
+            <select class="form-input" name="machineType">
+                <option value="0">Printer</option>
+                <option value="1">Plotter</option>
+                <option value="2">3D printer</option>
+                <option value="3">Laser cutter</option>
+                <option value="4">Finishing</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Service group</label>
+            <select class="form-input" name="serviceGroup">
+                <option value="0">Document</option>
+                <option value="1">Finishing</option>
+                <option value="2">Fabrication</option>
+            </select>
+        </div>
+        <div class="col-md-2"><button class="btn-ph btn-block" type="submit">Add</button></div>
+    </div>
+</form>
 
 <div class="row g-3">
     @foreach (var m in Model)
@@ -17,17 +52,23 @@
             <div class="card-ph pad">
                 <div class="between"><strong>@m.Name</strong><span class="status-badge @Cls(m.Status)">@m.Status</span></div>
                 <div class="muted mb-3" style="font-size:13px">@m.MachineType · @m.ServiceGroup</div>
-                <form method="post" asp-action="SetStatus" class="d-flex gap-2">
+                <form method="post" asp-action="SetStatus" class="d-flex gap-2 mb-2">
                     <input type="hidden" name="machineId" value="@m.Id" />
+                    @* Values must match MachineStatus: Idle=0, Busy=1, Maintenance=2, Offline=3. *@
                     <select class="form-input" name="status">
-                        <option value="0">Idle</option>
-                        <option value="1">Maintenance</option>
-                        <option value="2">Offline</option>
+                        <option value="0" selected="@(m.Status == "Idle")">Idle</option>
+                        <option value="2" selected="@(m.Status == "Maintenance")">Maintenance</option>
+                        <option value="3" selected="@(m.Status == "Offline")">Offline</option>
                     </select>
                     <button class="btn-outline-ph btn-sm" type="submit">Set</button>
+                </form>
+                <form method="post" asp-action="RemoveMachine">
+                    <input type="hidden" name="machineId" value="@m.Id" />
+                    <button class="btn-outline-ph btn-block" type="submit" style="font-size:12.5px;padding:5px"
+                            onclick="return confirm('Remove @m.Name? It can no longer be assigned to production.')">Remove</button>
                 </form>
             </div>
         </div>
     }
-    @if (!Model.Any()) { <div class="col-12"><div class="empty-ph">No machines yet.</div></div> }
+    @if (!Model.Any()) { <div class="col-12"><div class="empty-ph">No machines yet — add one above so your shop can be quoted.</div></div> }
 </div>

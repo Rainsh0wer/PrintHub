@@ -9,24 +9,68 @@
 
 <div class="row g-4">
     <div class="col-lg-8">
-        <div class="card-ph" style="overflow:hidden">
-            <table class="tbl">
-                <thead><tr><th>Code</th><th>Discount</th><th>Min order</th><th>Used</th><th>Valid to</th><th>Status</th><th></th></tr></thead>
-                <tbody>
-                    @foreach (var v in Model)
+        <div class="stack" style="--gap:12px">
+            @foreach (var v in Model)
+            {
+                <div class="card-ph pad" style="@(v.IsActive ? "" : "opacity:.7")">
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        <strong style="font-family:monospace">@v.Code</strong>
+                        <span class="muted">@v.Name</span>
+                        <span class="badge-ph">@(v.DiscountType == "Percent" ? $"{v.DiscountValue:0}%" : $"{v.DiscountValue:N0} ₫")</span>
+                        <span class="muted" style="font-size:12.5px">used @v.UsedCount / @v.UsageLimit</span>
+                        <span class="status-badge @(v.IsActive ? "st-ok" : "st-err")">@(v.IsActive ? "Active" : "Off")</span>
+                    </div>
+                    <form method="post" asp-action="Update" class="row g-2 align-items-end">
+                        <input type="hidden" name="id" value="@v.Id" />
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size:12px">Name</label>
+                            <input class="form-input" name="name" value="@v.Name" />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Value</label>
+                            <input class="form-input" type="number" name="discountValue" step="0.01" min="0" value="@v.DiscountValue" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Min order (₫)</label>
+                            <input class="form-input" type="number" name="minOrderAmount" step="1000" min="0" value="@v.MinOrderAmount" />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Max discount (₫)</label>
+                            <input class="form-input" type="number" name="maxDiscountAmount" step="1000" min="0" value="@v.MaxDiscountAmount" />
+                        </div>
+                        <div class="col-6 col-md-1">
+                            <label class="form-label" style="font-size:12px">Limit</label>
+                            <input class="form-input" type="number" name="usageLimit" min="0" value="@v.UsageLimit" />
+                        </div>
+                        <div class="col-6 col-md-1">
+                            <label class="form-label" style="font-size:12px">Per user</label>
+                            <input class="form-input" type="number" name="perUserLimit" min="1" value="@v.PerUserLimit" />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Valid from</label>
+                            <input class="form-input" type="date" name="validFrom" value="@v.ValidFrom.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Valid to</label>
+                            <input class="form-input" type="date" name="validTo" value="@v.ValidTo.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-6 col-md-2 pb-2">
+                            <label style="font-size:12.5px"><input type="checkbox" name="isActive" value="true" checked="@v.IsActive" /> Active</label>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn-ph btn-block" type="submit">Save</button>
+                        </div>
+                    </form>
+                    @if (v.IsActive)
                     {
-                        <tr>
-                            <td><strong>@v.Code</strong><div class="muted" style="font-size:12px">@v.Name</div></td>
-                            <td>@(v.DiscountType == "Percent" ? $"{v.DiscountValue:0}%" : $"{v.DiscountValue:N0} ₫")</td>
-                            <td class="muted">@v.MinOrderAmount.ToString("N0") ₫</td>
-                            <td class="muted">@v.UsedCount / @v.UsageLimit</td>
-                            <td class="muted">@v.ValidTo.ToString("dd MMM yyyy")</td>
-                            <td><span class="status-badge @(v.IsActive ? "st-ok" : "st-err")">@(v.IsActive ? "Active" : "Off")</span></td>
-                            <td class="text-end">@if (v.IsActive) { <form method="post" asp-action="Deactivate"><input type="hidden" name="id" value="@v.Id" /><button class="btn-outline-ph btn-sm">Off</button></form> }</td>
-                        </tr>
+                        <form method="post" asp-action="Deactivate" class="mt-2">
+                            <input type="hidden" name="id" value="@v.Id" />
+                            <button class="btn-outline-ph" type="submit" style="font-size:12.5px;padding:5px 12px"
+                                    onclick="return confirm('Deactivate @v.Code? Customers can no longer apply it.')">Deactivate</button>
+                        </form>
                     }
-                </tbody>
-            </table>
+                </div>
+            }
         </div>
     </div>
     <div class="col-lg-4">

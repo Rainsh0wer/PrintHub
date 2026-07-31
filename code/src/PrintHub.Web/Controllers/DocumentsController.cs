@@ -34,6 +34,14 @@ public class DocumentsController : Controller
     }
 
     [HttpPost]
+    public async Task<IActionResult> Rename(int id, string fileName)
+    {
+        var res = await _api.PutAsync<object>($"/api/documents/{id}", new { fileName });
+        TempData[res.Ok ? "ok" : "err"] = res.Ok ? "File renamed." : res.Error;
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {
         var res = await _api.DeleteAsync($"/api/documents/{id}");

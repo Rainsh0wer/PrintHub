@@ -28,6 +28,25 @@ public class ShopResourcesController : ConsoleBase
         return RedirectToAction(nameof(Machines));
     }
 
+    [HttpPost]
+    public async Task<IActionResult> AddMachine(string name, int machineType, int serviceGroup)
+    {
+        var shopId = CurrentShopId();
+        var res = await _api.PostAsync<MachineAdminDto>($"/api/shops/{shopId}/machines",
+            new { name, machineType, serviceGroup });
+        TempData[res.Ok ? "ok" : "err"] = res.Ok ? "Machine added." : res.Error;
+        return RedirectToAction(nameof(Machines));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RemoveMachine(int machineId)
+    {
+        var shopId = CurrentShopId();
+        var res = await _api.DeleteAsync($"/api/shops/{shopId}/machines/{machineId}");
+        TempData[res.Ok ? "ok" : "err"] = res.Ok ? "Machine removed." : res.Error;
+        return RedirectToAction(nameof(Machines));
+    }
+
     public async Task<IActionResult> Materials()
     {
         if (!IsShop()) return RedirectToAction("Login", "Account", new { returnUrl = "/ShopResources/Materials" });
@@ -44,6 +63,26 @@ public class ShopResourcesController : ConsoleBase
         var shopId = CurrentShopId();
         var res = await _api.PutAsync<MaterialAdminDto>($"/api/shops/{shopId}/materials/{materialId}/stock", new { stockQuantity, lowStockThreshold });
         TempData[res.Ok ? "ok" : "err"] = res.Ok ? "Stock updated." : res.Error;
+        return RedirectToAction(nameof(Materials));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddMaterial(string name, int materialType, string unit,
+        decimal stockQuantity, decimal lowStockThreshold, decimal unitCost)
+    {
+        var shopId = CurrentShopId();
+        var res = await _api.PostAsync<MaterialAdminDto>($"/api/shops/{shopId}/materials",
+            new { name, materialType, unit, stockQuantity, lowStockThreshold, unitCost });
+        TempData[res.Ok ? "ok" : "err"] = res.Ok ? "Material added." : res.Error;
+        return RedirectToAction(nameof(Materials));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RemoveMaterial(int materialId)
+    {
+        var shopId = CurrentShopId();
+        var res = await _api.DeleteAsync($"/api/shops/{shopId}/materials/{materialId}");
+        TempData[res.Ok ? "ok" : "err"] = res.Ok ? "Material removed." : res.Error;
         return RedirectToAction(nameof(Materials));
     }
 }

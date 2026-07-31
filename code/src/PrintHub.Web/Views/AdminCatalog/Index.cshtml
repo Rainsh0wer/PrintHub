@@ -2,32 +2,89 @@
 @{
     ViewData["Title"] = "Service types";
     Layout = "_ConsoleLayout";
+    var rate = (decimal)(ViewBag.CommissionRate ?? 0.10m);
+    var updatedAt = ViewBag.CommissionUpdatedAt as DateTime?;
 }
 
-<h1 class="fw-900 mb-3" style="font-size:1.6rem">Service types</h1>
+<h1 class="fw-900 mb-3" style="font-size:1.6rem">Service catalogue</h1>
 @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+@* ── Commission (UC-39) ─────────────────────────────────────────── *@
+<div class="card-ph pad mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-7">
+            <h3 class="fw-900 mb-1" style="font-size:1.05rem">Platform commission</h3>
+            <p class="muted mb-0" style="font-size:12.5px">
+                Taken from each completed order. The rate is snapshotted onto the order at completion,
+                so changing it never alters commission already recorded.
+                @if (updatedAt.HasValue) { <text>Last changed @updatedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm").</text> }
+            </p>
+        </div>
+        <div class="col-lg-5">
+            <form method="post" asp-action="SetCommission" class="d-flex gap-2 align-items-end">
+                <div class="flex-grow-1">
+                    <label class="form-label">Rate (%)</label>
+                    <input class="form-input" type="number" name="ratePercent" step="0.5" min="0" max="100"
+                           value="@((rate * 100m).ToString("0.##"))" required />
+                </div>
+                <button class="btn-ph" type="submit" style="white-space:nowrap">Save rate</button>
+            </form>
+        </div>
+    </div>
+</div>
 
 <div class="row g-4">
     <div class="col-lg-8">
-        <div class="card-ph" style="overflow:hidden">
-            <table class="tbl">
-                <thead><tr><th>Code</th><th>Name</th><th>Group</th><th>Pricing</th><th>Status</th><th></th></tr></thead>
-                <tbody>
-                    @foreach (var s in Model)
+        <h3 class="fw-900 mb-2" style="font-size:1.05rem">Service types <span class="muted" style="font-weight:400;font-size:13px">— @Model.Count total</span></h3>
+        <div class="stack" style="--gap:12px">
+            @foreach (var s in Model)
+            {
+                <div class="card-ph pad" style="@(s.IsActive ? "" : "opacity:.7")">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <strong>@s.Name</strong>
+                        <span class="muted" style="font-family:monospace;font-size:12.5px">@s.Code</span>
+                        <span class="badge-ph">@s.ServiceGroup</span>
+                        <span class="muted" style="font-size:12.5px">@s.PricingModel</span>
+                        <span class="status-badge @(s.IsActive ? "st-ok" : "st-err")">@(s.IsActive ? "Active" : "Off")</span>
+                    </div>
+                    <form method="post" asp-action="Update" class="row g-2 align-items-end">
+                        <input type="hidden" name="id" value="@s.Id" />
+                        <div class="col-md-4">
+                            <label class="form-label" style="font-size:12px">Name</label>
+                            <input class="form-input" name="name" value="@s.Name" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Unit</label>
+                            <input class="form-input" name="unitOfMeasure" value="@s.UnitOfMeasure" required />
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label" style="font-size:12px">Order</label>
+                            <input class="form-input" type="number" name="displayOrder" value="@s.DisplayOrder" />
+                        </div>
+                        <div class="col-md-2 d-flex gap-3 pb-2">
+                            <label style="font-size:12.5px"><input type="checkbox" name="requiresFile" value="true" checked="@s.RequiresFile" /> File</label>
+                            <label style="font-size:12.5px"><input type="checkbox" name="isActive" value="true" checked="@s.IsActive" /> Active</label>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn-ph btn-block" type="submit">Save</button>
+                        </div>
+                        <div class="col-12">
+                            <input class="form-input" name="description" value="@s.Description" placeholder="Description (optional)" style="font-size:13px" />
+                        </div>
+                    </form>
+                    @if (s.IsActive)
                     {
-                        <tr>
-                            <td class="muted">@s.Code</td>
-                            <td><strong>@s.Name</strong></td>
-                            <td><span class="badge-ph">@s.ServiceGroup</span></td>
-                            <td class="muted">@s.PricingModel</td>
-                            <td><span class="status-badge @(s.IsActive ? "st-ok" : "st-err")">@(s.IsActive ? "Active" : "Off")</span></td>
-                            <td class="text-end">@if (s.IsActive) { <form method="post" asp-action="Deactivate"><input type="hidden" name="id" value="@s.Id" /><button class="btn-outline-ph btn-sm">Deactivate</button></form> }</td>
-                        </tr>
+                        <form method="post" asp-action="Deactivate" class="mt-2">
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <button class="btn-outline-ph" type="submit" style="font-size:12.5px;padding:5px 12px"
+                                    onclick="return confirm('Deactivate @s.Name? Shops can no longer price it and it disappears from quoting. Existing orders are unaffected.')">Deactivate</button>
+                        </form>
                     }
-                </tbody>
-            </table>
+                </div>
+            }
         </div>
     </div>
+
     <div class="col-lg-4">
         <form method="post" asp-action="Create" class="card-ph pad">
             <h3 class="fw-900 mb-2" style="font-size:1.05rem">Add service type</h3>
@@ -37,8 +94,11 @@
             <select class="form-input mb-2" name="serviceGroup"><option value="0">Document</option><option value="1">Finishing</option><option value="2">Fabrication</option></select>
             <label class="form-label">Pricing model</label>
             <select class="form-input mb-2" name="pricingModel"><option value="0">Per page</option><option value="1">Per unit</option><option value="2">Material &amp; time</option></select>
-            <label class="form-label">Unit</label><input class="form-input mb-3" name="unitOfMeasure" required value="unit" />
+            <label class="form-label">Unit</label><input class="form-input mb-2" name="unitOfMeasure" required value="unit" />
+            <label class="form-label">Display order</label><input class="form-input mb-2" type="number" name="displayOrder" value="50" />
+            <label class="mb-3" style="font-size:13px"><input type="checkbox" name="requiresFile" value="true" checked /> Requires an uploaded file</label>
             <button class="btn-ph btn-block" type="submit">Create</button>
+            <p class="muted mt-2 mb-0" style="font-size:12px">The code and pricing model can't be changed once orders exist for the type.</p>
         </form>
     </div>
 </div>

@@ -30,4 +30,23 @@ public class ProfileController : Controller
         else TempData["err"] = res.Error;
         return RedirectToAction(nameof(Index));
     }
+
+    /// <summary>UC-05 — changing the password revokes every refresh token (BR-9), so the
+    /// session is cleared and the user is sent back to sign in.</summary>
+    [HttpPost]
+    public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
+    {
+        var res = await _api.PostAsync<object>("/api/auth/change-password",
+            new { currentPassword, newPassword, confirmNewPassword });
+
+        if (!res.Ok)
+        {
+            TempData["err"] = res.Error;
+            return RedirectToAction(nameof(Index));
+        }
+
+        HttpContext.Session.Clear();
+        TempData["ok"] = "Password changed. Please sign in again.";
+        return RedirectToAction("Login", "Account");
+    }
 }

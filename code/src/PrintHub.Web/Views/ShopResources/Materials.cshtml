@@ -9,11 +9,48 @@
 <div class="between mb-3"><h1 class="fw-900" style="font-size:1.6rem">Materials</h1><span class="muted">@Model.Count materials</span></div>
 @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
 
+<form method="post" asp-action="AddMaterial" class="card-ph pad mb-3">
+    <h3 class="fw-900 mb-2" style="font-size:1.05rem">Add a material</h3>
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Name</label>
+            <input class="form-input" name="name" required placeholder="A4 80gsm" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Type</label>
+            <select class="form-input" name="materialType">
+                <option value="0">Paper</option>
+                <option value="1">Filament</option>
+                <option value="2">Sheet</option>
+                <option value="3">Consumable</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-1">
+            <label class="form-label">Unit</label>
+            <input class="form-input" name="unit" required value="sheet" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label">Stock</label>
+            <input class="form-input" type="number" step="0.01" min="0" name="stockQuantity" value="0" />
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label">Low-stock at</label>
+            <input class="form-input" type="number" step="0.01" min="0" name="lowStockThreshold" value="0" />
+        </div>
+        <div class="col-6 col-md-1">
+            <label class="form-label">Cost</label>
+            <input class="form-input" type="number" step="1" min="0" name="unitCost" value="0" />
+        </div>
+        <div class="col-md-1"><button class="btn-ph btn-block" type="submit">Add</button></div>
+    </div>
+    <p class="muted mt-2 mb-0" style="font-size:12px">Unit cost is for your own margin reporting and is never shown publicly.</p>
+</form>
+
 <div class="card-ph" style="overflow:hidden">
     <table class="tbl">
-        <thead><tr><th>Material</th><th>Type</th><th class="text-end">Stock</th><th>Adjust stock / low-stock</th></tr></thead>
+        <thead><tr><th>Material</th><th>Type</th><th class="text-end">Stock</th><th>Adjust stock / low-stock</th><th></th></tr></thead>
         <tbody>
-            @if (!Model.Any()) { <tr><td colspan="4" class="muted text-center" style="padding:44px">No materials yet.</td></tr> }
+            @if (!Model.Any()) { <tr><td colspan="5" class="muted text-center" style="padding:44px">No materials yet — add one above.</td></tr> }
             @foreach (var m in Model)
             {
                 <tr>
@@ -26,6 +63,13 @@
                             <input class="form-input" style="max-width:120px" type="number" step="0.01" name="stockQuantity" value="@m.StockQuantity" />
                             <input class="form-input" style="max-width:120px" type="number" step="0.01" name="lowStockThreshold" value="@m.LowStockThreshold" />
                             <button class="btn-outline-ph btn-sm" type="submit">Save</button>
+                        </form>
+                    </td>
+                    <td class="text-end">
+                        <form method="post" asp-action="RemoveMaterial">
+                            <input type="hidden" name="materialId" value="@m.Id" />
+                            <button class="btn-outline-ph btn-sm" type="submit"
+                                    onclick="return confirm('Remove @m.Name from your stock list?')">Remove</button>
                         </form>
                     </td>
                 </tr>
