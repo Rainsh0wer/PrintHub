@@ -3,14 +3,16 @@
     ViewData["Title"] = "Shop approvals";
     Layout = "_ConsoleLayout";
     var active = ViewBag.Active as IEnumerable<PrintHub.Application.Features.Shops.Dtos.ShopSummaryDto> ?? new List<PrintHub.Application.Features.Shops.Dtos.ShopSummaryDto>();
+    var suspended = ViewBag.Suspended as IEnumerable<PrintHub.Application.Features.Shops.Dtos.ShopAdminListItemDto> ?? new List<PrintHub.Application.Features.Shops.Dtos.ShopAdminListItemDto>();
 }
 
 <h1 class="fw-900 mb-3" style="font-size:1.6rem">Shop approvals</h1>
 
-<h3 class="fw-900 mb-2" style="font-size:1.05rem">Pending applications</h3>
+@* ── Pending ─────────────────────────────────────────────────────── *@
+<h3 class="fw-900 mb-2" style="font-size:1.05rem">Pending applications <span class="muted" style="font-weight:400;font-size:13px">— @Model.Count waiting</span></h3>
 <div class="card-ph mb-4" style="overflow:hidden">
     <table class="tbl">
-        <thead><tr><th>Shop</th><th>Owner</th><th>Location</th><th>Applied</th><th class="text-end">Action</th></tr></thead>
+        <thead><tr><th>Shop</th><th>Owner</th><th>Location</th><th>Applied</th><th style="min-width:320px">Decision</th></tr></thead>
         <tbody>
             @if (!Model.Any()) { <tr><td colspan="5" class="muted text-center" style="padding:40px">No pending applications.</td></tr> }
             @foreach (var s in Model)
@@ -20,10 +22,17 @@
                     <td>@s.OwnerName <span class="muted">· @s.OwnerEmail</span></td>
                     <td class="muted">@s.District, @s.City</td>
                     <td class="muted">@s.CreatedAt.ToString("dd MMM yyyy")</td>
-                    <td class="text-end">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <form method="post" asp-action="Approve"><input type="hidden" name="id" value="@s.Id" /><button class="btn-ph btn-sm">Approve</button></form>
-                            <form method="post" asp-action="Reject"><input type="hidden" name="id" value="@s.Id" /><input type="hidden" name="reason" value="Does not meet requirements" /><button class="btn-outline-ph btn-sm">Reject</button></form>
+                    <td>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <form method="post" asp-action="Approve">
+                                <input type="hidden" name="id" value="@s.Id" />
+                                <button class="btn-ph btn-sm" onclick="return confirm('Approve @s.Name? The owner will be elevated to Shop Owner and the shop becomes discoverable.')">Approve</button>
+                            </form>
+                            <form method="post" asp-action="Reject" class="d-flex gap-2 flex-grow-1">
+                                <input type="hidden" name="id" value="@s.Id" />
+                                <input class="form-input" name="reason" required placeholder="Reason (required)" style="font-size:13px;min-width:150px" />
+                                <button class="btn-outline-ph btn-sm" type="submit">Reject</button>
+                            </form>
                         </div>
                     </td>
                 </tr>
@@ -32,19 +41,53 @@
     </table>
 </div>
 
+@* ── Active ──────────────────────────────────────────────────────── *@
 <h3 class="fw-900 mb-2" style="font-size:1.05rem">Active shops</h3>
-<div class="card-ph" style="overflow:hidden">
+<div class="card-ph mb-4" style="overflow:hidden">
     <table class="tbl">
-        <thead><tr><th>Shop</th><th>Location</th><th>Rating</th><th class="text-end">Action</th></tr></thead>
+        <thead><tr><th>Shop</th><th>Location</th><th>Rating</th><th style="min-width:320px">Action</th></tr></thead>
         <tbody>
+            @if (!active.Any()) { <tr><td colspan="4" class="muted text-center" style="padding:40px">No active shops.</td></tr> }
             @foreach (var s in active)
             {
                 <tr>
                     <td><strong>@s.Name</strong></td>
                     <td class="muted">@s.District, @s.City</td>
                     <td><span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0")</span></td>
+                    <td>
+                        <form method="post" asp-action="Suspend" class="d-flex gap-2">
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <input class="form-input" name="reason" required placeholder="Reason (required)" style="font-size:13px" />
+                            <button class="btn-outline-ph btn-sm" type="submit" style="white-space:nowrap"
+                                    onclick="return confirm('Suspend @s.Name? It disappears from search and takes no new orders. Orders already in progress still complete.')">Suspend</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@* ── Suspended ───────────────────────────────────────────────────── *@
+<h3 class="fw-900 mb-2" style="font-size:1.05rem">Suspended shops <span class="muted" style="font-weight:400;font-size:13px">— hidden from search until reinstated</span></h3>
+<div class="card-ph" style="overflow:hidden">
+    <table class="tbl">
+        <thead><tr><th>Shop</th><th>Owner</th><th>Location</th><th>Reason on file</th><th class="text-end">Action</th></tr></thead>
+        <tbody>
+            @if (!suspended.Any()) { <tr><td colspan="5" class="muted text-center" style="padding:40px">No suspended shops.</td></tr> }
+            @foreach (var s in suspended)
+            {
+                <tr>
+                    <td><strong>@s.Name</strong> <span class="status-badge st-warn">Suspended</span></td>
+                    <td class="muted">@s.OwnerName</td>
+                    <td class="muted">@s.District, @s.City</td>
+                    <td class="muted" style="font-size:13px">@s.Status</td>
                     <td class="text-end">
-                        <form method="post" asp-action="Suspend"><input type="hidden" name="id" value="@s.Id" /><input type="hidden" name="reason" value="Policy review" /><button class="btn-outline-ph btn-sm">Suspend</button></form>
+                        <form method="post" asp-action="Reinstate">
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <button class="btn-ph btn-sm" type="submit"
+                                    onclick="return confirm('Reinstate @s.Name? It becomes discoverable and can receive orders again.')">Reinstate</button>
+                        </form>
                     </td>
                 </tr>
             }

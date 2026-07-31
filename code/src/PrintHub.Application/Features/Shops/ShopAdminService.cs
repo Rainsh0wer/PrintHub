@@ -36,6 +36,12 @@ public class ShopAdminService : IShopAdminService
         return Result.Success(_mapper.Map<IReadOnlyList<ShopAdminListItemDto>>(shops));
     }
 
+    public async Task<Result<IReadOnlyList<ShopAdminListItemDto>>> ListByStatusAsync(ShopStatus status, CancellationToken ct = default)
+    {
+        var shops = await _uow.Repository<Shop>().ListAsync(new ShopsByStatusSpecification(status), ct);
+        return Result.Success(_mapper.Map<IReadOnlyList<ShopAdminListItemDto>>(shops));
+    }
+
     public async Task<Result> ApproveAsync(int shopId, CancellationToken ct = default)
     {
         var shops = _uow.Repository<Shop>();

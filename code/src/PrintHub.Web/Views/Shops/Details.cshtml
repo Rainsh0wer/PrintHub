@@ -47,6 +47,14 @@
             <div class="prof-actions">
                 <a class="btn-ph btn-lg" asp-controller="Quotes" asp-action="Index" asp-route-shopId="@Model.Id"><i class="fas fa-scale-balanced"></i> Get a quote</a>
                 <a class="btn-outline-ph btn-lg" onclick="showTab('rate')"><i class="far fa-rectangle-list"></i> Rate card</a>
+                @if (Context.Session.GetString(PrintHub.Web.Services.SessionKeys.UserRole) == "Customer")
+                {
+                    <form method="post" asp-controller="Favourites" asp-action="Add">
+                        <input type="hidden" name="shopId" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="/Shops/Details/@Model.Id" />
+                        <button class="btn-outline-ph btn-lg" type="submit"><i class="far fa-heart"></i> Save</button>
+                    </form>
+                }
             </div>
         </div>
         <div class="prof-featured">

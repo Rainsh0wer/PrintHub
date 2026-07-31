@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PrintHub.Api.Common;
 using PrintHub.Application.Features.Shops;
 using PrintHub.Application.Features.Shops.Dtos;
+using PrintHub.Domain.Enums;
 
 namespace PrintHub.Api.Controllers.Admin;
 
@@ -24,6 +25,11 @@ public class ShopAdminController : ControllerBase
     [HttpGet("applications")]
     public async Task<IActionResult> PendingApplications(CancellationToken ct)
         => (await _admin.ListPendingApplicationsAsync(ct)).ToActionResult();
+
+    /// <summary>UC-37 — shops in a given status; used to list suspended shops for reinstatement.</summary>
+    [HttpGet]
+    public async Task<IActionResult> ByStatus([FromQuery] ShopStatus status, CancellationToken ct)
+        => (await _admin.ListByStatusAsync(status, ct)).ToActionResult();
 
     /// <summary>UC-36 — approve an application (activates the shop, elevates the owner).</summary>
     [HttpPut("{id:int}/approve")]

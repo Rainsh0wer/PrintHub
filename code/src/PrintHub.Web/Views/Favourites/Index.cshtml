@@ -1,0 +1,47 @@
+@model List<PrintHub.Application.Features.Shops.Dtos.ShopSummaryDto>
+@{
+    ViewData["Title"] = "Favourite shops";
+}
+
+<div class="page-container" style="padding:24px 16px 60px">
+    <div class="page-head">
+        <h1>Favourite shops</h1>
+        <span class="muted">Shops you saved for quick access.</span>
+    </div>
+
+    @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-ph">
+            No favourites yet. Browse the <a asp-controller="Shops" asp-action="Index" class="fw-bold">marketplace</a> and tap the heart on a shop you like.
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var s in Model)
+            {
+                <div class="col-6 col-lg-3">
+                    <div class="product-card h-100">
+                        <a asp-controller="Shops" asp-action="Details" asp-route-id="@s.Id" class="img-wrap">
+                            <img src="@(s.CoverImageUrl ?? "https://picsum.photos/seed/shop" + s.Id + "/600/400")" alt="@s.Name" loading="lazy" />
+                        </a>
+                        <div class="pad">
+                            <a asp-controller="Shops" asp-action="Details" asp-route-id="@s.Id" class="fw-bold d-block mb-1" style="color:inherit;text-decoration:none">@s.Name</a>
+                            <div class="muted mb-1" style="font-size:12.5px">@s.District, @s.City</div>
+                            <div class="between align-items-center">
+                                <span class="rating"><span class="stars">★</span> @s.RatingAverage.ToString("0.0") <span class="muted">(@s.RatingCount)</span></span>
+                                <span class="price-current" style="font-size:14px">@(s.MaxUnitPrice?.ToString("N0") ?? "—") ₫</span>
+                            </div>
+                            <form method="post" asp-action="Remove" class="mt-2">
+                                <input type="hidden" name="shopId" value="@s.Id" />
+                                <button class="btn-outline-ph btn-block" type="submit" style="font-size:12.5px;padding:6px">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

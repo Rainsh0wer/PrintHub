@@ -1,0 +1,55 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Notifications.Dtos.NotificationDto>
+@{
+    ViewData["Title"] = "Notifications";
+    var unread = Model.Items.Count(n => !n.IsRead);
+}
+
+<div class="page-container" style="padding:24px 16px 60px">
+    <div class="between mb-3">
+        <div class="page-head mb-0">
+            <h1>Notifications</h1>
+            <span class="muted">@(unread > 0 ? $"{unread} unread" : "You're all caught up.")</span>
+        </div>
+        @if (unread > 0)
+        {
+            <form method="post" asp-action="MarkAllRead">
+                <button class="btn-outline-ph" type="submit">Mark all as read</button>
+            </form>
+        }
+    </div>
+
+    @if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+    @if (!Model.Items.Any())
+    {
+        <div class="empty-ph">No notifications yet. You'll be notified when a shop accepts, produces, or completes your order.</div>
+    }
+    else
+    {
+        <div class="stack" style="--gap:10px">
+            @foreach (var n in Model.Items)
+            {
+                <div class="card-ph pad" style="@(n.IsRead ? "" : "border-left:3px solid var(--accent)")">
+                    <div class="between">
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong>@n.Title</strong>
+                                @if (!n.IsRead) { <span class="badge-ph">New</span> }
+                                <span class="muted" style="font-size:12px">@n.Type</span>
+                            </div>
+                            <p class="muted mt-1 mb-0" style="font-size:14px">@n.Content</p>
+                        </div>
+                        <div class="text-end" style="white-space:nowrap">
+                            <div class="muted" style="font-size:12.5px">@n.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</div>
+                            @if (n.RelatedOrderId is int oid)
+                            {
+                                <a class="btn-outline-ph mt-2" style="font-size:12.5px;padding:5px 12px"
+                                   asp-controller="Orders" asp-action="Details" asp-route-id="@oid">View order</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

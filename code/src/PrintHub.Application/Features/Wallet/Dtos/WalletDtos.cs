@@ -22,6 +22,16 @@ public record TopUpResponse(
 /// <summary>Admin supplies the bank's own reference when confirming a matched transfer.</summary>
 public record ConfirmTopUpRequest(string? BankReference);
 
+/// <summary>A top-up awaiting confirmation, with who requested it so an admin can match the transfer.</summary>
+public record PendingTopUpDto(
+    int Id,
+    string RefCode,
+    decimal Amount,
+    int UserId,
+    string CustomerName,
+    string CustomerEmail,
+    DateTime CreatedAt);
+
 public record WalletTransactionDto(
     int Id,
     string Type,

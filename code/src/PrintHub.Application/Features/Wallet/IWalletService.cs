@@ -16,6 +16,9 @@ public interface IWalletService
     /// <summary>UC-21 — create a pending top-up and return bank-transfer instructions.</summary>
     Task<Result<TopUpResponse>> RequestTopUpAsync(int userId, TopUpRequest request, CancellationToken ct = default);
 
+    /// <summary>Admin — top-ups awaiting confirmation, oldest first, so a transfer can be matched.</summary>
+    Task<Result<PagedResult<PendingTopUpDto>>> ListPendingTopUpsAsync(PageRequest page, CancellationToken ct = default);
+
     /// <summary>Admin — confirm a matched transfer by reference code, crediting the wallet.</summary>
     Task<Result<WalletTransactionDto>> ConfirmTopUpAsync(int adminUserId, string refCode, ConfirmTopUpRequest request, CancellationToken ct = default);
 }

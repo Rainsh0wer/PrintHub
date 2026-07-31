@@ -24,6 +24,27 @@ public sealed class WalletTransactionsByUserCountSpecification : BaseSpecificati
     }
 }
 
+/// <summary>Every top-up still awaiting confirmation, oldest first — the admin work queue.</summary>
+public sealed class PendingTopUpsSpecification : BaseSpecification<WalletTransaction>
+{
+    public PendingTopUpsSpecification(int skip, int take)
+        : base(w => w.Type == WalletTransactionType.TopUp && w.Status == WalletTransactionStatus.Pending)
+    {
+        AddInclude(w => w.User);
+        ApplyOrderBy(w => w.CreatedAt);
+        ApplyPaging(skip, take);
+    }
+}
+
+/// <summary>Count of pending top-ups — the paging companion.</summary>
+public sealed class PendingTopUpsCountSpecification : BaseSpecification<WalletTransaction>
+{
+    public PendingTopUpsCountSpecification()
+        : base(w => w.Type == WalletTransactionType.TopUp && w.Status == WalletTransactionStatus.Pending)
+    {
+    }
+}
+
 /// <summary>A pending top-up matched by its unique reference code — for admin confirmation.</summary>
 public sealed class PendingTopUpByRefCodeSpecification : BaseSpecification<WalletTransaction>
 {

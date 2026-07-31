@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PrintHub.Api.Common;
 using PrintHub.Application.Common.Interfaces;
+using PrintHub.Application.Common.Models;
 using PrintHub.Application.Features.Wallet;
 using PrintHub.Application.Features.Wallet.Dtos;
 using PrintHub.Domain.Enums;
@@ -27,6 +28,11 @@ public class AdminWalletController : ControllerBase
         _wallet = wallet;
         _currentUser = currentUser;
     }
+
+    /// <summary>Top-ups awaiting confirmation — the administrator's reconciliation queue.</summary>
+    [HttpGet("topups/pending")]
+    public async Task<IActionResult> Pending([FromQuery] PageRequest page, CancellationToken ct)
+        => (await _wallet.ListPendingTopUpsAsync(page, ct)).ToActionResult();
 
     /// <summary>Confirm a matched transfer by reference code, crediting the wallet.</summary>
     [HttpPut("topups/{refCode}/confirm")]

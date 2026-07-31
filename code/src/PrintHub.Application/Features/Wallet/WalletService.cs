@@ -77,6 +77,19 @@ public class WalletService : IWalletService
             refCode, request.Amount, BankName, AccountNumber, AccountName, refCode, qr));
     }
 
+    public async Task<Result<PagedResult<PendingTopUpDto>>> ListPendingTopUpsAsync(PageRequest page, CancellationToken ct = default)
+    {
+        var repo = _uow.Repository<WalletTransaction>();
+        var total = await repo.CountAsync(new PendingTopUpsCountSpecification(), ct);
+        var items = await repo.ListAsync(new PendingTopUpsSpecification(page.Skip, page.Take), ct);
+
+        var mapped = items.Select(t => new PendingTopUpDto(
+            t.Id, t.RefCode, t.Amount, t.UserId,
+            t.User?.FullName ?? "", t.User?.Email ?? "", t.CreatedAt)).ToList();
+
+        return Result.Success(new PagedResult<PendingTopUpDto>(mapped, total, page.PageNumber, page.PageSize));
+    }
+
     public async Task<Result<WalletTransactionDto>> ConfirmTopUpAsync(
         int adminUserId, string refCode, ConfirmTopUpRequest request, CancellationToken ct = default)
     {

@@ -1,0 +1,55 @@
+@model PrintHub.Application.Common.Models.PagedResult<PrintHub.Application.Features.Wallet.Dtos.PendingTopUpDto>
+@{
+    ViewData["Title"] = "Top-ups";
+    Layout = "_ConsoleLayout";
+}
+
+<div class="between mb-3">
+    <div>
+        <h1 class="fw-900" style="font-size:1.6rem">Top-up requests</h1>
+        <span class="muted" style="font-size:13px">Match each reference against the bank statement, then confirm to credit the wallet.</span>
+    </div>
+    <span class="muted">@Model.TotalCount pending</span>
+</div>
+
+@if (ViewBag.Error != null) { <div class="alert-ph alert-err mb-3">@ViewBag.Error</div> }
+
+@if (!Model.Items.Any())
+{
+    <div class="empty-ph">No top-ups are waiting for confirmation.</div>
+}
+else
+{
+    <div class="alert-ph alert-info mb-3" style="font-size:13px">
+        A top-up does <strong>not</strong> change the balance until it is confirmed here — this is the only point at which money enters a wallet.
+    </div>
+    <div class="card-ph" style="overflow:hidden">
+        <table class="tbl">
+            <thead>
+                <tr><th>Reference</th><th>Customer</th><th class="text-end">Amount</th><th>Requested</th><th style="min-width:280px">Confirm</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Items)
+                {
+                    <tr>
+                        <td><strong style="font-family:monospace">@t.RefCode</strong></td>
+                        <td>
+                            @t.CustomerName
+                            <div class="muted" style="font-size:12.5px">@t.CustomerEmail</div>
+                        </td>
+                        <td class="text-end"><span class="price-current" style="font-size:15px">@t.Amount.ToString("N0") ₫</span></td>
+                        <td class="muted" style="font-size:13px">@t.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <form method="post" asp-action="Confirm" class="d-flex gap-2">
+                                <input type="hidden" name="refCode" value="@t.RefCode" />
+                                <input class="form-input" name="bankReference" placeholder="Bank reference (optional)" style="font-size:13px" />
+                                <button class="btn-ph" type="submit" style="white-space:nowrap"
+                                        onclick="return confirm('Confirm @t.RefCode and credit @t.Amount.ToString("N0") ₫ to @t.CustomerName?')">Confirm</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
